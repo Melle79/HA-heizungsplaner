@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="grund" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232a35"/>
+      <stop offset="1" stop-color="#151a22"/>
+    </linearGradient>
+    <linearGradient id="waerme" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#e8732d"/>
+      <stop offset="1" stop-color="#f0a93c"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="128" height="128" rx="28" fill="url(#grund)"/>
+
+  <!-- Heizkörper: fünf Lamellen mit Sammelrohren -->
+  <g fill="url(#waerme)">
+    <rect x="26" y="52" width="76" height="7" rx="3.5"/>
+    <rect x="26" y="94" width="76" height="7" rx="3.5"/>
+    <rect x="31" y="56" width="9" height="42" rx="4.5"/>
+    <rect x="47" y="56" width="9" height="42" rx="4.5"/>
+    <rect x="63" y="56" width="9" height="42" rx="4.5"/>
+    <rect x="79" y="56" width="9" height="42" rx="4.5"/>
+  </g>
+
+  <!-- Die Kurve darüber: der Tagesverlauf, dem der Planer folgt -->
+  <path d="M22 40 L38 40 L38 26 L62 26 L62 38 L84 38 L84 22 L106 22"
+        fill="none" stroke="#7aa2ff" stroke-width="6"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

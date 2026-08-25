@@ -1,5 +1,74 @@
 # Heizungsplaner – Anleitung
 
+Diese Anleitung erklärt, was der Planer tut und warum. Für die Installation
+genügt die [README](https://github.com/Melle79/HA-heizungsplaner).
+
+## Die Oberfläche
+
+Vier Reiter: Übersicht, Räume, Einstellungen, Protokoll.
+
+### Übersicht
+
+Je Raum der Zielwert, die gemessene Temperatur und in einem Satz die
+Begründung. Oben stehen die Außentemperatur, die Partytaste und der Knopf
+*Jetzt prüfen*; darunter der Hinweisbalken, wenn etwas Aufmerksamkeit braucht.
+
+![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
+
+Die Zustandsworte auf den Kacheln:
+
+| Wort | Bedeutung |
+|---|---|
+| Komfort / Eco / Nacht | der Zeitplan führt |
+| Vorheizen | der nächste Wechsel wird vorgezogen |
+| Abwesend | niemand Zuständiges im Haus, Karenzzeit abgelaufen |
+| Heimkehr | jemand nähert sich, der Raum wird wieder warm |
+| Fenster offen | Frostschutz, danach Sperrzeit |
+| Von Hand | jemand hat am Thermostat gedreht, der Planer hält sich zurück |
+| Gesperrt | Freigabeschalter aus |
+| Party | die Partytaste läuft |
+| Sommer / Urlaub | Ventile zu bzw. Urlaubstemperatur |
+
+### Räume
+
+![Raumliste mit Betriebsart und Zahl der Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raeume.png)
+
+Jeder Raum öffnet sich in einem Dialog mit fünf Reitern. Unter **Grundlagen**
+stehen Name, Betriebsart und die Thermostate des Raumes:
+
+![Grundlagen eines Raumes: Betriebsart und zugeordnete Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-grundlagen.png)
+
+Der **Zeitplan** besteht aus Umschaltpunkten (siehe unten). *Vorlage einsetzen*
+füllt einen leeren Plan mit einem üblichen Tagesablauf:
+
+![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
+
+Unter **Belegung** steht, wer den Raum benutzt – zuständige Personen, ein
+eigener Freigabeschalter, eine eigene Karenzzeit – und ob der Raum bei der
+Partytaste mitmacht:
+
+![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-belegung.png)
+
+**Temperaturen** hält die vier Sollwerte und die harten Grenzen des Raumes,
+**Fühler und Melder** den Temperaturfühler, die Fensterkontakte und die
+Präsenzmelder.
+
+### Einstellungen
+
+Alles, was fürs ganze Haus gilt: Takt, Heizkurve, Sommerbetrieb, Vorheizen,
+Anwesenheit, Fenstererkennung, Urlaub, Partytaste, Überwachung und Meldewege.
+Die Beispielwerte unter der Heizkurve rechnen beim Verstellen mit.
+
+![Einstellungen mit Heizkurve und Sommerbetrieb](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/einstellungen.png)
+
+### Protokoll
+
+Jede Änderung mit Begründung, die jüngste zuerst. Störungen sind rot
+hinterlegt, Warnungen gelb – so ist auf einen Blick zu sehen, ob etwas
+liegengeblieben ist.
+
+![Protokoll der Schaltvorgänge mit Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/protokoll.png)
+
 ## Wie der Sollwert zustande kommt
 
 In jedem Takt (Standard: alle fünf Minuten) durchläuft jeder Raum dieselbe
@@ -12,12 +81,14 @@ Sie gilt für Räume in der Betriebsart *nach Zeitplan führen*; für
 | Rang | Fall | Ergebnis |
 |---|---|---|
 | 1 | Raum im Planer abgeschaltet | Ventil zu |
-| 2 | Fenster offen | Frostschutz, danach Sperrzeit |
-| 3 | Urlaubsschalter an | Urlaubstemperatur |
-| 4 | Sommerbetrieb | Ventil zu |
-| 5 | Zeitplan | Komfort / Eco / Nacht, ggf. vorgezogen |
-| 6 | niemand Zuständiges da | Abwesenheitstemperatur |
-| 7 | Heizkurve | Aufschlag nach Außentemperatur |
+| 2 | Freigabeschalter aus | Ventil zu |
+| 3 | Fenster offen | Frostschutz, danach Sperrzeit |
+| 4 | Partytaste läuft | Komfort, für die eingestellte Dauer |
+| 5 | Urlaubsschalter an | Urlaubstemperatur |
+| 6 | Sommerbetrieb | Ventil zu |
+| 7 | Zeitplan | Komfort / Eco / Nacht, ggf. vorgezogen |
+| 8 | niemand Zuständiges da | Abwesenheitstemperatur |
+| 9 | Heizkurve | Aufschlag nach Außentemperatur |
 
 Die Heizkurve gilt nur für gewollte Raumtemperaturen (Komfort, Eco, Nacht).
 Auf die Abwesenheits-, Urlaubs- und Frostschutztemperatur wird sie **nicht**
@@ -370,19 +441,7 @@ Der zuletzt geschriebene Wert liegt in `/data/zustand.json` und überlebt einen
 Neustart. Ohne dieses Gedächtnis würde jeder Add-on-Start in jedes Thermostat
 schreiben.
 
-## Der Knopf „Jetzt prüfen“
-
-Von selbst rechnet der Planer alle paar Minuten (einstellbar unter *Takt*) und
-außerdem sofort, wenn sich an der Konfiguration etwas ändert. Der Knopf zieht
-einen solchen Durchlauf vor: Zustände aus Home Assistant neu einlesen, für
-jeden Raum entscheiden, und wo nötig die Thermostate stellen. Danach zeigt er
-kurz, wie viele Thermostate dabei gestellt wurden – oder dass nichts zu tun
-war.
-
-Nützlich, wenn man eine Einstellung geändert hat und nicht auf den nächsten
-Takt warten will.
-
-## Betriebsarten
+## Trockenlauf und Automatik aus
 
 **Trockenlauf** – der Planer rechnet, protokolliert und meldet über MQTT, aber
 stellt kein Thermostat. Der richtige Zustand für die ersten Tage.
@@ -424,6 +483,15 @@ Solange beide laufen, schreiben zwei Systeme auf dieselben Sollwerte und
 
 Der Hinweisbalken der Oberfläche warnt, wenn ein Thermostat in zwei Räumen
 steht – dann würden sich die beiden Räume gegenseitig verstellen.
+
+## Karten fürs Dashboard
+
+Unter `heizungsplaner/dashboard/` im Repository liegt eine fertige Übersicht
+zum Einfügen: die Partytaste mit Restzeit, eine Störungsanzeige, die nur
+erscheint, wenn es etwas zu melden gibt, und eine Tabelle aller Räume mit
+Zielwert, Ist-Temperatur, Zustand und dem nächsten Schaltpunkt. Die Karten
+lesen ausschließlich die MQTT-Entitäten und funktionieren deshalb auch von
+unterwegs.
 
 ## Dateien
 

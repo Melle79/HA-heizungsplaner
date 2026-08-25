@@ -1435,6 +1435,11 @@ function raumOeffnen(raum, startblatt) {
     `.d-reiter button[data-blatt="${startblatt || 'grund'}"]`);
   if (reiter) reiter.click();
   $('raum-dialog').showModal();
+  // Ohne Zutun landet der Fokus auf „Schließen“ – der erste Knopf im Dialog.
+  // Beim Namensfeld ist er besser aufgehoben: Dort fängt man bei einem neuen
+  // Raum ohnehin an, und der Fokusring liegt nicht auf dem Abbruch.
+  if (neu) $('r-name').focus();
+  else document.activeElement?.blur?.();
 }
 
 $('btn-neuer-raum').onclick = () => raumOeffnen(null);

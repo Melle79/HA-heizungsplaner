@@ -1,5 +1,19 @@
 # Änderungen
 
+## 1.8.7
+
+- **Eigenes Icon und Logo.** Ein Heizkörper, darüber die Stufenkurve eines
+  Tagesplans – im Add-on-Store und in der Seitenleiste stand bisher ein
+  allgemeines Symbol.
+- **Dokumentation mit Bildern.** README und Anleitung zeigen jetzt die
+  Oberfläche: Übersicht, Räume, Raum-Dialog, Einstellungen und Protokoll. Die
+  Anleitung beginnt mit einem Rundgang und einer Tabelle der Zustandsworte.
+- In der Anleitung fehlten in der Rangfolge die Freigabe und die Partytaste;
+  die Tabelle stimmt jetzt mit der Regelkette überein. Der Abschnitt über den
+  Knopf „Jetzt prüfen“ stand zweimal darin.
+- Beim Öffnen eines Raumes lag der Fokus auf „Schließen“. Er sitzt jetzt im
+  Namensfeld, wenn ein Raum neu angelegt wird, und sonst nirgends.
+
 ## 1.8.6
 
 - Der Knopf „Jetzt rechnen“ heißt jetzt **„Jetzt prüfen“**, erklärt sich beim
