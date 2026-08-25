@@ -256,6 +256,41 @@ try:
 except store.ValidationError:
     pruefe(True, "Komfort über dem Raum-Maximum wird abgelehnt")
 
+print("\n=== Übersteuerung durch einen Schalter ===")
+
+# Ein Homeoffice-Schalter soll das Buero auf Komfort halten, statt es
+# vormittags nach Plan abzusenken.
+def lage_uebersteuert(schalter_an, modus="komfort", niemand_da=False, sommer=False):
+    r = store.validate_raum({**wohnzimmer, "anwesenheit": not niemand_da,
+                             "uebersteuerung": [{"entity": "input_boolean.homeoffice",
+                                                 "modus": modus}],
+                             "zeitplan": [{"start": "07:30", "modus": "eco",
+                                           "gilt": "immer",
+                                           "tage": ["mon","tue","wed","thu","fri","sat","sun"]}]})
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "attributes": {"current_temperature": 20.0, "temperature": 19.0,
+                                        "min_temp": 5, "max_temp": 30,
+                                        "hvac_modes": ["off", "heat"]}},
+           "input_boolean.homeoffice": {
+               "entity_id": "input_boolean.homeoffice",
+               "state": "on" if schalter_an else "off",
+               "attributes": {"friendly_name": "Homeoffice"}}}
+    return regelung.entscheide(r, {"temperaturquelle": "thermostate"},
+                               umgebung(montag.replace(hour=9), states_index=idx,
+                                        sommerbetrieb=sommer))
+
+aus = lage_uebersteuert(False)
+pruefe(aus["zustand"] == "eco", f"ohne Schalter fuehrt der Zeitplan ({aus['zustand']})")
+
+an = lage_uebersteuert(True)
+pruefe(an["zustand"] == "komfort" and "Homeoffice" in an["begruendung"],
+       f"eingeschaltet uebersteuert der Schalter den Plan ({an['begruendung']})")
+
+# Der Schalter hebelt weder Sommerbetrieb noch ein offenes Fenster aus.
+sommer = lage_uebersteuert(True, sommer=True)
+pruefe(sommer["zustand"] == "sommer",
+       f"im Sommerbetrieb bleibt der Schalter wirkungslos ({sommer['zustand']})")
+
 print("\n=== Fensterkontakte ===")
 
 def fensterlage(kontakte, zustaende, verlauf_sturz=True, zusatz=False):

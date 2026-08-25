@@ -109,7 +109,7 @@ Sie gilt für Räume in der Betriebsart *nach Zeitplan führen*; für
 | 4 | Partytaste läuft | Komfort, für die eingestellte Dauer |
 | 5 | Urlaubsschalter an | Urlaubstemperatur |
 | 6 | Sommerbetrieb | Ventil zu |
-| 7 | Zeitplan | Komfort / Eco / Nacht, ggf. vorgezogen |
+| 7 | Zeitplan, ggf. übersteuert | Komfort / Eco / Nacht, ggf. vorgezogen |
 | 8 | niemand Zuständiges da | Abwesenheitstemperatur |
 | 9 | Heizkurve | Aufschlag nach Außentemperatur |
 
@@ -201,6 +201,36 @@ Schaltpunkt** – bei einem einzigen Punkt also bis Mitternacht. Wer abends auf
 
 Im Sommerbetrieb ist auch dieser Raum zu; die Untergrenze greift erst wieder,
 wenn die gedämpfte Außentemperatur unter die Sommergrenze fällt.
+
+## Übersteuerung: ein Schalter statt des Zeitplans
+
+Ein Raum kann Schalter aus Home Assistant hinterlegt bekommen, die den
+Zeitplan übersteuern. Solange ein solcher Schalter an ist, gilt sein Modus –
+unabhängig davon, was der Plan gerade sagt.
+
+![Übersteuerung im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
+
+Der Anlass ist das Homeoffice: Das Büro läuft nach einem Plan, der es
+vormittags auf Eco stellt, weil dort sonst niemand ist. An Homeoffice-Tagen
+soll es warm bleiben, ohne dass man den Zeitplan umbaut. Ein
+`input_boolean.homeoffice` mit dem Modus *Komfort* erledigt das.
+
+Weitere Beispiele: ein Basteltag im Hobbyraum, ein Krankheitstag im
+Schlafzimmer, ein Schalter, der den Wintergarten für einen Abend freigibt.
+
+**Was die Übersteuerung nicht aushebelt:** ein offenes Fenster, den
+Sommerbetrieb, den Urlaubsschalter und die Anwesenheitsabsenkung. Das ist
+Absicht – wer den Schalter anlässt und wegfährt, heizt sonst tagelang ein
+leeres Haus. Im Büro, das ohnehin am Präsenzmelder hängt, genügt der Schalter
+damit, um den Vormittag auf Komfort zu heben, solange dort jemand sitzt.
+
+Sind mehrere Schalter hinterlegt, gewinnt der oberste. Ein Schalter, der
+nichts meldet, zählt als aus: Dann gilt schlicht der Zeitplan.
+
+Der Modus *Aus* schließt das Ventil – für einen Schalter, der einen Raum
+zeitweise ganz stilllegt. Zum dauerhaften Sperren eines Raumes gibt es die
+[Freigabe](#freigabe-räume-die-nur-zeitweise-gebraucht-werden); sie steht in
+der Rangfolge weit oben und gilt auch gegen die Partytaste.
 
 ## Heizkurve
 

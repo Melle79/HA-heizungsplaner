@@ -692,6 +692,19 @@
         </select>
       </div>
       <div class="notiz" id="zeitplan-notiz" style="margin-top:var(--l3)"></div>
+
+      <div class="abschnitt" style="margin-top:var(--l5)">
+        <h3>Übersteuerung</h3>
+        <div id="r-uebersteuerung"></div>
+        <div class="zeile-aktionen">
+          <button class="leise" id="btn-uebersteuerung-neu">Schalter hinzufügen</button>
+        </div>
+        <div class="notiz" style="margin-top:var(--l2)">Solange der Schalter an ist,
+          gilt dieser Modus statt des Zeitplans – ein Homeoffice-Schalter hält das
+          Büro so auf Komfort, statt es vormittags abzusenken. Anwesenheit,
+          offene Fenster und der Sommerbetrieb bleiben stärker: Wer den Schalter
+          anlässt und wegfährt, heizt kein leeres Haus.</div>
+      </div>
     </div>
 
     <!-- ───────── Belegung ───────── -->
@@ -782,6 +795,7 @@ let einstellungen = {};
 let raeume = [];
 let offenerRaum = null;
 let zeitplanEntwurf = [];
+let uebersteuerungEntwurf = [];
 
 // ─────────────────────────────────────────────── Werkzeuge ──
 const $ = (id) => document.getElementById(id);
@@ -1569,6 +1583,67 @@ async function raeumeLaden() {
 }
 
 // ─────────────────────────────────────── Zeitplan-Editor ──
+function uebersteuerungZeichnen() {
+  const ziel = $('r-uebersteuerung');
+  ziel.innerHTML = '';
+  if (!uebersteuerungEntwurf.length) {
+    ziel.innerHTML = '<div class="leer">Kein Schalter – es gilt immer der '
+      + 'Zeitplan.</div>';
+    return;
+  }
+  const schalter = entitaeten.schalter || [];
+  uebersteuerungEntwurf.forEach((regel, nummer) => {
+    const zeile = document.createElement('div');
+    zeile.className = 'schaltpunkt';
+
+    const wahl = document.createElement('select');
+    wahl.style.flex = '1 1 260px';
+    for (const eintrag of schalter) {
+      const option = document.createElement('option');
+      option.value = eintrag.entity_id;
+      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id;
+      wahl.appendChild(option);
+    }
+    if (regel.entity && !schalter.some(e => e.entity_id === regel.entity)) {
+      const fehlend = document.createElement('option');
+      fehlend.value = regel.entity;
+      fehlend.textContent = regel.entity + '  (zurzeit nicht in Home Assistant)';
+      wahl.appendChild(fehlend);
+    }
+    wahl.value = regel.entity || '';
+    wahl.onchange = () => { regel.entity = wahl.value; };
+
+    const modus = document.createElement('select');
+    modus.style.width = 'auto';
+    for (const [wert, text] of [['komfort','Komfort'], ['eco','Eco'],
+                                ['nacht','Nacht'], ['aus','Aus – Ventil zu']]) {
+      const option = document.createElement('option');
+      option.value = wert; option.textContent = text;
+      modus.appendChild(option);
+    }
+    modus.value = regel.modus || 'komfort';
+    modus.onchange = () => { regel.modus = modus.value; };
+
+    const weg = document.createElement('button');
+    weg.className = 'leise';
+    weg.textContent = '✕';
+    weg.title = 'Diese Übersteuerung entfernen';
+    weg.onclick = () => {
+      uebersteuerungEntwurf.splice(nummer, 1);
+      uebersteuerungZeichnen();
+    };
+
+    zeile.append(wahl, modus, weg);
+    ziel.appendChild(zeile);
+  });
+  if (uebersteuerungEntwurf.length > 1) {
+    const hinweis = document.createElement('div');
+    hinweis.className = 'notiz';
+    hinweis.textContent = 'Sind mehrere an, gewinnt der oberste.';
+    ziel.appendChild(hinweis);
+  }
+}
+
 function zeitplanZeichnen() {
   const ziel = $('r-zeitplan');
   if (!zeitplanEntwurf.length) {
@@ -1747,6 +1822,8 @@ function raumOeffnen(raum, startblatt) {
                           liste: entitaeten.sonstige_melder}});
 
   zeitplanEntwurf = JSON.parse(JSON.stringify(d.zeitplan || []));
+  uebersteuerungEntwurf = JSON.parse(JSON.stringify(d.uebersteuerung || []));
+  uebersteuerungZeichnen();
   zeitplanZeichnen();
   betriebsartAnzeigen();
   $('m-raum').textContent = '';
@@ -1763,6 +1840,13 @@ function raumOeffnen(raum, startblatt) {
 }
 
 $('btn-neuer-raum').onclick = () => raumOeffnen(null);
+
+$('btn-uebersteuerung-neu').onclick = () => {
+  const erster = (entitaeten.schalter || [])[0];
+  uebersteuerungEntwurf.push({entity: erster ? erster.entity_id : '',
+                              modus: 'komfort'});
+  uebersteuerungZeichnen();
+};
 
 // Wer im Reiter Grundlagen ein Thermostat dazunimmt, soll die Notiz beim
 // Raumfühler gleich angepasst vorfinden. Der Zuhörer sitzt am Behälter – die
@@ -1793,6 +1877,7 @@ $('btn-raum-speichern').onclick = async () => {
     freigabe_entity: $('r-freigabe').value,
     sturz_auch_mit_kontakten: $('r-sturz').checked,
     zeitplan: zeitplanEntwurf,
+    uebersteuerung: uebersteuerungEntwurf,
   };
   try {
     if (offenerRaum) await sendeJSON('raeume/' + offenerRaum.id, 'PUT', koerper);

@@ -176,6 +176,25 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     return False, "", hinweis
 
 
+def _uebersteuerung(raum: dict, states_index: dict) -> dict | None:
+    """Der erste eingeschaltete Übersteuerungs-Schalter des Raumes.
+
+    Die Reihenfolge in der Konfiguration ist die Rangfolge. Ein Schalter, der
+    nichts meldet, zählt als aus – anders als beim Freigabeschalter, wo ein
+    kaputter Schalter den Raum kalt ließe, kann hier nichts Schlimmes
+    passieren: Ohne Übersteuerung gilt schlicht der Zeitplan.
+    """
+    for eintrag in raum.get("uebersteuerung") or []:
+        entity_id = eintrag.get("entity")
+        if not entity_id or _bool_state(states_index, entity_id) is not True:
+            continue
+        name = ((states_index.get(entity_id) or {}).get("attributes") or {}).get(
+            "friendly_name", entity_id)
+        return {"entity": entity_id, "modus": eintrag.get("modus", "komfort"),
+                "name": name}
+    return None
+
+
 def _verlauf_fortschreiben(rz: dict, ist: float | None, jetzt: datetime,
                            quelle: str) -> None:
     """Kurzes Temperaturgedächtnis je Raum, eine Stunde tief.
@@ -300,15 +319,30 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
         return _nur_absenken(raum, rz, umgebung, plan, ist, ergebnis,
                              fenster_hinweis)
 
-    # 6 — Zeitplan, ggf. vorgezogen
+    # 6 — Zeitplan, ggf. übersteuert, ggf. vorgezogen
     eintrag = zp.aktueller_eintrag(plan, jetzt, umgebung.get("schulfrei"))
     modus = eintrag["modus"] if eintrag else "eco"
     basis = zp.modus_temperatur(raum, modus, frostschutz)
     begruendung = (f"Zeitplan: {modus} ab {eintrag['start']} Uhr" if eintrag
                    else "Kein Zeitplan hinterlegt – Eco-Temperatur")
 
+    # Ein Schalter kann den Zeitplan übersteuern – ein Homeoffice-Schalter
+    # etwa hält das Büro auf Komfort, statt es vormittags abzusenken. Er
+    # ersetzt den Modus des Plans; Anwesenheit und Heizkurve gelten weiter.
+    # Das ist Absicht: Wer den Schalter anlässt und wegfährt, heizt kein
+    # leeres Haus, und die Absenkung eines Fensters bleibt stärker.
+    uebersteuerung = _uebersteuerung(raum, states_index)
+    if uebersteuerung:
+        modus = uebersteuerung["modus"]
+        basis = zp.modus_temperatur(raum, modus, frostschutz)
+        begruendung = (f"„{uebersteuerung['name']}“ ist an – {modus} "
+                       f"statt Zeitplan")
+        if uebersteuerung["modus"] == "aus":
+            return ergebnis("uebersteuert", frostschutz, begruendung,
+                            ventil_zu=True)
+
     vorlauf = witterung.vorlaufminuten(umgebung.get("aussen"), einst["vorheizen"])
-    if vorlauf:
+    if vorlauf and not uebersteuerung:
         kommend = zp.naechster_waermerer_wechsel(
             raum, jetzt, umgebung.get("schulfrei"), basis, frostschutz)
         if kommend:

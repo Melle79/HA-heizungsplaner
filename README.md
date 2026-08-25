@@ -41,6 +41,9 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   in Home Assistant es freigibt.
 * **Partytaste** – hebt die gewählten Räume für ein paar Stunden auf Komfort
   und stellt sich danach von selbst zurück.
+* **Übersteuerung je Raum** – ein Schalter aus Home Assistant setzt den
+  Zeitplan außer Kraft, solange er an ist: ein Homeoffice-Schalter hält das
+  Büro auf Komfort, statt es vormittags abzusenken.
 
 ## Die Oberfläche
 

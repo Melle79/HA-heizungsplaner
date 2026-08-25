@@ -124,6 +124,9 @@ STANDARD_RAUM = {
     "karenz_min": None,        # None = die globale Karenzzeit gilt
     "freigabe_entity": "",     # leer = der Raum ist immer freigegeben
     "sturz_auch_mit_kontakten": False,
+    # Schalter, die den Zeitplan übersteuern – etwa ein Homeoffice-Schalter,
+    # der das Büro auf Komfort hält, statt es vormittags abzusenken.
+    "uebersteuerung": [],      # [{"entity": "input_boolean.x", "modus": "komfort"}]
     "zeitplan": [],
 }
 
@@ -249,6 +252,19 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
     if betriebsart not in BETRIEBSARTEN:
         raise ValidationError(f"Unbekannte Betriebsart {betriebsart!r}")
 
+    # Übersteuerungen: Reihenfolge = Rangfolge, die erste eingeschaltete gewinnt.
+    uebersteuerung = []
+    for eintrag in (raum.get("uebersteuerung") or []):
+        if not isinstance(eintrag, dict):
+            raise ValidationError("Übersteuerung: Objekt erwartet")
+        entity = str(eintrag.get("entity") or "").strip()
+        if not entity:
+            continue
+        modus = str(eintrag.get("modus") or "komfort").strip()
+        if modus not in MODI:
+            raise ValidationError(f"Unbekannter Modus {modus!r} in der Übersteuerung")
+        uebersteuerung.append({"entity": entity, "modus": modus})
+
     karenz = raum.get("karenz_min")
     if karenz in (None, "", "null"):
         karenz = None
@@ -274,6 +290,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         "karenz_min": karenz,
         "freigabe_entity": str(raum.get("freigabe_entity") or "").strip(),
         "sturz_auch_mit_kontakten": bool(raum.get("sturz_auch_mit_kontakten", False)),
+        "uebersteuerung": uebersteuerung,
         "zeitplan": validate_zeitplan(raum.get("zeitplan") or []),
         **temperaturen,
     }

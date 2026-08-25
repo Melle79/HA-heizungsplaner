@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.10.0
+
+- **Übersteuerung je Raum.** Im Reiter *Zeitplan* lassen sich Schalter aus
+  Home Assistant hinterlegen, die den Plan außer Kraft setzen, solange sie an
+  sind – ein Homeoffice-Schalter hält das Büro so auf Komfort, statt es
+  vormittags abzusenken. Mehrere Schalter sind möglich, der oberste gewinnt.
+- Offenes Fenster, Sommerbetrieb, Urlaub und die Anwesenheitsabsenkung bleiben
+  stärker: Ein vergessener Schalter heizt kein leeres Haus.
+
 ## 1.9.2
 
 - **Der Planer erinnert an die FRITZ!-Sommerpause**, sobald der Sommerbetrieb
