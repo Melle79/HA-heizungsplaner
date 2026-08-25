@@ -281,6 +281,18 @@ gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
 | nicht erreichbar | Zustand `unavailable` oder `unknown` |
 | meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 6 Stunden) |
 | schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) |
+| nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
+
+Der letzte Fall ist nicht zwangsläufig ein Defekt: Ein FRITZ!-Thermostat in der
+**Sommerpause** lehnt jeden Sollwert ab, solange dieser Modus läuft. Die
+Meldung nennt das ausdrücklich, damit man nicht nach Batterien sucht, wo keine
+fehlen. Vor der Heizperiode gehört die Sommerpause am Gerät oder in der
+FRITZ!Box beendet – sonst bleibt der Raum kalt, ohne dass der Planer etwas
+dagegen ausrichten könnte.
+
+Nach drei Fehlschlägen versucht der Planer es nur noch alle 30 Minuten. Sonst
+füllte ein solches Gerät bei jedem Takt das Protokoll, ohne dass sich etwas
+ändert.
 
 Gemeldet wird **auf Flanke**: einmal beim Auftreten, einmal bei der Behebung.
 Eine Warnung, die stündlich erneut aufs Telefon kommt, wird nach dem dritten

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.7.1
+
+- **Thermostate, die Sollwerte ablehnen, werden gemeldet.** Im Betrieb
+  aufgefallen: Die beiden FRITZ!-Geräte stehen in der Sommerpause und nehmen
+  nichts an – der Planer versuchte es bei jedem Takt aufs Neue. Nach drei
+  Fehlschlägen gilt das jetzt als Störung, die Meldung nennt die Sommerpause
+  als mögliche Ursache, und weitere Versuche erfolgen nur noch alle 30 Minuten.
+- Die Partytaste liegt jetzt auch als Kachel auf der Dashboard-Ansicht.
+
 ## 1.7.0
 
 **Partytaste.** Einmal drücken, und die gewählten Räume gehen für die

@@ -823,6 +823,29 @@ einst_aus = store.validate_einstellungen({"wachhund": {"aktiv": False}})
 pruefe(wachhund.pruefen(cfg, {}, jetzt_w, einst_aus, {}) == [],
        "abgeschaltete Ueberwachung meldet nichts")
 
+print("\n--- Geraet, das keine Sollwerte annimmt ---")
+# Beobachtet an den FRITZ!-Thermostaten: Stehen sie in der Sommerpause,
+# lehnen sie jeden Sollwert ab. Das ist kein Batterieproblem, sieht aber wie
+# ein Ausfall aus - und muss deshalb gemeldet werden.
+def lage_verweigert(fehler, preset=None):
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "off",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat A",
+                                        **({"preset_mode": preset} if preset else {})}},
+           "climate.b": {"entity_id": "climate.b", "state": "heat",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat B"}}}
+    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {},
+                            {"climate.a": {"schreib_fehler": fehler}})
+
+pruefe(lage_verweigert(2) == [], "zwei Fehlschlaege sind noch keine Stoerung")
+st = lage_verweigert(3)
+pruefe(len(st) == 1 and st[0]["art"] == "verweigert",
+       f"ab dem dritten wird gemeldet ({st[0]['text'] if st else '-'})")
+st = lage_verweigert(4, preset="summer")
+pruefe(st and "Sommerpause" in st[0]["text"],
+       f"die Sommerpause wird als Ursache benannt ({st[0]['text'] if st else '-'})")
+
 print("\n--- Melden nur auf Flanke ---")
 erste = lage(a_zustand="unavailable")
 hinzu, weg = wachhund.vergleichen(erste, {})

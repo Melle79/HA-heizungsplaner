@@ -29,7 +29,11 @@ ARTEN = {
     "unerreichbar": ("ist nicht erreichbar", "fehler"),
     "stumm":        ("meldet sich nicht mehr", "fehler"),
     "batterie":     ("hat eine schwache Batterie", "warnung"),
+    "verweigert":   ("nimmt keine Sollwerte an", "fehler"),
 }
+
+# So oft darf ein Schreibvorgang scheitern, bevor es als Störung gilt.
+FEHLSCHLAEGE = 3
 
 
 def _zeit(text: str | None) -> datetime | None:
@@ -64,8 +68,16 @@ def batterien_je_thermostat() -> dict:
 
 
 def pruefen(config: dict, states_index: dict, jetzt: datetime,
-            einstellungen: dict, batterien: dict) -> list[dict]:
-    """Alle Thermostate der eingerichteten Räume durchsehen."""
+            einstellungen: dict, batterien: dict,
+            thermostat_zustand: dict | None = None) -> list[dict]:
+    """Alle Thermostate der eingerichteten Räume durchsehen.
+
+    ``thermostat_zustand`` ist das Gedächtnis des Planers je Gerät. Daraus
+    stammt die Zahl der vergeblichen Schreibvorgänge: Ein Thermostat, das den
+    Sollwert wiederholt nicht annimmt, ist so gut wie ausgefallen, auch wenn es
+    sich brav meldet.
+    """
+    thermostat_zustand = thermostat_zustand or {}
     wacht = einstellungen.get("wachhund") or {}
     if not wacht.get("aktiv", True):
         return []
@@ -99,6 +111,14 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
                 stunden = (jetzt_utc - gemeldet).total_seconds() / 3600
                 stoerungen.append(_bauen(entity_id, name, raum, "stumm",
                                          f"zuletzt vor {stunden:.0f} Stunden"))
+                continue
+
+            fehler = (thermostat_zustand.get(entity_id) or {}).get("schreib_fehler", 0)
+            if fehler >= FEHLSCHLAEGE:
+                zusatz = f"{fehler} Versuche vergeblich"
+                if (eintrag.get("attributes") or {}).get("preset_mode") == "summer":
+                    zusatz += ", das Gerät steht in der Sommerpause"
+                stoerungen.append(_bauen(entity_id, name, raum, "verweigert", zusatz))
                 continue
 
             batterie_id = batterien.get(entity_id)

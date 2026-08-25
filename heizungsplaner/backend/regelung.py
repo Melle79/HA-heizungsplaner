@@ -42,6 +42,12 @@ BESTAETIGUNG_MIN = 15
 # Feinere Sollwerte als ein halbes Grad kann kein Heizkörperthermostat.
 SCHRITT = 0.5
 
+# Ein Thermostat, das den Sollwert nicht annimmt, wird nicht bei jedem Takt
+# aufs Neue bestürmt. Nach ein paar Fehlschlägen genügt ein Versuch in
+# größerem Abstand – gemeldet wird es ohnehin über die Überwachung.
+FEHLSCHLAEGE_BIS_SCHONUNG = 3
+SCHONFRIST_MIN = 30
+
 # Betriebsart „nur absenken“: So lange nach einem Absenkzeitpunkt versucht der
 # Planer, den Wert zu setzen. Danach gehört der Raum wieder der Hand, die ihn
 # stellt. Das Fenster überbrückt einen ausgefallenen Takt oder ein Thermostat,
@@ -587,17 +593,34 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                              "wert": ziel, "vorher": ist_soll, "trocken": True})
             continue
 
+        # Ein Gerät, das sich schon mehrfach verweigert hat, bekommt nur noch
+        # in größerem Abstand einen Versuch. Sonst füllt es bei jedem Takt das
+        # Protokoll, ohne dass sich etwas ändert.
+        fehler = gedaechtnis.get("schreib_fehler", 0)
+        if fehler >= FEHLSCHLAEGE_BIS_SCHONUNG:
+            letzter = _aus_iso(gedaechtnis.get("fehler_zuletzt"))
+            if letzter and (jetzt - letzter) < timedelta(minutes=SCHONFRIST_MIN):
+                continue
+
         if ha_api.set_temperature(entity_id, ziel):
-            gedaechtnis.update({"soll": ziel, "gesetzt_am": _iso(jetzt), "hvac": "heat"})
+            gedaechtnis.update({"soll": ziel, "gesetzt_am": _iso(jetzt), "hvac": "heat",
+                                "schreib_fehler": 0, "fehler_zuletzt": None})
             aktionen.append({"entity_id": entity_id, "aktion": "soll",
                              "wert": ziel, "vorher": ist_soll})
             protokoll(raum["name"],
                       f"{ziel:.1f} °C",
                       entscheidung["begruendung"], entity_id)
         else:
-            protokoll(raum["name"], "fehlgeschlagen",
-                      f"{entity_id} hat den Sollwert {ziel:.1f} °C nicht angenommen",
-                      entity_id)
+            gedaechtnis["schreib_fehler"] = fehler + 1
+            gedaechtnis["fehler_zuletzt"] = _iso(jetzt)
+            if fehler + 1 <= FEHLSCHLAEGE_BIS_SCHONUNG:
+                grund = ""
+                preset = attrs.get("preset_mode")
+                if preset == "summer":
+                    grund = " – das Gerät steht in der Sommerpause"
+                protokoll(raum["name"], "fehlgeschlagen",
+                          f"{attrs.get('friendly_name', entity_id)} nimmt den "
+                          f"Sollwert {ziel:.1f} °C nicht an{grund}", entity_id)
 
     return aktionen
 
@@ -734,7 +757,8 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     # das gerade eben erst als fehlend aufgefallen ist.
     try:
         stoerungen = wachhund.pruefen(config, states_index, jetzt, einst,
-                                      _batterien_holen(jetzt, state))
+                                      _batterien_holen(jetzt, state),
+                                      state.get("thermostate") or {})
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("Überwachung fehlgeschlagen: %s", err)
         stoerungen = []
