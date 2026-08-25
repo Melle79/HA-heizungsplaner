@@ -1,5 +1,9 @@
 # Änderungen
 
+## 1.4.2
+
+- Abstand zwischen Name und Aufenthalt in der Personenübersicht.
+
 ## 1.4.1
 
 - **Die Heimkehr-Erkennung sah nur die Entfernung an.** Wer eine Schule in

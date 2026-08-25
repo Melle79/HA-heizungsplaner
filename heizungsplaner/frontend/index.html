@@ -950,7 +950,8 @@ function berichtZeichnen(bericht) {
       wo = `${zahl(p.entfernung_km)} km` + (p.naehert_sich ? ' · kommt näher' : '');
     } else wo = p.zustand;
     return `<span class="person${p.zuhause ? ' daheim' : ''}">
-      <span class="zu-hause"></span>${p.name}<span class="wo">${wo}</span></span>`;
+      <span class="zu-hause"></span><span>${p.name}</span>
+      <span class="wo">${wo}</span></span>`;
   }).join('');
   $('personen').innerHTML = eintraege
     || '<div class="leer">Keine Personen in Home Assistant gefunden.</div>';
