@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.8.5
+
+- Die Dashboard-Karten liegen jetzt im Repository unter
+  `heizungsplaner/dashboard/`: als fertige YAML-Fassung zum Einfügen, dazu der
+  Baukasten und ein Erzeuger. Bisher gab es sie nur auf dem Rechner, von dem
+  aus sie eingespielt wurden.
+
 ## 1.8.4
 
 - **Im Raum-Dialog ließ sich das Ende nicht erreichen.** Die Innenhöhe war

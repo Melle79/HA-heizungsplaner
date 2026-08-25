@@ -68,6 +68,12 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr; Meldungen nach Schwere getrennt als Attribute |
 | `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
 
+## Karten fürs Dashboard
+
+Unter [`heizungsplaner/dashboard/`](heizungsplaner/dashboard/) liegt eine
+fertige Übersicht zum Einfügen: Partytaste, Störungsanzeige und eine Tabelle
+aller Räume mit Zielwert, Ist-Temperatur und nächstem Schaltpunkt.
+
 ## Prüflauf
 
 Die Regellogik lässt sich ohne Home Assistant und ohne Fremdpakete prüfen:
