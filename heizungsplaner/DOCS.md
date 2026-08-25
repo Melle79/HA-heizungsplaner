@@ -609,6 +609,19 @@ Zielwert, Ist-Temperatur, Zustand und dem nächsten Schaltpunkt. Die Karten
 lesen ausschließlich die MQTT-Entitäten und funktionieren deshalb auch von
 unterwegs.
 
+Dazu kommt `regelkarte(sensor)`: eine Kachel, die nur erscheint, solange eine
+Übersteuerungsregel greift, und zeigt, bis wann („bis 14:00 Uhr"). Sie gehört
+in den Abschnitt, in dem man den Raum ohnehin ansieht. Grundlage sind die
+Attribute `uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` und
+`uebersteuerung_bis` am Raum-Sensor – eine Karte, die stattdessen die
+Begründung nach Stichworten durchsucht, bricht beim ersten umbenannten Raum.
+
+**Keine `conditional`-Karte verwenden:** In einer Sections-Ansicht meldet die
+in Home Assistant 2026.8 „Konfigurationsfehler". Dort gehört `visibility` an
+die Karte selbst. Und ist das unter `state_content` genannte Attribut leer,
+zeigt eine Tile-Karte ersatzweise den Zustand des Sensors – deshalb ist
+`uebersteuerung_bis` nie leer, sondern trägt „ruht", wenn nichts läuft.
+
 ## Dateien
 
 | Datei unter `/data` | Inhalt |

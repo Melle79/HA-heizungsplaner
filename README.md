@@ -69,6 +69,14 @@ nur an schulfreien Tagen:
 
 ![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](heizungsplaner/doku/bilder/raum-zeitplan.png)
 
+Darunter stehen die **Übersteuerungsregeln**: Solange alle Bedingungen einer
+Regel zutreffen und die Uhrzeit im Fenster liegt, gilt ihr Modus statt des
+Zeitplans. So entsteht eine Homeoffice-Regelung ohne Schalter – Werktag, keine
+Ferien, jemand ist zu Hause. Die Regel sagt selbst, ob sie greift, und wenn
+nicht, woran es liegt:
+
+![Übersteuerungsregel mit Bedingungen und Zeitfenster](heizungsplaner/doku/bilder/uebersteuerung.png)
+
 Unter **Belegung** steht, wer den Raum benutzt: zuständige Personen, ein
 Präsenzmelder, eine eigene Karenzzeit – und ob der Raum bei der Partytaste
 mitmacht:
@@ -122,7 +130,7 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `sensor.heizungsplaner_aussentemperatur_gedaempft` | geglättete Außentemperatur |
 | `binary_sensor.heizungsplaner_sommerbetrieb` | Sommerbetrieb aktiv |
 | `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
-| `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum, mit Begründung als Attribut |
+| `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum; Attribute: `zustand`, `begruendung`, `ist_temperatur`, `naechster_wechsel` sowie `uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` und `uebersteuerung_bis` |
 | `switch.heizungsplaner_party` | Partytaste, mit Restzeit als Attribut |
 | `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr; Meldungen nach Schwere getrennt als Attribute |
 | `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
@@ -133,6 +141,10 @@ Unter [`heizungsplaner/dashboard/`](heizungsplaner/dashboard/) liegt eine
 fertige Übersicht zum Einfügen: Partytaste, Störungsanzeige und eine Tabelle
 aller Räume mit Zielwert, Ist-Temperatur und nächstem Schaltpunkt. Sie kommt
 mit den MQTT-Entitäten aus und funktioniert damit auch von unterwegs.
+
+Dazu `regelkarte(sensor)` – eine Kachel, die **nur erscheint, solange eine
+Übersteuerungsregel greift**, und zeigt, bis wann. Sie gehört dorthin, wo man
+den Raum ohnehin ansieht, nicht in den Planer-Abschnitt.
 
 ## Prüflauf
 
