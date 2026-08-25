@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.8.6
+
+- Der Knopf „Jetzt rechnen“ heißt jetzt **„Jetzt prüfen“**, erklärt sich beim
+  Überfahren und meldet nach dem Durchlauf, wie viele Thermostate gestellt
+  wurden – oder dass nichts zu tun war. Vorher blieb offen, was er überhaupt
+  bewirkt.
+
 ## 1.8.5
 
 - Die Dashboard-Karten liegen jetzt im Repository unter

@@ -320,7 +320,8 @@
     <span class="zustand"><span class="punkt" id="k-punkt"></span>
       <span id="k-mqtt">MQTT</span></span>
     <button class="leise" id="btn-party">🎉 Party</button>
-    <button class="leise" id="btn-rechnen">Jetzt rechnen</button>
+    <button class="leise" id="btn-rechnen"
+            title="Liest die Zustände aus Home Assistant neu ein, entscheidet für jeden Raum und stellt die Thermostate. Von selbst geschieht das alle paar Minuten.">Jetzt prüfen</button>
   </div>
 </header>
 
@@ -1140,9 +1141,27 @@ $('btn-party').onclick = async () => {
 };
 
 $('btn-rechnen').onclick = async () => {
-  $('btn-rechnen').disabled = true;
-  try { berichtZeichnen(await hole('takt', {method:'POST'})); }
-  finally { $('btn-rechnen').disabled = false; gesundheitLaden(); }
+  const knopf = $('btn-rechnen');
+  const beschriftung = knopf.textContent;
+  knopf.disabled = true;
+  knopf.textContent = 'prüft …';
+  try {
+    const bericht = await hole('takt', {method:'POST'});
+    berichtZeichnen(bericht);
+    // Kurz zeigen, was der Durchlauf bewirkt hat – sonst bleibt unklar, ob
+    // der Knopf überhaupt etwas getan hat.
+    const geschaltet = (bericht.raeume || [])
+      .reduce((summe, r) => summe + (r.aktionen || []).length, 0);
+    knopf.textContent = geschaltet
+      ? `${geschaltet} gestellt` : 'nichts zu tun';
+    setTimeout(() => { knopf.textContent = beschriftung; }, 2500);
+  } catch (err) {
+    knopf.textContent = beschriftung;
+    $('k-aussen').textContent = err.message;
+  } finally {
+    knopf.disabled = false;
+    gesundheitLaden();
+  }
 };
 
 // ───────────────────────────────────────────── Einrichtung ──

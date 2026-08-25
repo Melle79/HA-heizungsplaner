@@ -26,6 +26,18 @@ angewandt: Das sind Haltewerte, kein Zielklima.
 Jede Entscheidung trägt ihre Begründung mit. Sie steht auf der Raumkachel und
 im Protokoll.
 
+## Der Knopf „Jetzt prüfen“
+
+Von selbst rechnet der Planer alle paar Minuten (einstellbar unter *Takt*) und
+außerdem sofort, wenn sich an der Konfiguration etwas ändert. Der Knopf zieht
+einen solchen Durchlauf vor: Zustände aus Home Assistant neu einlesen, für
+jeden Raum entscheiden, und wo nötig die Thermostate stellen. Danach zeigt er
+kurz, wie viele Thermostate dabei gestellt wurden – oder dass nichts zu tun
+war.
+
+Nützlich, wenn man eine Einstellung geändert hat und nicht auf den nächsten
+Takt warten will.
+
 ## Betriebsarten je Raum
 
 **Nach Zeitplan führen** (Vorgabe) – der Planer bestimmt den Sollwert
@@ -357,6 +369,18 @@ Nimmt ein Thermostat den Sollwert nicht an, schaltet der Planer es einmal auf
 Der zuletzt geschriebene Wert liegt in `/data/zustand.json` und überlebt einen
 Neustart. Ohne dieses Gedächtnis würde jeder Add-on-Start in jedes Thermostat
 schreiben.
+
+## Der Knopf „Jetzt prüfen“
+
+Von selbst rechnet der Planer alle paar Minuten (einstellbar unter *Takt*) und
+außerdem sofort, wenn sich an der Konfiguration etwas ändert. Der Knopf zieht
+einen solchen Durchlauf vor: Zustände aus Home Assistant neu einlesen, für
+jeden Raum entscheiden, und wo nötig die Thermostate stellen. Danach zeigt er
+kurz, wie viele Thermostate dabei gestellt wurden – oder dass nichts zu tun
+war.
+
+Nützlich, wenn man eine Einstellung geändert hat und nicht auf den nächsten
+Takt warten will.
 
 ## Betriebsarten
 
