@@ -148,13 +148,18 @@ def set_temperature(entity_id: str, temperature: float) -> bool:
 
 # ------------------------------------------------------------- Auswahlen ----
 
-def climate_entities(states: list[dict] | None = None) -> list[dict]:
+def climate_entities(states: list[dict] | None = None,
+                     bereiche: dict | None = None) -> list[dict]:
     """Alle Thermostate für die Raumkonfiguration in der Oberfläche.
 
     Gruppen-Helfer (``climate_group_helper``) bleiben außen vor: Der Planer
     stellt jeden Heizkörper einzeln, sonst kämpfen Gruppe und Planer um
     denselben Sollwert.
+
+    Der Bereich kommt mit, damit die Oberfläche die Auswahllisten auf den
+    Bereich eines Raumes einengen kann.
     """
+    bereiche = bereiche if bereiche is not None else {}
     out = []
     for s in states if states is not None else get_states():
         eid = s.get("entity_id", "")
@@ -169,6 +174,7 @@ def climate_entities(states: list[dict] | None = None) -> list[dict]:
             "current_temperature": as_float(attrs.get("current_temperature")),
             "temperature": as_float(attrs.get("temperature")),
             "state": s.get("state"),
+            "bereich": bereiche.get(eid, ""),
             "gruppe": bool(attrs.get("total_member_count")),
         })
     out.sort(key=lambda e: e["name"])
@@ -284,7 +290,8 @@ def ist_fensterkontakt(entity_id: str, name: str, klasse: str | None) -> bool:
 
 
 def sensor_candidates(states: list[dict] | None = None,
-                      mit_bereichen: bool = True) -> dict:
+                      mit_bereichen: bool = True,
+                      bereiche: dict | None = None) -> dict:
     """Kandidaten für die Auswahllisten der Oberfläche.
 
     Die Fensterliste enthält, was nach Geräteklasse oder Namen ein Kontakt ist;
@@ -293,7 +300,8 @@ def sensor_candidates(states: list[dict] | None = None,
     """
     aussen, fenster, sonstige, praesenz, raumtemp, schalter = [], [], [], [], [], []
     zustaende = states if states is not None else get_states()
-    bereiche = bereiche_je_entitaet(("binary_sensor",)) if mit_bereichen else {}
+    if bereiche is None:
+        bereiche = bereiche_je_entitaet(("binary_sensor",)) if mit_bereichen else {}
 
     for s in zustaende:
         eid = s.get("entity_id", "")

@@ -1,5 +1,22 @@
 # Änderungen
 
+## 1.8.8
+
+- **Die Auswahllisten im Raum lassen sich filtern.** Über jeder Liste steht
+  jetzt ein Suchfeld und ein Häkchen „nur dieser Raum“. Bisher standen unter
+  den Fensterkontakten des Wohnzimmers auch die Haustür, der Briefkasten und
+  gut zweihundert sonstige Melder.
+- Als „gehört zu diesem Raum“ zählt nicht nur der Bereich, sondern auch der
+  Name: `binary_sensor.heizung_wohnzimmer_offenes_fenster_erkannt` trägt gar
+  keinen Bereich, ein reiner Bereichsfilter hätte im Wohnzimmer genau den
+  Kontakt verborgen, den man dort sucht.
+- Die Gruppe **Sonstige Melder** erscheint erst beim Suchen. Sie ungefragt
+  unter die fünf echten Kontakte zu hängen machte die Liste unbrauchbar.
+- Zugeordnete Geräte bleiben immer sichtbar, gleich wie gefiltert wird – eine
+  ausgeblendete Zuordnung ginge beim Speichern verloren.
+- Die Thermostatliste ist jetzt ebenfalls nach Bereich gruppiert, der eigene
+  Bereich zuoberst.
+
 ## 1.8.7
 
 - **Eigenes Icon und Logo.** Ein Heizkörper, darüber die Stufenkurve eines

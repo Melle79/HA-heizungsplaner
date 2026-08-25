@@ -71,6 +71,13 @@ mitmacht:
 
 ![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](heizungsplaner/doku/bilder/raum-belegung.png)
 
+Unter **Fühler und Melder** hängen Temperaturfühler, Präsenzmelder und
+Fensterkontakte am Raum. Eine Filterzeile über jeder Liste zeigt auf Wunsch
+nur, was zu diesem Raum gehört – sonst stünde im Wohnzimmer auch der
+Briefkastenkontakt zur Auswahl:
+
+![Fühler und Melder mit Filterzeile über jeder Auswahlliste](heizungsplaner/doku/bilder/raum-melder.png)
+
 Die **Einstellungen** gelten fürs ganze Haus: Heizkurve, Sommerbetrieb,
 Vorheizen, Anwesenheit, Fenstererkennung, Überwachung und Meldewege:
 

@@ -49,9 +49,29 @@ Partytaste mitmacht:
 
 ![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-belegung.png)
 
-**Temperaturen** hält die vier Sollwerte und die harten Grenzen des Raumes,
-**Fühler und Melder** den Temperaturfühler, die Fensterkontakte und die
-Präsenzmelder.
+**Temperaturen** hält die vier Sollwerte und die harten Grenzen des Raumes.
+Unter **Fühler und Melder** stehen Temperaturfühler, Präsenzmelder und
+Fensterkontakte:
+
+![Fühler und Melder mit Filterzeile über jeder Auswahlliste](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-melder.png)
+
+Über jeder Auswahlliste sitzt eine Filterzeile. Sie ist nötig, weil ein
+Haushalt schnell mehrere hundert binäre Melder hat – ohne sie stünde im
+Wohnzimmer auch der Briefkastenkontakt zur Auswahl:
+
+* **Häkchen „nur <Raum>“** – zeigt nur, was zu diesem Raum gehört. Das ist
+  der Bereich in Home Assistant, aber auch der Name: In dieser Installation
+  trägt ausgerechnet der Wohnzimmer-Fensterkontakt keinen Bereich, und ein
+  reiner Bereichsfilter würde ihn verstecken. Das Häkchen erscheint nur, wenn
+  es für den Raum überhaupt etwas zu finden gibt.
+* **Suchfeld** – durchsucht Namen und Entitäts-ID. Sobald etwas darin steht,
+  werden auch die *sonstigen Melder* durchsucht.
+* Was **zugeordnet ist, bleibt immer sichtbar**, gleich wie gefiltert wird.
+  Eine ausgeblendete Zuordnung würde beim Speichern verlorengehen.
+
+Die Gruppe **Sonstige Melder** – alles Binäre, das kein Kontakt ist – bleibt
+zunächst zugeklappt und erscheint erst beim Suchen. Die Zeile rechts sagt,
+wie viele dort warten.
 
 ### Einstellungen
 
@@ -332,11 +352,12 @@ Speichern genügt. Dasselbe gilt für neue Präsenz- und Bewegungsmelder.
 Was man dort nicht haben will, verschwindet mit *Nicht nötig* dauerhaft aus
 den Hinweisen.
 
-In der Auswahlliste stehen die Kontakte nach Bereich gruppiert. Als Kontakt
-gilt, was die Geräteklasse `window`, `door` oder `opening` trägt **oder** ein
-entsprechendes Wort im Namen führt – so werden auch die
-„Offenes Fenster erkannt“-Meldungen mancher Thermostate gefunden, die ohne
-Geräteklasse kommen. Alles übrige Binäre steht unter *Sonstige Melder*.
+In der Auswahlliste stehen die Kontakte nach Bereich gruppiert, der eigene
+Bereich zuoberst. Als Kontakt gilt, was die Geräteklasse `window`, `door` oder
+`opening` trägt **oder** ein entsprechendes Wort im Namen führt – so werden
+auch die „Offenes Fenster erkannt“-Meldungen mancher Thermostate gefunden, die
+ohne Geräteklasse kommen. Alles übrige Binäre steht unter *Sonstige Melder*
+und erscheint erst, wenn man ins Suchfeld tippt.
 
 ### Wenn ein Kontakt ausfällt
 

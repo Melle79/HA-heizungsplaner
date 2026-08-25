@@ -83,7 +83,7 @@
   button.leise:hover{color:var(--text); border-color:var(--leise); filter:none}
   button.leise.gefahr:hover{color:var(--achtung); border-color:var(--achtung)}
 
-  input[type=text],input[type=number],input[type=time],select{
+  input[type=text],input[type=number],input[type=time],input[type=search],select{
     background:var(--flaeche2); border:1px solid var(--linie); border-radius:var(--rund);
     color:var(--text); padding:7px var(--l3); font-size:.88rem; width:100%;
     color-scheme:dark; font-family:inherit;
@@ -106,6 +106,13 @@
          cursor:pointer; padding:var(--l1) 0; line-height:1.45}
   .haken input{width:auto; accent-color:var(--warm); margin-top:3px; flex:none}
   .haken + .haken{margin-top:2px}
+  .filterzeile{display:flex; align-items:center; gap:var(--l2);
+    margin:0 0 4px; flex-wrap:wrap}
+  .filterzeile input[type=search]{flex:1 1 160px; min-width:120px; padding:4px 8px;
+    font-size:.82rem}
+  .filterzeile .haken{font-size:.8rem; white-space:nowrap; align-items:center}
+  .filterzeile .haken input{margin-top:0}
+  .f-zahl{font-size:.76rem; color:var(--grau); margin-left:auto}
   .notiz{font-size:.78rem; color:var(--sehr-leise); line-height:1.45}
   .feld .notiz{margin-top:2px}
   .zeile-aktionen{display:flex; gap:var(--l2); align-items:center;
@@ -826,18 +833,81 @@ function fuelleAuswahl(select, liste, wert, leerText) {
   }
 }
 
-function fuelleMelderAuswahl(select, quelle, wert, anhang) {
-  // Nach Bereich gruppiert, damit ein nachgerüsteter Melder gleich beim
-  // richtigen Raum steht. Was nicht dazu passt, kommt ans Ende – erreichbar,
-  // aber nicht im Weg.
+// Der Filter über einer Auswahlliste. Die Listen enthalten alles, was Home
+// Assistant kennt – im Wohnzimmer also auch den Briefkastenkontakt und die
+// Haustür. Ein Suchfeld und ein Häkchen „nur dieser Raum“ engen sie ein.
+//
+// Was zugeordnet ist, bleibt dabei **immer** sichtbar. Eine ausgeblendete
+// Option steht nicht mehr im Formular, und Speichern würde die Zuordnung
+// stillschweigend löschen.
+const filterStand = {};
+
+function filterZeileBauen(select) {
+  const zeile = document.createElement('div');
+  zeile.className = 'filterzeile';
+  const suche = document.createElement('input');
+  suche.type = 'search';
+  suche.placeholder = 'filtern …';
+  const haken = document.createElement('label');
+  haken.className = 'haken f-nur';
+  const kasten = document.createElement('input');
+  kasten.type = 'checkbox';
+  const beschriftung = document.createElement('span');
+  haken.append(kasten, beschriftung);
+  const zahl = document.createElement('span');
+  zahl.className = 'f-zahl';
+  zeile.append(suche, haken, zahl);
+  select.parentNode.insertBefore(zeile, select);
+
+  suche.oninput = () => {
+    filterStand[select.id].such = suche.value;
+    select._neuFuellen();
+  };
+  kasten.onchange = () => {
+    filterStand[select.id].nurRaum = kasten.checked;
+    select._neuFuellen();
+  };
+  select._filterzeile = {zeile, suche, kasten, beschriftung, zahl};
+  return select._filterzeile;
+}
+
+function auswahlFuellen(select, quelle, wert, opt) {
+  opt = opt || {};
+  const stand = filterStand[select.id] || (filterStand[select.id] = {such:'', nurRaum:false});
+  const werte = Array.isArray(wert) ? wert.filter(Boolean)
+                                    : (wert ? [wert] : []);
+  const istMehrfach = select.multiple;
+
+  // Beim Neuaufbau nach einer Filteränderung zählt, was gerade angehakt ist –
+  // nicht der Stand beim Öffnen des Dialogs.
+  const gewaehltJetzt = new Set(select._gefuellt
+    ? (istMehrfach ? gewaehlt(select) : [select.value].filter(Boolean))
+    : werte);
+
+  const alle = [...(quelle || []),
+                ...((opt.anhang && opt.anhang.liste) || [])];
+  const raum = opt.raum;
+  // Das Häkchen erscheint nur, wenn es überhaupt etwas zu filtern gibt –
+  // sonst stünde dort ein Schalter, der die Liste leer macht.
+  const mitRaum = !!raum && !raum.leer && alle.some(e => gehoertZumRaum(e, raum));
+  const such = stand.such.trim().toLowerCase();
+
+  const sichtbar = (eintrag) => {
+    if (gewaehltJetzt.has(eintrag.entity_id)) return true;
+    if (stand.nurRaum && mitRaum && !gehoertZumRaum(eintrag, raum)) return false;
+    if (!such) return true;
+    return (eintrag.name + ' ' + eintrag.entity_id).toLowerCase().includes(such);
+  };
+
   select.innerHTML = '';
-  const gruppen = new Map();
-  for (const eintrag of quelle || []) {
-    const schluessel = eintrag.bereich || 'Ohne Bereich';
-    if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
-    gruppen.get(schluessel).push(eintrag);
+  if (opt.leerText !== undefined) {
+    const leer = document.createElement('option');
+    leer.value = ''; leer.textContent = opt.leerText;
+    select.appendChild(leer);
   }
+
   const vorhanden = new Set();
+  let gezeigt = 0;
   const anhaengen = (ziel, eintrag) => {
     const option = document.createElement('option');
     option.value = eintrag.entity_id;
@@ -846,27 +916,150 @@ function fuelleMelderAuswahl(select, quelle, wert, anhang) {
     option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
     ziel.appendChild(option);
     vorhanden.add(eintrag.entity_id);
+    gezeigt++;
   };
-  for (const name of [...gruppen.keys()].sort()) {
+  const gruppeAnhaengen = (titel, eintraege) => {
+    const treffer = eintraege.filter(sichtbar);
+    if (!treffer.length) return;
+    if (!opt.gruppiert) {
+      for (const eintrag of treffer) anhaengen(select, eintrag);
+      return;
+    }
     const gruppe = document.createElement('optgroup');
-    gruppe.label = name;
-    for (const eintrag of gruppen.get(name)) anhaengen(gruppe, eintrag);
+    gruppe.label = titel;
+    for (const eintrag of treffer) anhaengen(gruppe, eintrag);
     select.appendChild(gruppe);
+  };
+
+  if (opt.gruppiert) {
+    // Nach Bereich gruppiert, damit ein nachgerüsteter Melder gleich beim
+    // richtigen Raum steht. Der eigene Bereich zuerst, was nicht dazu passt
+    // ans Ende – erreichbar, aber nicht im Weg.
+    const gruppen = new Map();
+    for (const eintrag of quelle || []) {
+      const schluessel = eintrag.bereich || 'Ohne Bereich';
+      if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
+      gruppen.get(schluessel).push(eintrag);
+    }
+    const eigen = (name) =>
+      (raum && !raum.leer && raum.bereiche.has(name.toLowerCase())) ? 0 : 1;
+    const namen = [...gruppen.keys()].sort(
+      (a, b) => eigen(a) - eigen(b) || a.localeCompare(b, 'de'));
+    for (const name of namen) gruppeAnhaengen(name, gruppen.get(name));
+  } else {
+    gruppeAnhaengen('', quelle || []);
   }
-  if (anhang && anhang.liste && anhang.liste.length) {
-    const gruppe = document.createElement('optgroup');
-    gruppe.label = anhang.titel;
-    for (const eintrag of anhang.liste) anhaengen(gruppe, eintrag);
-    select.appendChild(gruppe);
+  // Die Anhang-Gruppe – alles Binäre, das kein Kontakt ist – umfasst in
+  // diesem Haus über 200 Einträge. Sie ungefragt unter die fünf echten
+  // Fensterkontakte zu hängen macht die Auswahl unbrauchbar. Sie erscheint
+  // deshalb erst, wenn jemand etwas eintippt; zugeordnete Einträge stehen
+  // ohnehin immer drin.
+  const anhang = (opt.anhang && opt.anhang.liste) || [];
+  let versteckt = 0;
+  if (anhang.length) {
+    if (such || !opt.anhang.nurBeiSuche) {
+      gruppeAnhaengen(opt.anhang.titel, anhang);
+    } else {
+      const dabei = anhang.filter(e => gewaehltJetzt.has(e.entity_id));
+      if (dabei.length) gruppeAnhaengen(opt.anhang.titel, dabei);
+      versteckt = anhang.length - dabei.length;
+    }
   }
-  for (const fehlend of (wert || []).filter(w => w && !vorhanden.has(w))) {
+
+  // Eingestellte Entitäten, die gerade nicht in der Liste stehen – weil Home
+  // Assistant nicht antwortet oder das Gerät fort ist – werden ergänzt. Sonst
+  // würde ein Speichern die Zuordnung stillschweigend löschen.
+  //
+  // Maßgeblich ist die **aktuelle** Auswahl, nicht die beim Öffnen: Wer den
+  // Fühler wechselt und danach filtert, bekäme sonst den alten Wert als
+  // „zurzeit nicht in Home Assistant“ vorgesetzt, obwohl er nur weggefiltert
+  // ist.
+  for (const fehlend of [...gewaehltJetzt].filter(w => w && !vorhanden.has(w))) {
     const option = document.createElement('option');
     option.value = fehlend;
     option.textContent = fehlend + '  (zurzeit nicht in Home Assistant)';
     select.appendChild(option);
   }
-  for (const option of select.options) {
-    option.selected = (wert || []).includes(option.value);
+
+  if (istMehrfach) {
+    const auswahl = select._gefuellt ? gewaehltJetzt : new Set(werte);
+    for (const option of select.options) option.selected = auswahl.has(option.value);
+  } else {
+    select.value = (select._gefuellt ? [...gewaehltJetzt][0] : werte[0]) || '';
+  }
+
+  if (opt.filter !== false) {
+    const teile = select._filterzeile || filterZeileBauen(select);
+    teile.suche.value = stand.such;
+    teile.kasten.checked = stand.nurRaum && mitRaum;
+    teile.beschriftung.textContent = 'nur ' + (opt.raumName || 'dieser Raum');
+    teile.kasten.parentElement.style.display = mitRaum ? '' : 'none';
+    // Solange der Anhang zurückgehalten wird, zählt nur die eigentliche
+    // Liste – „1 von 227“ wäre irreführend, gemeint ist einer von fünf.
+    const grundmenge = versteckt ? (quelle || []).length : alle.length;
+    teile.zahl.textContent =
+      (gezeigt >= grundmenge ? grundmenge + ' zur Auswahl'
+                             : gezeigt + ' von ' + grundmenge)
+      + (versteckt ? ' · ' + versteckt + ' weitere Melder – zum Suchen tippen' : '');
+  }
+  select._neuFuellen = () => auswahlFuellen(select, quelle, wert, opt);
+  select._gefuellt = true;
+}
+
+// Woran ein Gerät als „gehört zu diesem Raum“ erkannt wird.
+//
+// Zuerst am **Bereich**: sein Name – die Räume stammen in aller Regel aus den
+// Bereichen von Home Assistant – und die Bereiche seiner Thermostate, was den
+// Fall abfängt, dass jemand den Raum umbenannt hat.
+//
+// Der Bereich allein genügt aber nicht. In dieser Installation trägt
+// ausgerechnet `binary_sensor.heizung_wohnzimmer_offenes_fenster_erkannt`
+// keinen Bereich – ein reiner Bereichsfilter würde im Wohnzimmer genau den
+// Kontakt verstecken, den man dort sucht. Deshalb zählt zusätzlich der
+// **Name**: „Wohnzimmer“ im Namen oder in der Entitäts-ID reicht.
+const ohneZierrat = (text) => (text || '').toLowerCase()
+  .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss')
+  .replace(/[^a-z0-9]/g, '');
+
+// „Zimmer“ und „Raum“ stehen in fast jedem Namen und würden alles durchlassen.
+const ALLERWELTSWORTE = ['zimmer', 'raum', 'bereich'];
+
+function raumSchluessel(d, thermostate) {
+  const bereiche = new Set();
+  if ((d.name || '').trim()) bereiche.add(d.name.trim().toLowerCase());
+  const zuBereich = new Map((thermostate || []).map(
+    t => [t.entity_id, (t.bereich || '').toLowerCase()]));
+  for (const eid of d.thermostate || []) {
+    const bereich = zuBereich.get(eid);
+    if (bereich) bereiche.add(bereich);
+  }
+  const worte = new Set();
+  for (const bereich of bereiche) {
+    const teile = bereich.split(/\s+/).filter(Boolean);
+    const eigen = teile.filter(w => !ALLERWELTSWORTE.includes(w));
+    for (const wort of (eigen.length ? eigen : teile)) {
+      const rein = ohneZierrat(wort);
+      if (rein.length >= 3) worte.add(rein);
+    }
+  }
+  return {bereiche, worte: [...worte], leer: bereiche.size === 0};
+}
+
+// Gehört dieser Eintrag zum Raum?
+function gehoertZumRaum(eintrag, raum) {
+  if (!raum || raum.leer) return false;
+  if (raum.bereiche.has((eintrag.bereich || '').toLowerCase())) return true;
+  const text = ohneZierrat(eintrag.name + ' ' + eintrag.entity_id);
+  return raum.worte.some(wort => text.includes(wort));
+}
+
+// Beim Öffnen eines Raumes fängt jede Liste von vorn an: kein Suchtext, und
+// das Häkchen gesetzt, sofern der Raum überhaupt eigene Kandidaten hat.
+function filterZuruecksetzen(ids, an) {
+  for (const id of ids) filterStand[id] = {such:'', nurRaum: an};
+  for (const id of ids) {
+    const select = $(id);
+    if (select) select._gefuellt = false;
   }
 }
 
@@ -1416,15 +1609,28 @@ function raumOeffnen(raum, startblatt) {
 
   const einzeln = entitaeten.thermostate.filter(
     t => !t.gruppe || d.thermostate.includes(t.entity_id));
-  fuelleAuswahl($('r-thermostate'), einzeln, d.thermostate);
+
+  // Welche Bereiche gehören zu diesem Raum? Der Raumname selbst – die Räume
+  // stammen meist aus den Bereichen – und die Bereiche seiner Thermostate.
+  // Daran engen die Auswahllisten sich ein.
+  const raumbezug = raumSchluessel(d, einzeln);
+  const gefiltert = ['r-thermostate', 'r-praesenz', 'r-fenster', 'r-raumtemp'];
+  filterZuruecksetzen(gefiltert, !raumbezug.leer);
+  const raumName = (d.name || '').trim() || 'dieser Raum';
+
+  auswahlFuellen($('r-thermostate'), einzeln, d.thermostate,
+                 {gruppiert:true, raum: raumbezug, raumName});
   fuelleAuswahl($('r-personen'), entitaeten.personen, d.personen);
-  fuelleAuswahl($('r-raumtemp'), entitaeten.raumtemp, d.raumtemp,
-                'Mittelwert der Thermostate');
+  auswahlFuellen($('r-raumtemp'), entitaeten.raumtemp, d.raumtemp,
+                 {leerText:'Mittelwert der Thermostate'});
   fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], d.freigabe_entity,
                 'immer freigegeben');
-  fuelleMelderAuswahl($('r-praesenz'), entitaeten.praesenz, d.praesenz);
-  fuelleMelderAuswahl($('r-fenster'), entitaeten.fenster, d.fenster,
-                      {titel:'Sonstige Melder', liste: entitaeten.sonstige_melder});
+  auswahlFuellen($('r-praesenz'), entitaeten.praesenz, d.praesenz,
+                 {gruppiert:true, raum: raumbezug, raumName});
+  auswahlFuellen($('r-fenster'), entitaeten.fenster, d.fenster,
+                 {gruppiert:true, raum: raumbezug, raumName,
+                  anhang:{titel:'Sonstige Melder', nurBeiSuche:true,
+                          liste: entitaeten.sonstige_melder}});
 
   zeitplanEntwurf = JSON.parse(JSON.stringify(d.zeitplan || []));
   zeitplanZeichnen();

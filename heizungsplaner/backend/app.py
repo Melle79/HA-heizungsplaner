@@ -286,9 +286,13 @@ def api_anlauf():
 @app.route("/api/entitaeten")
 def api_entitaeten():
     states = ha_api.get_states()
-    kandidaten = ha_api.sensor_candidates(states)
+    # Bereiche für beide Domänen in einer Abfrage: Die Oberfläche zeigt die
+    # Auswahllisten nach Bereich gruppiert und engt sie auf den Bereich des
+    # Raumes ein – dafür braucht auch das Thermostat seinen Bereich.
+    bereiche = ha_api.bereiche_je_entitaet(("binary_sensor", "climate"))
+    kandidaten = ha_api.sensor_candidates(states, bereiche=bereiche)
     return jsonify({
-        "thermostate": ha_api.climate_entities(states),
+        "thermostate": ha_api.climate_entities(states, bereiche),
         "personen": ha_api.person_entities(states),
         "meldewege": ha_api.notify_dienste(),
         **kandidaten,
