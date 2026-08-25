@@ -111,48 +111,34 @@ th:nth-child(5), td:nth-child(5) { text-align: right; white-space: nowrap; }
 
 # ── Eine Regel im Blick behalten ────────────────────────────────────────────
 #
-# Für einen Raum, dessen Zeitplan von einer Regel übersteuert wird – etwa das
-# Wohnzimmer mit seiner Homeoffice-Regelung. Eine einzige Markdown-Karte, die
-# im Text unterscheidet, ob die Regel greift, und sonst sagt, warum nicht.
+# Für einen Raum, dessen Zeitplan zeitweise von einer Regel übersteuert wird –
+# etwa das Wohnzimmer mit seiner Homeoffice-Regelung. Eine Kachel, die nur
+# erscheint, solange die Regel greift, und sonst nichts vom Platz nimmt.
 #
-# Bewusst **keine** `conditional`-Karte: In einer Sections-Ansicht meldete die
-# in HA 2026.8 „Konfigurationsfehler“. Eine schlichte Karte mit einem
-# if/else im Template tut dasselbe und hat weniger Teile, die brechen können.
+# Bewusst **keine** `conditional`-Karte: In einer Sections-Ansicht meldet die
+# in HA 2026.8 „Konfigurationsfehler“. Dort ist `visibility` an der Karte
+# selbst der richtige Weg.
 
-def regelkarten(sensor):
-    """Eine Karte für die Übersteuerungsregel eines Raumes.
+def regelkarte(sensor, name="Homeoffice", icon="mdi:laptop"):
+    """Eine Kachel, sichtbar nur solange die Übersteuerungsregel greift.
 
     ``sensor`` ist der Raum-Sensor des Planers, etwa
-    ``sensor.heizungsplaner_raum_wohnzimmer``.
+    ``sensor.heizungsplaner_raum_wohnzimmer``. Angezeigt wird der Zielwert des
+    Raumes; ein Klick öffnet den Sensor mit Begründung und Lage.
     """
-    inhalt = (
-        f"{{% set s = '{sensor}' %}}"
-        "{% set name = state_attr(s, 'uebersteuerung') %}"
-        "{% if not name %}"
-        "*Für diesen Raum ist keine Übersteuerung eingerichtet.*"
-        "{% elif state_attr(s, 'uebersteuerung_greift') %}"
-        "### 🏠 {{ name }} läuft\n"
-        "Ziel **{{ states(s) | float(0) | round(1) | replace('.', ',') }} °C**"
-        "{% set ist = state_attr(s, 'ist_temperatur') %}"
-        "{% if ist is not none %} · gemessen "
-        "{{ ist | float(0) | round(1) | replace('.', ',') }} °C{% endif %}\n\n"
-        "*{{ state_attr(s, 'begruendung') }}*"
-        "{% else %}"
-        "### {{ name }}\n"
-        "{{ state_attr(s, 'uebersteuerung_lage') }}\n\n"
-        "*Zurzeit: {{ state_attr(s, 'begruendung') }}*"
-        "{% endif %}"
-    )
-    greift = f"state_attr('{sensor}', 'uebersteuerung_greift')"
-    stil = {"style": {
-        ".": ("ha-card { border-left: 3px solid "
-              "{% if " + greift + " %}var(--success-color, #43a047)"
-              "{% else %}var(--divider-color){% endif %}; }"),
-        "ha-markdown $": ("h3 { margin-top: 0; color: "
-                          "{% if " + greift + " %}var(--success-color, #43a047)"
-                          "{% else %}var(--secondary-text-color){% endif %}; }"),
-    }}
-    return [{"type": "markdown", "content": inhalt, "card_mod": stil}]
+    return {
+        "type": "tile",
+        "entity": sensor,
+        "name": name,
+        "icon": icon,
+        "color": "green",
+        "state_content": ["state"],
+        "visibility": [{
+            "condition": "template",
+            "value_template": (f"{{{{ state_attr('{sensor}', "
+                               f"'uebersteuerung_greift') | default(false, true) }}}}"),
+        }],
+    }
 
 
 def abschnitt():

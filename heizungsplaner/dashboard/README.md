@@ -23,20 +23,17 @@ python3 heizungsplaner/dashboard/erzeuge_yaml.py
 
 ## Eine Übersteuerungsregel im Blick behalten
 
-`regelkarten("sensor.heizungsplaner_raum_wohnzimmer")` liefert eine Karte für
-einen Raum mit Übersteuerungsregel:
+`regelkarte("sensor.heizungsplaner_raum_wohnzimmer")` liefert eine Kachel, die
+**nur erscheint, solange die Regel greift** – mit dem Zielwert des Raumes und
+grünem Akzent. Ruht die Regel, ist die Kachel weg und nimmt keinen Platz.
+Warum sie ruht, steht in der App und im Attribut `uebersteuerung_lage`.
 
-* **greift die Regel**, steht dort ihr Name, der Zielwert und die gemessene
-  Temperatur, mit grünem Akzent;
-* **greift sie nicht**, steht dort der Grund – „greift heute nicht – Ferien &
-  Feiertage läuft" –, damit man nicht vor einer leeren Stelle steht und rätselt.
+Sie gehört nicht in den Planer-Abschnitt, sondern dorthin, wo man den Raum
+ohnehin ansieht – beim Wohnzimmer also in dessen Klima-Abschnitt.
 
 Bewusst **keine** `conditional`-Karte: In einer Sections-Ansicht meldet die in
-HA 2026.8 „Konfigurationsfehler". Eine schlichte Karte mit if/else im Template
-tut dasselbe.
-
-Diese Karten gehören nicht in den Planer-Abschnitt, sondern dorthin, wo man
-den Raum ohnehin ansieht – beim Wohnzimmer also in dessen Klima-Abschnitt.
+HA 2026.8 „Konfigurationsfehler". Dort ist `visibility` an der Karte selbst
+der richtige Weg.
 
 ## Was die Karten voraussetzen
 
