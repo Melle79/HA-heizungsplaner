@@ -1,12 +1,16 @@
 # Änderungen
 
+## 1.3.3
+
+- Zuordnungsvorschläge lassen sich mit *Nicht nötig* dauerhaft abweisen. Ein
+  Hinweisbalken, den man wegen Dauerrauschen überliest, ist schlechter als
+  keiner.
+
 ## 1.3.2
 
 - Nicht nur nachgerüstete Fensterkontakte, auch neue **Präsenz- und
   Bewegungsmelder** im Bereich eines Raumes werden zur Zuordnung angeboten.
-- Vorschläge lassen sich mit *Nicht nötig* dauerhaft abweisen. Ein
-  Hinweisbalken, den man wegen Dauerrauschen überliest, ist schlechter als
-  keiner.
+
 
 ## 1.3.1
 
