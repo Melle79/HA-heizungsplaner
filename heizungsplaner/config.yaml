@@ -1,0 +1,19 @@
+name: "Heizungsplaner"
+version: "1.0.0"
+slug: "heizungsplaner"
+description: "Vorausschauende Heizungssteuerung: Zeitplan je Raum, Heizkurve nach Außentemperatur, personenbezogene Anwesenheitsabsenkung und Vorheizen"
+url: "https://github.com/Melle79/HA-heizungsplaner"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+init: false
+ingress: true
+ingress_port: 8098
+panel_icon: "mdi:radiator"
+panel_title: "Heizung"
+homeassistant_api: true
+services:
+  - "mqtt:need"
+options: {}
+schema: {}

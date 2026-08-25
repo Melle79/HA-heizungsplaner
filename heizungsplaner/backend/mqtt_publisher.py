@@ -1,0 +1,220 @@
+"""MQTT Discovery: der Heizungsplaner als Gerät mit Entitäten in Home Assistant.
+
+Feste Entitäten für den Gesamtzustand, dazu je Raum ein Sensor mit Zielwert
+und Begründung. Damit lässt sich der Planer im Dashboard anzeigen und in
+Automationen verwenden, ohne die Add-on-Oberfläche zu öffnen.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import re
+import threading
+
+import paho.mqtt.client as mqtt
+
+from version import VERSION
+
+_LOGGER = logging.getLogger(__name__)
+
+DISCOVERY_PREFIX = "homeassistant"
+BASE_TOPIC = "heizungsplaner"
+AVAILABILITY_TOPIC = f"{BASE_TOPIC}/availability"
+COMMAND_TOPIC = f"{BASE_TOPIC}/cmd"
+DEVICE_ID = "heizungsplaner"
+
+# (component, key, Anzeigename, Icon, Einheit, device_class)
+GRUND_ENTITAETEN = [
+    ("sensor", "status", "Heizungsplaner Status", "mdi:radiator", None, None),
+    ("sensor", "aussentemperatur_gedaempft", "Außentemperatur gedämpft",
+     "mdi:thermometer-lines", "°C", "temperature"),
+    ("binary_sensor", "sommerbetrieb", "Sommerbetrieb", "mdi:sun-thermometer", None, None),
+    ("binary_sensor", "trockenlauf", "Trockenlauf", "mdi:test-tube", None, None),
+]
+
+
+def _slug(text: str) -> str:
+    text = (text.lower()
+            .replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss"))
+    text = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+    return text or "raum"
+
+
+class Publisher:
+    """MQTT-Verbindung, Discovery und Zustandsmeldungen."""
+
+    def __init__(self, host: str, port: int, username: str | None, password: str | None):
+        self.connected = threading.Event()
+        self.on_ready = None
+        self.on_command = None
+        self._bekannte_raeume: set[str] = set()
+        self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
+                                   client_id="heizungsplaner")
+        if username:
+            self._client.username_pw_set(username, password or "")
+        self._client.will_set(AVAILABILITY_TOPIC, "offline", retain=True)
+        self._client.on_connect = self._on_connect
+        self._client.on_disconnect = self._on_disconnect
+        self._client.on_message = self._on_message
+        self._host = host
+        self._port = port
+
+    def start(self) -> None:
+        try:
+            self._client.connect_async(self._host, self._port, keepalive=60)
+            self._client.loop_start()
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.error("MQTT-Verbindung fehlgeschlagen: %s", err)
+
+    def stop(self) -> None:
+        try:
+            self._client.publish(AVAILABILITY_TOPIC, "offline", retain=True)
+            self._client.loop_stop()
+            self._client.disconnect()
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _publish(self, topic: str, payload: str) -> None:
+        self._client.publish(topic, payload, qos=1, retain=True)
+
+    def _on_connect(self, client, userdata, flags, reason_code, properties) -> None:
+        if reason_code == 0:
+            _LOGGER.info("Mit MQTT-Broker verbunden")
+            client.publish(AVAILABILITY_TOPIC, "online", qos=1, retain=True)
+            client.subscribe(COMMAND_TOPIC, qos=1)
+            self.connected.set()
+            if self.on_ready is not None:
+                try:
+                    self.on_ready()
+                except Exception as err:  # noqa: BLE001
+                    _LOGGER.error("Fehler nach Verbindungsaufbau: %s", err)
+        else:
+            _LOGGER.error("MQTT-Verbindung abgelehnt: %s", reason_code)
+
+    def _on_disconnect(self, client, userdata, flags, reason_code, properties) -> None:
+        _LOGGER.warning("MQTT-Verbindung getrennt (%s)", reason_code)
+        self.connected.clear()
+
+    def _on_message(self, client, userdata, msg) -> None:
+        if msg.topic != COMMAND_TOPIC or self.on_command is None:
+            return
+        try:
+            payload = json.loads(msg.payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as err:
+            _LOGGER.warning("Ungültiger Befehl: %s", err)
+            return
+        try:
+            self.on_command(payload)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.error("Befehl konnte nicht ausgeführt werden: %s", err)
+
+    # ---------------------------------------------------------- Discovery ----
+
+    def _device(self) -> dict:
+        return {
+            "identifiers": [DEVICE_ID],
+            "name": "Heizungsplaner",
+            "manufacturer": "Heizungsplaner Add-on",
+            "model": "Vorausschauende Heizungssteuerung",
+            "sw_version": VERSION,
+        }
+
+    def publish_discovery(self, raeume: list[dict] | None = None) -> None:
+        device = self._device()
+        for component, key, name, icon, einheit, klasse in GRUND_ENTITAETEN:
+            payload = {
+                "name": name,
+                "unique_id": f"{DEVICE_ID}_{key}",
+                "default_entity_id": f"{component}.{DEVICE_ID}_{key}",
+                "state_topic": f"{BASE_TOPIC}/{key}/state",
+                "json_attributes_topic": f"{BASE_TOPIC}/{key}/attributes",
+                "availability_topic": AVAILABILITY_TOPIC,
+                "icon": icon,
+                "device": device,
+            }
+            if einheit:
+                payload["unit_of_measurement"] = einheit
+            if klasse:
+                payload["device_class"] = klasse
+            self._publish(f"{DISCOVERY_PREFIX}/{component}/{DEVICE_ID}/{key}/config",
+                          json.dumps(payload))
+
+        for raum in raeume or []:
+            key = f"raum_{_slug(raum['name'])}"
+            self._bekannte_raeume.add(key)
+            payload = {
+                "name": f"Heizung {raum['name']}",
+                "unique_id": f"{DEVICE_ID}_{key}",
+                "default_entity_id": f"sensor.{DEVICE_ID}_{key}",
+                "state_topic": f"{BASE_TOPIC}/{key}/state",
+                "json_attributes_topic": f"{BASE_TOPIC}/{key}/attributes",
+                "availability_topic": AVAILABILITY_TOPIC,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "icon": "mdi:radiator",
+                "device": device,
+            }
+            self._publish(f"{DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{key}/config",
+                          json.dumps(payload))
+        _LOGGER.info("Discovery veröffentlicht (%d Räume)", len(raeume or []))
+
+    # ------------------------------------------------------------ Zustand ----
+
+    def publish_status(self, bericht: dict) -> None:
+        """Den Bericht eines Regeltakts nach MQTT spiegeln."""
+        if not self.connected.is_set():
+            return
+        raeume = bericht.get("raeume") or []
+        aktive = [r for r in raeume if r["zustand"] not in ("aus", "sommer")]
+        if bericht.get("trockenlauf"):
+            status = "Trockenlauf"
+        elif not bericht.get("automatik"):
+            status = "Automatik aus"
+        elif bericht.get("sommerbetrieb"):
+            status = "Sommerbetrieb"
+        elif bericht.get("urlaub"):
+            status = "Urlaub"
+        else:
+            status = f"{len(aktive)} von {len(raeume)} Räumen aktiv"
+
+        self._zustand("status", status, {
+            "zeit": bericht.get("zeit"),
+            "automatik": bericht.get("automatik"),
+            "trockenlauf": bericht.get("trockenlauf"),
+            "urlaub": bericht.get("urlaub"),
+            "schulfrei": bericht.get("schulfrei"),
+            "aussentemperatur": bericht.get("aussen"),
+            "raeume": {r["name"]: r["zustand"] for r in raeume},
+        })
+        gedaempft = bericht.get("aussen_gedaempft")
+        self._zustand("aussentemperatur_gedaempft",
+                      f"{gedaempft:.1f}" if gedaempft is not None else "unknown",
+                      {"roh": bericht.get("aussen")})
+        self._zustand("sommerbetrieb", "ON" if bericht.get("sommerbetrieb") else "OFF", {})
+        self._zustand("trockenlauf", "ON" if bericht.get("trockenlauf") else "OFF", {})
+
+        for raum in raeume:
+            key = f"raum_{_slug(raum['name'])}"
+            self._zustand(key, f"{raum['ziel']:.1f}", {
+                "zustand": raum["zustand"],
+                "begruendung": raum["begruendung"],
+                "ist_temperatur": raum.get("ist"),
+                "seit": raum.get("seit"),
+                "naechster_wechsel": raum.get("naechster_wechsel"),
+                "thermostate": [t["entity_id"] for t in raum.get("thermostate", [])],
+            })
+
+    def _zustand(self, key: str, state: str, attributes: dict) -> None:
+        self._publish(f"{BASE_TOPIC}/{key}/state", state)
+        self._publish(f"{BASE_TOPIC}/{key}/attributes",
+                      json.dumps(attributes, ensure_ascii=False))
+
+    def remove_all(self) -> None:
+        """Alle Entitäten wieder aus Home Assistant entfernen."""
+        for component, key, *_ in GRUND_ENTITAETEN:
+            self._publish(f"{DISCOVERY_PREFIX}/{component}/{DEVICE_ID}/{key}/config", "")
+            self._publish(f"{BASE_TOPIC}/{key}/state", "")
+        for key in self._bekannte_raeume:
+            self._publish(f"{DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{key}/config", "")
+            self._publish(f"{BASE_TOPIC}/{key}/state", "")
+        _LOGGER.info("Entitäten aus MQTT entfernt")
