@@ -89,7 +89,14 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
     if not wacht.get("aktiv", True):
         return []
 
-    stumm_ab = timedelta(hours=float(wacht.get("stumm_stunden", 6)))
+    # Im Sommerbetrieb sind die Ventile zu und die Geräte haben nichts zu
+    # berichten. Gemessen am 25.08.2026: reguläre Pausen von bis zu 13 Stunden,
+    # ohne dass irgendetwas fehlte. Eine Frist, die im Heizbetrieb sinnvoll
+    # ist, erzeugt hier reihenweise Fehlalarme – deshalb gilt sie im Sommer
+    # doppelt.
+    stumm_ab = timedelta(hours=float(wacht.get("stumm_stunden", 12)))
+    if sommerbetrieb:
+        stumm_ab *= 2
     schwelle = float(wacht.get("batterie_prozent", 20))
     # Der Planer rechnet in lokaler Zeit ohne Zeitzone, Home Assistant meldet
     # in UTC. `astimezone` liest eine zeitzonenlose Angabe als Ortszeit – ein

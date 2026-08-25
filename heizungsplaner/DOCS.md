@@ -447,7 +447,7 @@ gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
 |---|---|
 | gibt es nicht mehr | die Entität ist aus Home Assistant verschwunden |
 | nicht erreichbar | Zustand `unavailable` oder `unknown` |
-| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 6 Stunden) |
+| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 12 Stunden, im Sommerbetrieb doppelt) |
 | schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) und **nicht älter als zwölf Stunden** |
 | nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
 | steht in der Sommerpause | das Gerät meldet `summer`, obwohl geheizt werden soll |
@@ -473,6 +473,14 @@ Batterien sucht, wo keine fehlen.
 Nach drei Fehlschlägen versucht der Planer es nur noch alle 30 Minuten. Sonst
 füllte ein solches Gerät bei jedem Takt das Protokoll, ohne dass sich etwas
 ändert.
+
+**Wie lange darf ein Gerät schweigen?** Länger, als man denkt. Die
+Matter-Thermostate dieses Hauses melden im Sommerbetrieb – Ventile zu, nichts
+zu berichten – regulär bis zu 13 Stunden nichts. Eine Frist von sechs Stunden
+erzeugte damit reihenweise Ausfallmeldungen für Geräte, denen nichts fehlte.
+Die Vorgabe liegt deshalb bei zwölf Stunden und gilt im Sommerbetrieb doppelt.
+Im Heizbetrieb meldet ein Gerät bei jeder Sollwertänderung, dort ist die Frist
+deutlich schärfer, als sie klingt.
 
 Gemeldet wird **auf Flanke**: einmal beim Auftreten, einmal bei der Behebung.
 Eine Warnung, die stündlich erneut aufs Telefon kommt, wird nach dem dritten

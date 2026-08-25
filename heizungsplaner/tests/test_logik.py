@@ -980,16 +980,37 @@ pruefe(len(st) == 1 and st[0]["art"] == "unerreichbar",
        f"nicht erreichbar erkannt ({st[0]['text'] if st else '-'})")
 
 # Der eigentliche Urlaubsfall: Das Geraet meldet sich einfach nicht mehr
-st = lage(a_gemeldet="2026-08-25T02:00:00+00:00")
+st = lage(a_gemeldet="2026-08-24T22:00:00+00:00")
 pruefe(len(st) == 1 and st[0]["art"] == "stumm",
        f"stilles Verstummen erkannt ({st[0]['text'] if st else '-'})")
-pruefe(st and "10 Stunden" in st[0]["text"],
+pruefe(st and "14 Stunden" in st[0]["text"],
        f"Dauer wird benannt ({st[0]['text'] if st else '-'})")
 
 st = lage(batterie=15)
 pruefe(len(st) == 1 and st[0]["art"] == "batterie",
        f"schwache Batterie gemeldet ({st[0]['text'] if st else '-'})")
 pruefe(lage(batterie=80) == [], "volle Batterie meldet nichts")
+
+# Im Sommerbetrieb schweigen die Geraete regulaer stundenlang - gemessen bis zu
+# 13 Stunden. Die Schweigefrist gilt dort deshalb doppelt, sonst meldet der
+# Wachhund reihenweise Ausfaelle, die keine sind.
+def lage_stumm(stunden, sommerbetrieb):
+    gemeldet = (jetzt_w - timedelta(hours=stunden)).isoformat()
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "off",
+                         "last_reported": gemeldet,
+                         "attributes": {"friendly_name": "Thermostat A"}},
+           "climate.b": {"entity_id": "climate.b", "state": "off",
+                         "last_reported": jetzt_w.isoformat(),
+                         "attributes": {"friendly_name": "Thermostat B"}}}
+    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, {},
+                            sommerbetrieb=sommerbetrieb)
+
+pruefe(not lage_stumm(14, True),
+       "im Sommer sind vierzehn stille Stunden kein Ausfall")
+pruefe(len(lage_stumm(14, False)) == 1,
+       "im Heizbetrieb sind vierzehn stille Stunden ein Ausfall")
+pruefe(len(lage_stumm(26, True)) == 1,
+       "auch im Sommer wird ein Geraet nach der doppelten Frist gemeldet")
 
 # Die Sommerpause eines FRITZ!-Thermostats lehnt jeden Sollwert ab. Gemeldet
 # wird sie erst, wenn der Planer wieder heizen will - im Sommer waere sie nur
@@ -1096,8 +1117,8 @@ def lage_ortszeit(gemeldet):
                          "attributes": {"friendly_name": "Thermostat B"}}}
     return wachhund.pruefen(cfg, idx, jetzt_ortszeit, einst_w, {})
 
-st_utc = lage(a_gemeldet="2026-08-25T02:00:00+00:00")
-st_lokal = lage_ortszeit("2026-08-25T02:00:00+00:00")
+st_utc = lage(a_gemeldet="2026-08-24T22:00:00+00:00")
+st_lokal = lage_ortszeit("2026-08-24T22:00:00+00:00")
 pruefe(st_utc and st_lokal and st_utc[0]["text"] == st_lokal[0]["text"],
        f"Ortszeit ergibt dieselbe Dauer wie UTC ({st_lokal[0]['text'] if st_lokal else '-'})")
 pruefe(lage_ortszeit("2026-08-25T10:00:00+00:00") == [],

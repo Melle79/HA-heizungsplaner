@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.11.1
+
+- **Behoben: Ausfallmeldungen für Geräte, denen nichts fehlt.** Die
+  Schweigefrist stand auf sechs Stunden. Gemessen über drei Tage melden die
+  Thermostate im Sommerbetrieb aber regulär bis zu 13 Stunden nichts – die
+  Ventile sind zu, es gibt nichts zu berichten. Die Vorgabe liegt jetzt bei
+  zwölf Stunden und gilt im Sommerbetrieb doppelt.
+
 ## 1.11.0
 
 - **Die Übersteuerung kennt jetzt Bedingungen statt eines Schalters.** Eine
