@@ -60,6 +60,20 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
 | `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum, mit Begründung als Attribut |
 
+## Prüflauf
+
+Die Regellogik lässt sich ohne Home Assistant und ohne Fremdpakete prüfen:
+
+```
+python3 heizungsplaner/tests/test_logik.py
+```
+
+Geprüft werden Zeitplan über Tagesgrenzen, Heizkurve und Sommerhysterese,
+Anwesenheit samt Heimkehr, Fenstererkennung, die Betriebsart „nur absenken“
+und das Schreiben auf Flanke. Etliche Fälle stehen dort, weil sie einmal
+falsch waren – etwa eine Schule in einem Kilometer Entfernung, die das
+Kinderzimmer den ganzen Vormittag als „auf dem Heimweg“ gelten ließ.
+
 ## Lizenz
 
 MIT

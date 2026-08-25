@@ -248,6 +248,15 @@ stellt kein Thermostat. Der richtige Zustand für die ersten Tage.
 **Automatik aus** – der Planer rechnet nicht mehr in die Thermostate hinein
 und lässt sie, wie sie sind.
 
+### Zurück zur vorherigen Steuerung
+
+1. Trockenlauf einschalten (oder Automatik aus).
+2. Die zuvor abgeschalteten Zeitpläne und Automationen wieder aktivieren.
+
+Die Thermostate behalten in beiden Fällen den zuletzt gestellten Wert – der
+Planer räumt beim Abschalten nichts auf, damit ein versehentliches Umschalten
+kein kaltes Haus hinterlässt.
+
 ## Ersteinrichtung
 
 Der Assistent liest die Bereiche aus Home Assistant und legt je Bereich mit

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.4.3
+
+- Der Prüflauf liegt jetzt im Repository unter `heizungsplaner/tests/` und
+  läuft ohne Home Assistant und ohne Fremdpakete.
+- Anleitung um den Rückweg zur vorherigen Steuerung ergänzt.
+
 ## 1.4.2
 
 - Abstand zwischen Name und Aufenthalt in der Personenübersicht.
