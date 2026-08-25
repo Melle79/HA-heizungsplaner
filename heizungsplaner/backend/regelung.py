@@ -27,6 +27,7 @@ from datetime import datetime, timedelta
 
 import anwesenheit
 import ha_api
+import wachhund
 import witterung
 import zeitplan as zp
 
@@ -645,6 +646,15 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             ],
         })
 
+    # Der Wachhund läuft nach den Räumen: Er soll auch ein Thermostat sehen,
+    # das gerade eben erst als fehlend aufgefallen ist.
+    try:
+        stoerungen = wachhund.pruefen(config, states_index, jetzt, einst,
+                                      _batterien_holen(jetzt, state))
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Überwachung fehlgeschlagen: %s", err)
+        stoerungen = []
+
     state.update({
         "aussen_gedaempft": round(gedaempft, 2) if gedaempft is not None else None,
         "sommerbetrieb": sommer,
@@ -662,4 +672,22 @@ def takt(config: dict, state: dict, protokoll) -> dict:
         "trockenlauf": bool(einst.get("trockenlauf")),
         "personen": personen,
         "raeume": ergebnisse,
+        "stoerungen": stoerungen,
     }
+
+
+_BATTERIEN: dict = {"stand": None, "geholt": None}
+
+
+def _batterien_holen(jetzt: datetime, state: dict) -> dict:
+    """Die Zuordnung Thermostat → Batterieanzeige, einmal je Stunde erneuert.
+
+    Sie ändert sich nur, wenn Geräte dazukommen – eine Template-Abfrage in
+    jedem Takt wäre Verschwendung.
+    """
+    letzte = _BATTERIEN["geholt"]
+    if _BATTERIEN["stand"] is None or letzte is None or \
+            (jetzt - letzte) > timedelta(hours=1):
+        _BATTERIEN["stand"] = wachhund.batterien_je_thermostat()
+        _BATTERIEN["geholt"] = jetzt
+    return _BATTERIEN["stand"]

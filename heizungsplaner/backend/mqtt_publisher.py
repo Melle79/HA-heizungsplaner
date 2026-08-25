@@ -30,6 +30,9 @@ GRUND_ENTITAETEN = [
      "mdi:thermometer-lines", "°C", "temperature"),
     ("binary_sensor", "sommerbetrieb", "Sommerbetrieb", "mdi:sun-thermometer", None, None),
     ("binary_sensor", "trockenlauf", "Trockenlauf", "mdi:test-tube", None, None),
+    ("binary_sensor", "stoerung", "Heizung Störung", "mdi:radiator-off", None, "problem"),
+    ("sensor", "stoerungen", "Ausgefallene Thermostate", "mdi:alert-circle",
+     None, None),
 ]
 
 
@@ -192,6 +195,17 @@ class Publisher:
                       {"roh": bericht.get("aussen")})
         self._zustand("sommerbetrieb", "ON" if bericht.get("sommerbetrieb") else "OFF", {})
         self._zustand("trockenlauf", "ON" if bericht.get("trockenlauf") else "OFF", {})
+
+        # Damit sich eigene Automationen daran hängen können – eine Durchsage
+        # über die Lautsprecher etwa.
+        stoerungen = bericht.get("stoerungen") or []
+        schwer = [s for s in stoerungen if s.get("schwere") == "fehler"]
+        self._zustand("stoerung", "ON" if stoerungen else "OFF",
+                      {"anzahl": len(stoerungen), "ausgefallen": len(schwer),
+                       "meldungen": [s["text"] for s in stoerungen]})
+        self._zustand("stoerungen", str(len(schwer)),
+                      {"geraete": [s["entity_id"] for s in schwer],
+                       "meldungen": [s["text"] for s in stoerungen]})
 
         for raum in raeume:
             key = f"raum_{_slug(raum['name'])}"

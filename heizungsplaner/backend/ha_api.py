@@ -364,3 +364,36 @@ def historien_mittel(entity_id: str, stunden: float = 48.0) -> float | None:
     _LOGGER.info("Außentemperatur der letzten %.0f Stunden: %.1f °C aus %d Werten",
                  stunden, mittel, len(werte))
     return mittel
+
+
+def notify(dienst: str, titel: str, nachricht: str) -> bool:
+    """Eine Benachrichtigung über einen notify-Dienst von Home Assistant senden."""
+    if not available() or not dienst:
+        return False
+    name = dienst.split(".", 1)[-1]
+    try:
+        _request("POST", f"/services/notify/{name}",
+                 {"title": titel, "message": nachricht})
+        _LOGGER.info("Benachrichtigung über %s: %s", dienst, titel)
+        return True
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Benachrichtigung über %s fehlgeschlagen: %s", dienst, err)
+        return False
+
+
+def notify_dienste() -> list[dict]:
+    """Alle verfügbaren notify-Dienste für die Auswahl in der Oberfläche."""
+    if not available():
+        return []
+    try:
+        dienste = _request("GET", "/services")
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Dienste konnten nicht geladen werden: %s", err)
+        return []
+    out = []
+    for eintrag in dienste if isinstance(dienste, list) else []:
+        if eintrag.get("domain") != "notify":
+            continue
+        for name in sorted(eintrag.get("services") or {}):
+            out.append({"entity_id": f"notify.{name}", "name": f"notify.{name}"})
+    return out

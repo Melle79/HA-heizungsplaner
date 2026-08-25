@@ -214,6 +214,37 @@ Temperatursturz-Erkennung wieder ein, die Begründung sagt es
 („… melden nichts – ersatzweise Temperatursturz“), und auf der Übersicht steht
 eine Warnung.
 
+## Überwachung: wenn ein Thermostat ausfällt
+
+Der Anlass ist ein Vorfall: Während eines Urlaubs fielen vier Thermostate wegen
+leerer Batterien aus, und niemand bemerkte es.
+
+Eine Batteriewarnung allein hilft dabei nicht. Die SwitchBot-Thermostate melden
+über Matter **gar keinen Ladestand** – es gibt nichts zu überwachen. Was sie
+melden, ist ihr Zustand, und zwar regelmäßig. Bleibt das aus, ist das Gerät tot,
+gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
+
+| Fall | Wann |
+|---|---|
+| gibt es nicht mehr | die Entität ist aus Home Assistant verschwunden |
+| nicht erreichbar | Zustand `unavailable` oder `unknown` |
+| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 6 Stunden) |
+| schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) |
+
+Gemeldet wird **auf Flanke**: einmal beim Auftreten, einmal bei der Behebung.
+Eine Warnung, die stündlich erneut aufs Telefon kommt, wird nach dem dritten
+Mal weggewischt und beim vierten Mal übersehen. Wird aus einer schwachen
+Batterie ein Ausfall, gilt das als neue Nachricht.
+
+Die Meldewege wählt man in den Einstellungen aus den `notify`-Diensten von Home
+Assistant – für die Ferne taugt die Companion-App, für zu Hause zusätzlich die
+dauerhafte Benachrichtigung in der Oberfläche. Jede Störung steht außerdem im
+Protokoll und im Hinweisbalken.
+
+Für eigene Automationen gibt es `binary_sensor.heizungsplaner_stoerung`
+(Geräteklasse `problem`) mit den Meldungen als Attribut sowie
+`sensor.heizungsplaner_stoerungen` mit der Zahl der ausgefallenen Geräte.
+
 ## Handeingriffe
 
 Wird ein Thermostat von Hand verstellt – am Gerät, in Home Assistant oder per

@@ -1,5 +1,21 @@
 # Änderungen
 
+## 1.5.0
+
+**Überwachung der Thermostate.** Anlass: Während eines Urlaubs fielen vier
+Thermostate wegen leerer Batterien aus, ohne dass es jemand mitbekam.
+
+- Der Planer wacht über das **Lebenszeichen** jedes Thermostats. Eine
+  Batteriewarnung allein trüge nicht weit – die SwitchBot-Geräte melden über
+  Matter gar keinen Ladestand.
+- Erkannt werden: verschwundene Entitäten, `unavailable`, ausbleibende
+  Meldungen (Vorgabe: 6 Stunden) und – wo es eine Anzeige gibt – schwache
+  Batterien.
+- Gemeldet wird über frei wählbare `notify`-Dienste, **einmal beim Auftreten
+  und einmal bei der Behebung**.
+- Neue Entitäten `binary_sensor.heizungsplaner_stoerung` und
+  `sensor.heizungsplaner_stoerungen` für eigene Automationen.
+
 ## 1.4.3
 
 - Der Prüflauf liegt jetzt im Repository unter `heizungsplaner/tests/` und

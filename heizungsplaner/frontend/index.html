@@ -469,6 +469,28 @@
   </div>
 
   <div class="tafel">
+    <h2>Überwachung</h2>
+    <label class="haken"><input type="checkbox" id="e-wh-aktiv">
+      <span>Melden, wenn ein Thermostat ausfällt</span></label>
+    <div class="raster-felder eng" style="margin-top:var(--l3)">
+      <div class="feld"><label>Schweigefrist (Stunden)</label>
+        <input type="number" id="e-wh-stumm" min="0.5" max="168" step="0.5">
+        <div class="notiz">So lange darf ein Gerät nichts von sich hören lassen,
+          bevor es als ausgefallen gilt.</div></div>
+      <div class="feld"><label>Batteriewarnung ab (%)</label>
+        <input type="number" id="e-wh-batterie" min="0" max="100" step="5">
+        <div class="notiz">Nur dort, wo es überhaupt eine Anzeige gibt.</div></div>
+    </div>
+    <div class="feld" style="margin-top:var(--l3)">
+      <label>Meldewege</label>
+      <select id="e-wh-melden" multiple size="6"></select>
+      <div class="notiz">Mehrfachauswahl mit ⌘ bzw. Strg. Gemeldet wird einmal beim
+        Ausfall und einmal bei der Behebung – eine Warnung, die stündlich erneut
+        kommt, wird bald weggewischt.</div>
+    </div>
+  </div>
+
+  <div class="tafel">
     <h2>Fenstererkennung</h2>
     <label class="haken"><input type="checkbox" id="e-fe-aktiv">
       <span>Bei offenem Fenster auf Frostschutz gehen</span></label>
@@ -856,6 +878,12 @@ function lageZeichnen(bericht) {
     {marke:'Letzter Durchlauf', wert: uhr(bericht.zeit),
      zusatz: bericht.fehler ? bericht.fehler : '', klein:true},
   ];
+  const stoerungen = bericht.stoerungen || [];
+  if (stoerungen.length) {
+    const schwer = stoerungen.filter(s => s.schwere === 'fehler').length;
+    posten.push({marke:'Störungen', wert: String(stoerungen.length),
+                 zusatz: schwer ? `${schwer} ausgefallen` : 'Batterie schwach'});
+  }
   $('lage').innerHTML = posten.map(p => `
     <div class="posten">
       <span class="marke">${p.marke}</span>
@@ -1376,6 +1404,12 @@ function einstellungenZeichnen() {
   $('e-vor-max').value = e.vorheizen.max_min;
   $('e-vor-km').value = e.vorheizen.heimkehr_km;
   $('e-vor-naehe').value = e.vorheizen.heimkehr_annaeherung_km;
+  const wacht = e.wachhund || {};
+  $('e-wh-aktiv').checked = wacht.aktiv;
+  $('e-wh-stumm').value = wacht.stumm_stunden;
+  $('e-wh-batterie').value = wacht.batterie_prozent;
+  fuelleAuswahl($('e-wh-melden'), entitaeten.meldewege || [], wacht.melden_an || []);
+
   $('e-fe-aktiv').checked = e.fenster.aktiv;
   $('e-fe-sturz').value = e.fenster.sturz_k;
   $('e-fe-min').value = e.fenster.sturz_min;
@@ -1458,6 +1492,12 @@ $('btn-speichern-einst').onclick = async () => {
       max_min: parseInt($('e-vor-max').value, 10),
       heimkehr_km: parseFloat($('e-vor-km').value),
       heimkehr_annaeherung_km: parseFloat($('e-vor-naehe').value),
+    },
+    wachhund: {
+      aktiv: $('e-wh-aktiv').checked,
+      stumm_stunden: parseFloat($('e-wh-stumm').value),
+      batterie_prozent: parseInt($('e-wh-batterie').value, 10),
+      melden_an: gewaehlt($('e-wh-melden')),
     },
     fenster: {
       aktiv: $('e-fe-aktiv').checked,

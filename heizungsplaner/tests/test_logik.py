@@ -532,6 +532,85 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Wachhund ===")
+import wachhund
+from datetime import timezone
+
+jetzt_w = datetime(2026, 8, 25, 12, 0, tzinfo=timezone.utc)
+cfg = {"raeume": [store.validate_raum({
+    "name": "Wohnzimmer", "thermostate": ["climate.a", "climate.b"],
+    "personen": [], "zeitplan": plan})]}
+einst_w = store.validate_einstellungen({})
+
+def lage(a_zustand="heat", a_gemeldet="2026-08-25T11:58:00+00:00",
+         b_zustand="heat", b_gemeldet="2026-08-25T11:58:00+00:00",
+         batterie=None, b_fehlt=False):
+    idx = {"climate.a": {"entity_id": "climate.a", "state": a_zustand,
+                         "last_reported": a_gemeldet,
+                         "attributes": {"friendly_name": "Thermostat A"}}}
+    if not b_fehlt:
+        idx["climate.b"] = {"entity_id": "climate.b", "state": b_zustand,
+                            "last_reported": b_gemeldet,
+                            "attributes": {"friendly_name": "Thermostat B"}}
+    if batterie is not None:
+        idx["sensor.a_batterie"] = {"entity_id": "sensor.a_batterie",
+                                    "state": str(batterie), "attributes": {}}
+    batterien = {"climate.a": "sensor.a_batterie"} if batterie is not None else {}
+    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, batterien)
+
+pruefe(lage() == [], "alles in Ordnung -> keine Stoerung")
+
+st = lage(b_fehlt=True)
+pruefe(len(st) == 1 and st[0]["art"] == "fehlt", f"verschwundenes Geraet ({st})")
+
+st = lage(a_zustand="unavailable")
+pruefe(len(st) == 1 and st[0]["art"] == "unerreichbar",
+       f"nicht erreichbar erkannt ({st[0]['text'] if st else '-'})")
+
+# Der eigentliche Urlaubsfall: Das Geraet meldet sich einfach nicht mehr
+st = lage(a_gemeldet="2026-08-25T02:00:00+00:00")
+pruefe(len(st) == 1 and st[0]["art"] == "stumm",
+       f"stilles Verstummen erkannt ({st[0]['text'] if st else '-'})")
+pruefe(st and "10 Stunden" in st[0]["text"],
+       f"Dauer wird benannt ({st[0]['text'] if st else '-'})")
+
+st = lage(batterie=15)
+pruefe(len(st) == 1 and st[0]["art"] == "batterie",
+       f"schwache Batterie gemeldet ({st[0]['text'] if st else '-'})")
+pruefe(lage(batterie=80) == [], "volle Batterie meldet nichts")
+
+# Ein ausgefallenes Geraet wird nicht zusaetzlich wegen Batterie gemeldet
+st = lage(a_zustand="unavailable", batterie=5)
+pruefe(len(st) == 1 and st[0]["art"] == "unerreichbar",
+       "Ausfall verdeckt die Batteriemeldung")
+
+# Abgeschaltete Ueberwachung schweigt
+einst_aus = store.validate_einstellungen({"wachhund": {"aktiv": False}})
+pruefe(wachhund.pruefen(cfg, {}, jetzt_w, einst_aus, {}) == [],
+       "abgeschaltete Ueberwachung meldet nichts")
+
+print("\n--- Melden nur auf Flanke ---")
+erste = lage(a_zustand="unavailable")
+hinzu, weg = wachhund.vergleichen(erste, {})
+pruefe(len(hinzu) == 1 and not weg, "erste Stoerung wird gemeldet")
+
+gedaechtnis = wachhund.als_gedaechtnis(erste)
+hinzu, weg = wachhund.vergleichen(erste, gedaechtnis)
+pruefe(not hinzu and not weg, "dieselbe Stoerung wird nicht erneut gemeldet")
+
+hinzu, weg = wachhund.vergleichen([], gedaechtnis)
+pruefe(not hinzu and len(weg) == 1, "Behebung wird gemeldet")
+
+# Aus schwacher Batterie wird ein Ausfall: neue Nachricht
+vorher = wachhund.als_gedaechtnis(lage(batterie=15))
+hinzu, weg = wachhund.vergleichen(lage(a_zustand="unavailable"), vorher)
+pruefe(len(hinzu) == 1 and len(weg) == 1,
+       "Wechsel der Stoerungsart wird gemeldet")
+
+titel, text = wachhund.meldung_bauen(lage(a_zustand="unavailable"), [])
+pruefe("ausgefallen" in titel and "Thermostat A" in text,
+       f"Meldung nennt Ross und Reiter ({titel})")
+
 print("\n=== Validierung ===")
 try:
     store.validate_raum({"name": "", "thermostate": []})

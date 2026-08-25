@@ -25,6 +25,9 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   zur Zuordnung; fällt einer aus, gilt er nicht als „geschlossen“.
 * **Urlaub** – ein Schalter in Home Assistant legt das ganze Haus auf die
   Urlaubstemperatur.
+* **Überwachung** – meldet ein Thermostat sich nicht mehr, kommt eine
+  Benachrichtigung. Weil die Geräte keinen Batteriestand liefern, wacht der
+  Planer über das Lebenszeichen statt über die Batterie.
 * **Handbetrieb je Raum** – wer einen Raum selbst stellen will, lässt den
   Planer nur zu festen Zeiten absenken. Dazwischen rührt er ihn nicht an.
 * **Freigabe je Raum** – ein Gästezimmer wird nur geheizt, wenn ein Schalter
@@ -59,6 +62,8 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `binary_sensor.heizungsplaner_sommerbetrieb` | Sommerbetrieb aktiv |
 | `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
 | `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum, mit Begründung als Attribut |
+| `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr |
+| `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
 
 ## Prüflauf
 

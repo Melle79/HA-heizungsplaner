@@ -86,6 +86,13 @@ STANDARD_EINSTELLUNGEN = {
         "sturz_min": 10,          # … innerhalb dieser Zeitspanne
         "sperre_min": 30,         # so lange bleibt der Raum danach auf Frostschutz
     },
+    # Ein ausgefallenes Thermostat soll auffallen, ohne dass jemand hinsieht.
+    "wachhund": {
+        "aktiv": True,
+        "stumm_stunden": 6.0,     # so lange darf ein Gerät schweigen
+        "batterie_prozent": 20,   # Warnschwelle, wo es eine Anzeige gibt
+        "melden_an": ["notify.persistent_notification"],
+    },
 }
 
 STANDARD_RAUM = {
@@ -302,6 +309,12 @@ def validate_einstellungen(roh: dict) -> dict:
     v["heimkehr_km"] = _zahl(v["heimkehr_km"], "Heimkehr-Entfernung", 0.0, 100.0)
     v["heimkehr_annaeherung_km"] = _zahl(
         v["heimkehr_annaeherung_km"], "Mindestannäherung", 0.0, 20.0)
+
+    w = e["wachhund"]
+    w["aktiv"] = bool(w["aktiv"])
+    w["stumm_stunden"] = _zahl(w["stumm_stunden"], "Schweigefrist", 0.5, 168.0)
+    w["batterie_prozent"] = int(_zahl(w["batterie_prozent"], "Batterieschwelle", 0, 100))
+    w["melden_an"] = [str(d).strip() for d in (w.get("melden_an") or []) if str(d).strip()]
 
     f = e["fenster"]
     f["aktiv"] = bool(f["aktiv"])

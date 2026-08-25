@@ -20,6 +20,7 @@ import logbuch
 import regelung
 import store
 import uebernahme
+import wachhund
 from version import VERSION
 
 logging.basicConfig(
@@ -75,6 +76,8 @@ def _takt_ausfuehren() -> dict:
             _LOGGER.exception("Regeltakt fehlgeschlagen")
             bericht = {"zeit": None, "raeume": [], "fehler": str(err)}
         else:
+            _stoerungen_melden(bericht.get("stoerungen") or [], state,
+                               config["einstellungen"])
             store.save_state(state)
         bericht["version"] = VERSION
         _letzter_bericht = bericht
@@ -84,6 +87,39 @@ def _takt_ausfuehren() -> dict:
         except Exception as err:  # noqa: BLE001
             _LOGGER.warning("MQTT-Meldung fehlgeschlagen: %s", err)
     return bericht
+
+
+def _stoerungen_melden(stoerungen: list, state: dict, einstellungen: dict) -> None:
+    """Neue Störungen einmal melden, behobene einmal entwarnen.
+
+    Der Auslöser für diese Funktion: Während eines Urlaubs fielen vier
+    Thermostate wegen leerer Batterien aus, ohne dass es jemand mitbekam. Eine
+    Meldung, die nur in der Oberfläche steht, hilft in so einem Fall nicht –
+    sie muss dorthin, wo man sie auch aus der Ferne sieht.
+    """
+    gemerkt = state.get("stoerungen") or {}
+    hinzu, weg = wachhund.vergleichen(stoerungen, gemerkt)
+    state["stoerungen"] = wachhund.als_gedaechtnis(stoerungen)
+    if not hinzu and not weg:
+        return
+
+    for eintrag in hinzu:
+        logbuch.eintragen(eintrag["raum"], "Störung", eintrag["text"],
+                          eintrag["entity_id"])
+    for eintrag in weg:
+        logbuch.eintragen(eintrag["raum"], "wieder da",
+                          f"{eintrag['name']} meldet sich wieder", eintrag["entity_id"])
+
+    meldung = wachhund.meldung_bauen(hinzu, weg)
+    if not meldung:
+        return
+    titel, text = meldung
+    dienste = (einstellungen.get("wachhund") or {}).get("melden_an") or []
+    if not dienste:
+        _LOGGER.warning("Störung, aber kein Meldeweg eingestellt: %s", titel)
+        return
+    for dienst in dienste:
+        ha_api.notify(dienst, titel, text)
 
 
 def _takt_schleife() -> None:
@@ -239,6 +275,7 @@ def api_entitaeten():
     return jsonify({
         "thermostate": ha_api.climate_entities(states),
         "personen": ha_api.person_entities(states),
+        "meldewege": ha_api.notify_dienste(),
         **kandidaten,
     })
 
@@ -314,6 +351,12 @@ def api_gesundheit():
     vorhanden = {s.get("entity_id") for s in states}
     einst = config["einstellungen"]
     hinweise = []
+
+    # Störungen zuerst: Ein ausgefallenes Thermostat wiegt schwerer als eine
+    # fehlende Zuordnung.
+    for stoerung in (_letzter_bericht.get("stoerungen") or []):
+        hinweise.append({"art": "fehler" if stoerung["schwere"] == "fehler"
+                         else "warnung", "text": stoerung["text"]})
 
     if not config["raeume"]:
         hinweise.append({"art": "info",
