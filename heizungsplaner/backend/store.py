@@ -372,6 +372,7 @@ def load_state() -> dict:
         state = {}
     state.setdefault("thermostate", {})   # entity_id -> {soll, gesetzt_am, modus}
     state.setdefault("raeume", {})        # raum_id  -> Laufzeitdaten
+    state.setdefault("veroeffentlichte_raeume", [])
     state.setdefault("aussen_gedaempft", None)
     state.setdefault("sommerbetrieb", False)
     return state

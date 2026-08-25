@@ -156,7 +156,7 @@ def _mqtt_starten() -> None:
         os.environ.get("MQTT_USER"), os.environ.get("MQTT_PASSWORD"))
 
     def bereit() -> None:
-        _publisher.publish_discovery(store.load_config()["raeume"])
+        _discovery_auffrischen()
         if _letzter_bericht.get("zeit"):
             _publisher.publish_status(_letzter_bericht)
 
@@ -165,11 +165,22 @@ def _mqtt_starten() -> None:
 
 
 def _discovery_auffrischen() -> None:
-    if _publisher is not None and _publisher.connected.is_set():
-        try:
-            _publisher.publish_discovery(store.load_config()["raeume"])
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.warning("Discovery fehlgeschlagen: %s", err)
+    """Entitäten neu anmelden – und die weggefallener Räume abräumen."""
+    if _publisher is None or not _publisher.connected.is_set():
+        return
+    try:
+        raeume = store.load_config()["raeume"]
+        aktuell = _publisher.raum_schluessel(raeume)
+        zustand = store.load_state()
+        veraltet = [k for k in (zustand.get("veroeffentlichte_raeume") or [])
+                    if k not in aktuell]
+        if veraltet:
+            _publisher.entferne_raeume(veraltet)
+        _publisher.publish_discovery(raeume)
+        zustand["veroeffentlichte_raeume"] = aktuell
+        store.save_state(zustand)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Discovery fehlgeschlagen: %s", err)
 
 
 # ------------------------------------------------------------ Oberfläche ----

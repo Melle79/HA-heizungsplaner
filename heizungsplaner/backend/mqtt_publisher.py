@@ -122,6 +122,24 @@ class Publisher:
             "sw_version": VERSION,
         }
 
+    def raum_schluessel(self, raeume: list[dict] | None) -> list[str]:
+        return [f"raum_{_slug(r['name'])}" for r in raeume or []]
+
+    def entferne_raeume(self, schluessel: list[str]) -> None:
+        """Entitäten weggefallener oder umbenannter Räume aus HA nehmen.
+
+        Ohne das bliebe nach jedem Umbenennen ein Geisterraum stehen: Die
+        Discovery-Nachricht ist „retained“, also überlebt sie das Add-on und
+        wird beim nächsten Start von Home Assistant wieder eingelesen.
+        """
+        for key in schluessel:
+            self._publish(f"{DISCOVERY_PREFIX}/sensor/{DEVICE_ID}/{key}/config", "")
+            self._publish(f"{BASE_TOPIC}/{key}/state", "")
+            self._publish(f"{BASE_TOPIC}/{key}/attributes", "")
+            self._bekannte_raeume.discard(key)
+        if schluessel:
+            _LOGGER.info("Entfernt: %s", ", ".join(schluessel))
+
     def publish_discovery(self, raeume: list[dict] | None = None) -> None:
         device = self._device()
         for component, key, name, icon, einheit, klasse in GRUND_ENTITAETEN:

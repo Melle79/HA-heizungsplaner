@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.5.4
+
+- Wird ein Raum umbenannt oder gelöscht, verschwindet jetzt auch seine Entität
+  aus Home Assistant. Bisher blieb ein Geisterraum stehen: Die
+  Discovery-Nachricht ist „retained“ und überlebte das Add-on.
+
 ## 1.5.3
 
 - **Thermostate, die sich nicht abschalten lassen.** Im Betrieb beobachtet:
