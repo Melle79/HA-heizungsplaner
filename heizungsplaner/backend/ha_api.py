@@ -48,6 +48,26 @@ def _request(method: str, path: str, payload: dict | None = None):
 
 # ---------------------------------------------------------------- lesen ----
 
+def ist_bereit() -> bool:
+    """Läuft Home Assistant, oder startet es gerade?
+
+    Während des Starts liefert `/states` eine wachsende Teilliste. Wer darauf
+    rechnet, hält die noch nicht geladenen Geräte für verschwunden – und meldet
+    im schlimmsten Fall ein Dutzend Ausfälle, die keine sind.
+    """
+    if not available():
+        return False
+    try:
+        config = _request("GET", "/config")
+    except Exception:  # noqa: BLE001
+        return False
+    if not isinstance(config, dict):
+        return False
+    zustand = config.get("state")
+    # Ältere Fassungen melden kein `state` – dann wird Bereitschaft angenommen.
+    return zustand in (None, "RUNNING")
+
+
 def get_states() -> list[dict]:
     """Alle Zustände auf einen Schlag – ein Aufruf je Regeltakt."""
     if not available():

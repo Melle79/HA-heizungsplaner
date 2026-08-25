@@ -553,6 +553,21 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Home Assistant startet gerade ===")
+# Beobachtet nach einem HA-Neustart: `/states` liefert eine wachsende
+# Teilliste. Wer darauf rechnet, meldet ein Dutzend Ausfaelle, die keine sind.
+import ha_api as _ha
+_echt_bereit, _echt_states = _ha.ist_bereit, _ha.get_states
+_ha.ist_bereit = lambda: False
+cfg_start = {"raeume": [wohnzimmer], "einstellungen": einst}
+bericht = regelung.takt(cfg_start, {"thermostate": {}, "raeume": {}},
+                        lambda *a, **k: None)
+pruefe(bericht.get("startet") is True and not bericht["raeume"],
+       f"waehrend des Starts wird ausgesetzt ({bericht.get('fehler')})")
+pruefe(not bericht.get("stoerungen"),
+       "und keine Stoerung gemeldet")
+_ha.ist_bereit, _ha.get_states = _echt_bereit, _echt_states
+
 print("\n=== Befehl bestaetigt, aber nicht umgesetzt ===")
 # Beobachtet an einem SwitchBot-Thermostat: Es quittiert den Sollwert und
 # steht danach unveraendert da. Wird das als Handeingriff gewertet, zieht sich

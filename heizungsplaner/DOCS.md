@@ -265,6 +265,15 @@ Temperatursturz-Erkennung wieder ein, die Begründung sagt es
 („… melden nichts – ersatzweise Temperatursturz“), und auf der Übersicht steht
 eine Warnung.
 
+## Während Home Assistant startet
+
+Nach einem Neustart liefert Home Assistant seine Entitäten nach und nach. Wer
+in dieser Phase rechnet, hält die noch nicht geladenen Geräte für verschwunden.
+Der Planer fragt deshalb vor jedem Takt den Zustand von Home Assistant ab und
+setzt aus, solange dieser nicht `RUNNING` ist – kein Schalten, keine Störung,
+keine Benachrichtigung. Die Oberfläche zeigt in dieser Zeit einen Hinweis statt
+einer Mängelliste.
+
 ## Überwachung: wenn ein Thermostat ausfällt
 
 Der Anlass ist ein Vorfall: Während eines Urlaubs fielen vier Thermostate wegen

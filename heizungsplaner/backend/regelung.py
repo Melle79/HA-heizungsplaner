@@ -654,6 +654,11 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     jetzt = _jetzt()
     einst = config["einstellungen"]
 
+    if not ha_api.ist_bereit():
+        _LOGGER.info("Home Assistant ist noch nicht bereit – Takt ausgesetzt")
+        return {"zeit": _iso(jetzt), "fehler": "Home Assistant startet gerade",
+                "startet": True, "raeume": []}
+
     states = ha_api.get_states()
     if not states:
         _LOGGER.warning("Keine Zustände von Home Assistant erhalten – Takt übersprungen")

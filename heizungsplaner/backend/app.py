@@ -477,6 +477,17 @@ def api_logbuch():
 def api_gesundheit():
     """Was der Einrichtung im Weg steht – für den Hinweisbalken der Oberfläche."""
     config = store.load_config()
+    # Während Home Assistant startet, ist die Entitätenliste unvollständig.
+    # Daraus einen Befund zu machen hieße, ein Dutzend Ausfälle zu melden, die
+    # keine sind – wie es beim Neustart einmal geschah.
+    if not ha_api.ist_bereit():
+        return jsonify({"hinweise": [{
+            "art": "info",
+            "text": "Home Assistant startet gerade – der Planer setzt aus, bis "
+                    "alle Geräte geladen sind."}],
+            "startet": True,
+            "mqtt": _publisher is not None and _publisher.connected.is_set()})
+
     states = ha_api.get_states()
     vorhanden = {s.get("entity_id") for s in states}
     einst = config["einstellungen"]

@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.8.0
+
+- **Der Planer setzt aus, solange Home Assistant startet.** Nach einem Neustart
+  liefert Home Assistant seine Entitäten nach und nach; die Oberfläche meldete
+  in dieser Phase ein Dutzend angeblich verschwundener Thermostate und Melder.
+  Vor jedem Takt wird nun geprüft, ob Home Assistant `RUNNING` meldet – sonst
+  wird nicht geschaltet, nichts gemeldet und nichts benachrichtigt.
+
 ## 1.7.6
 
 - **Veraltete Batteriestände warnen nicht mehr.** Manche Geräte melden den
