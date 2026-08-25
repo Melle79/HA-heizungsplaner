@@ -279,8 +279,14 @@
   dialog{
     background:var(--flaeche); color:var(--text); border:1px solid var(--linie);
     border-radius:var(--rund-gross); padding:0; width:min(720px, calc(100% - 24px));
-    max-height:min(84vh, 780px); overflow:hidden; margin:auto;
+    max-height:min(88vh, 820px); overflow:hidden; margin:auto;
   }
+  /* Der geöffnete Dialog ist ein Flex-Behälter: Kopf, Reiter und Fußzeile
+     behalten ihre Höhe, das Blatt dazwischen nimmt den Rest und scrollt. Eine
+     ausgerechnete Höhe (`calc(84vh - 168px)`) ging bei niedrigen Fenstern nicht
+     auf – dann verdeckte die Fußzeile das Ende des Inhalts. */
+  dialog[open]{display:flex; flex-direction:column}
+  .d-kopf, .d-reiter, .d-fuss{flex:none}
   dialog::backdrop{background:rgba(0,0,0,.65)}
   .d-kopf{display:flex; align-items:center; gap:var(--l3);
           padding:var(--l3) var(--l5); border-bottom:1px solid var(--linie)}
@@ -293,7 +299,8 @@
     cursor:pointer; white-space:nowrap; font-family:inherit; border-radius:0}
   .d-reiter button:hover{color:var(--text); filter:none}
   .d-reiter button.an{color:var(--text); border-bottom-color:var(--warm)}
-  .d-blatt{padding:var(--l5); overflow-y:auto; max-height:calc(84vh - 168px)}
+  .d-blatt{padding:var(--l5); overflow-y:auto; flex:1 1 auto; min-height:0;
+           overscroll-behavior:contain}
   .d-blatt > div[data-blatt]{display:none}
   .d-blatt > div[data-blatt].an{display:block}
   .d-fuss{display:flex; gap:var(--l2); align-items:center;
@@ -876,6 +883,9 @@ function reiterSetzen(leiste, blattRaum) {
       const ziel = blattRaum.querySelector(`:scope > [data-blatt="${knopf.dataset.blatt}"]`)
         || $(knopf.dataset.blatt);
       if (ziel) ziel.classList.add('an');
+      // Nach dem Wechsel oben anfangen – sonst bleibt die Bildlaufleiste dort
+      // stehen, wo man im vorigen Blatt aufgehört hat.
+      if (blattRaum.scrollTop) blattRaum.scrollTop = 0;
       if (knopf.dataset.blatt === 'protokoll') protokollLaden();
     };
   });

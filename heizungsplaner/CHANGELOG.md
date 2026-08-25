@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.8.4
+
+- **Im Raum-Dialog ließ sich das Ende nicht erreichen.** Die Innenhöhe war
+  ausgerechnet (`84vh − 168px`); bei niedrigen Fenstern ging die Rechnung nicht
+  auf und die Fußzeile legte sich über den Inhalt. Der Dialog ist jetzt ein
+  Flex-Behälter – Kopf, Reiter und Fußzeile behalten ihre Höhe, das Blatt
+  dazwischen nimmt den Rest und scrollt. Geprüft bis hinunter zu 300 Pixeln
+  Fensterhöhe.
+- Beim Wechsel des Reiters beginnt der Inhalt wieder oben.
+
 ## 1.8.3
 
 - Die Störungsentität trennt Meldungen nach Schwere (`fehler`, `warnungen`
