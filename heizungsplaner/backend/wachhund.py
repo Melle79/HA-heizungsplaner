@@ -30,6 +30,7 @@ ARTEN = {
     "stumm":        ("meldet sich nicht mehr", "fehler"),
     "batterie":     ("hat eine schwache Batterie", "warnung"),
     "verweigert":   ("nimmt keine Sollwerte an", "fehler"),
+    "sommerpause":  ("steht in der Sommerpause und heizt deshalb nicht", "fehler"),
 }
 
 # So oft darf ein Schreibvorgang scheitern, bevor es als Störung gilt.
@@ -74,7 +75,8 @@ def batterien_je_thermostat() -> dict:
 
 def pruefen(config: dict, states_index: dict, jetzt: datetime,
             einstellungen: dict, batterien: dict,
-            thermostat_zustand: dict | None = None) -> list[dict]:
+            thermostat_zustand: dict | None = None,
+            sommerbetrieb: bool = False) -> list[dict]:
     """Alle Thermostate der eingerichteten Räume durchsehen.
 
     ``thermostat_zustand`` ist das Gedächtnis des Planers je Gerät. Daraus
@@ -116,6 +118,18 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
                 stunden = (jetzt_utc - gemeldet).total_seconds() / 3600
                 stoerungen.append(_bauen(entity_id, name, raum, "stumm",
                                          f"zuletzt vor {stunden:.0f} Stunden"))
+                continue
+
+            # Die Sommerpause eines FRITZ!-Thermostats ist ein Zustand in der
+            # FRITZ!Box, nicht in Home Assistant: Das Gerät lehnt jeden
+            # Sollwert ab, solange sie läuft, und nichts hier kann sie
+            # beenden. Gemeldet wird sie, sobald der Planer wieder heizen
+            # will – dann ist der Hinweis eine Handlungsanweisung und keine
+            # Nachricht über den Sommer.
+            if not sommerbetrieb and (eintrag.get("attributes") or {}).get(
+                    "preset_mode") == "summer":
+                stoerungen.append(_bauen(entity_id, name, raum, "sommerpause",
+                                         "in der FRITZ!Box beenden"))
                 continue
 
             fehler = (thermostat_zustand.get(entity_id) or {}).get("schreib_fehler", 0)

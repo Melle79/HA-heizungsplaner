@@ -918,6 +918,28 @@ pruefe(len(st) == 1 and st[0]["art"] == "batterie",
        f"schwache Batterie gemeldet ({st[0]['text'] if st else '-'})")
 pruefe(lage(batterie=80) == [], "volle Batterie meldet nichts")
 
+# Die Sommerpause eines FRITZ!-Thermostats lehnt jeden Sollwert ab. Gemeldet
+# wird sie erst, wenn der Planer wieder heizen will - im Sommer waere sie nur
+# eine Nachricht ueber den Sommer.
+def lage_sommerpause(sommerbetrieb):
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "off",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat A",
+                                        "preset_mode": "summer"}},
+           "climate.b": {"entity_id": "climate.b", "state": "heat",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat B"}}}
+    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, {},
+                            sommerbetrieb=sommerbetrieb)
+
+still = lage_sommerpause(True)
+pruefe(not still, f"im Sommerbetrieb schweigt die Sommerpause ({still})")
+laut = lage_sommerpause(False)
+pruefe(len(laut) == 1 and laut[0]["art"] == "sommerpause"
+       and "FRITZ" in laut[0]["text"],
+       f"zur Heizperiode wird die Sommerpause gemeldet "
+       f"({laut[0]['text'] if laut else '-'})")
+
 # Ein veralteter Stand darf nicht warnen: Nach einem Batteriewechsel zeigen
 # manche Geraete tagelang den alten Wert.
 def lage_batterie(prozent, gemeldet):

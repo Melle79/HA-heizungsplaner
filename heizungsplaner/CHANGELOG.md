@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.9.2
+
+- **Der Planer erinnert an die FRITZ!-Sommerpause**, sobald der Sommerbetrieb
+  endet und ein Thermostat noch auf `summer` steht. Ein solches Gerät lehnt
+  jeden Sollwert ab, und beenden lässt sich der Modus nur in der FRITZ!Box –
+  Home Assistant zeigt ihn nur an. Bisher fiel das erst auf, nachdem der Raum
+  drei Schreibversuche lang kalt geblieben war.
+
 ## 1.9.1
 
 - **Eine verschwundene Batterieanzeige wird sofort neu gesucht.** Die

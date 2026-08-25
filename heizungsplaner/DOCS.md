@@ -408,6 +408,7 @@ gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
 | meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 6 Stunden) |
 | schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) und **nicht älter als zwölf Stunden** |
 | nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
+| steht in der Sommerpause | das Gerät meldet `summer`, obwohl geheizt werden soll |
 
 Beim Batteriestand zählt auch sein Alter. Manche Geräte melden ihn nur bei
 Änderung – nach einem Batteriewechsel steht dort womöglich noch tagelang der
@@ -415,12 +416,17 @@ alte Wert. Eine Warnung darauf wäre falsch, deshalb bleibt ein Stand, der
 älter als zwölf Stunden ist, unberücksichtigt. Die Meldung nennt umgekehrt die
 Uhrzeit der Messung, damit man sie einordnen kann.
 
-Der letzte Fall ist nicht zwangsläufig ein Defekt: Ein FRITZ!-Thermostat in der
-**Sommerpause** lehnt jeden Sollwert ab, solange dieser Modus läuft. Die
-Meldung nennt das ausdrücklich, damit man nicht nach Batterien sucht, wo keine
-fehlen. Vor der Heizperiode gehört die Sommerpause am Gerät oder in der
-FRITZ!Box beendet – sonst bleibt der Raum kalt, ohne dass der Planer etwas
-dagegen ausrichten könnte.
+**Die Sommerpause meldet der Planer von sich aus**, sobald der Sommerbetrieb
+endet und ein Gerät noch auf `summer` steht. Das ist der Zeitpunkt, an dem der
+Hinweis etwas nützt: Vorher wäre er eine Nachricht über den Sommer, nachher
+bliebe der Raum kalt. Beenden lässt sie sich nur in der FRITZ!Box – unter
+*Smart Home → Gerät bearbeiten → Zeitschaltung → Sommerzeit*. Home Assistant
+kann es nicht: Die Integration zeigt den Modus an, und die Liste der
+Voreinstellungen enthält dann nichts außer `summer`.
+
+Bis dahin gilt auch der Fall darüber: Ein Gerät in der Sommerpause lehnt jeden
+Sollwert ab. Die Meldung nennt das ausdrücklich, damit man nicht nach
+Batterien sucht, wo keine fehlen.
 
 Nach drei Fehlschlägen versucht der Planer es nur noch alle 30 Minuten. Sonst
 füllte ein solches Gerät bei jedem Takt das Protokoll, ohne dass sich etwas

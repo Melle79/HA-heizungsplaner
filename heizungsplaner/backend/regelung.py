@@ -799,7 +799,8 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     try:
         stoerungen = wachhund.pruefen(config, states_index, jetzt, einst,
                                       _batterien_holen(jetzt, state, states_index),
-                                      state.get("thermostate") or {})
+                                      state.get("thermostate") or {},
+                                      sommerbetrieb=sommer)
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("Überwachung fehlgeschlagen: %s", err)
         stoerungen = []
