@@ -72,9 +72,21 @@ def eintragen(raum: str, was: str, warum: str, entity_id: str = "",
 
 
 def lesen(grenze: int = 200) -> list[dict]:
+    """Die jüngsten Einträge, neueste zuerst.
+
+    Einträgen ohne vermerkte Art wird sie hier zugeordnet – so sind auch die
+    Einträge von vor dieser Fassung im Protokoll richtig eingefärbt.
+    """
     with _lock:
         eintraege = _load()
-    return list(reversed(eintraege[-grenze:]))
+    out = []
+    for eintrag in reversed(eintraege[-grenze:]):
+        if not eintrag.get("art"):
+            eintrag = {**eintrag,
+                       "art": _art_raten(eintrag.get("was", ""),
+                                         eintrag.get("warum", ""))}
+        out.append(eintrag)
+    return out
 
 
 def leeren() -> None:
