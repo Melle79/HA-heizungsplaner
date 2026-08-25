@@ -280,8 +280,14 @@ gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
 | gibt es nicht mehr | die Entität ist aus Home Assistant verschwunden |
 | nicht erreichbar | Zustand `unavailable` oder `unknown` |
 | meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 6 Stunden) |
-| schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) |
+| schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) und **nicht älter als zwölf Stunden** |
 | nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
+
+Beim Batteriestand zählt auch sein Alter. Manche Geräte melden ihn nur bei
+Änderung – nach einem Batteriewechsel steht dort womöglich noch tagelang der
+alte Wert. Eine Warnung darauf wäre falsch, deshalb bleibt ein Stand, der
+älter als zwölf Stunden ist, unberücksichtigt. Die Meldung nennt umgekehrt die
+Uhrzeit der Messung, damit man sie einordnen kann.
 
 Der letzte Fall ist nicht zwangsläufig ein Defekt: Ein FRITZ!-Thermostat in der
 **Sommerpause** lehnt jeden Sollwert ab, solange dieser Modus läuft. Die

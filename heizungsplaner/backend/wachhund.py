@@ -35,6 +35,11 @@ ARTEN = {
 # So oft darf ein Schreibvorgang scheitern, bevor es als Störung gilt.
 FEHLSCHLAEGE = 3
 
+# Älter als das wird ein Batteriestand nicht mehr für bare Münze genommen.
+# Manche Geräte melden ihn nur bei Änderung – nach einem Batteriewechsel steht
+# dort womöglich tagelang der alte Wert, und eine Warnung darauf wäre falsch.
+BATTERIE_HOECHSTALTER_H = 12
+
 
 def _zeit(text: str | None) -> datetime | None:
     if not text:
@@ -122,11 +127,24 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
                 continue
 
             batterie_id = batterien.get(entity_id)
-            stand = ha_api.as_float((states_index.get(batterie_id) or {}).get("state")) \
-                if batterie_id else None
+            batterie = states_index.get(batterie_id) if batterie_id else None
+            stand = ha_api.as_float((batterie or {}).get("state"))
             if stand is not None and stand <= schwelle:
-                stoerungen.append(_bauen(entity_id, name, raum, "batterie",
-                                         f"{stand:.0f} %"))
+                # Wie alt ist die Angabe? Ein Gerät, das seinen Ladestand nur
+                # bei Änderung meldet, zeigt nach einem Batteriewechsel weiter
+                # den alten Wert – davor zu warnen wäre schlicht falsch.
+                gemessen = _zeit((batterie or {}).get("last_reported")
+                                 or (batterie or {}).get("last_updated"))
+                alter = ((jetzt_utc - gemessen).total_seconds() / 3600
+                         if gemessen else None)
+                if alter is not None and alter > BATTERIE_HOECHSTALTER_H:
+                    _LOGGER.info("Batteriestand von %s ist %.0f Stunden alt "
+                                 "(%.0f %%) – keine Warnung", batterie_id, alter, stand)
+                else:
+                    zusatz = f"{stand:.0f} %"
+                    if gemessen:
+                        zusatz += f", Stand {gemessen.astimezone().strftime('%H:%M')} Uhr"
+                    stoerungen.append(_bauen(entity_id, name, raum, "batterie", zusatz))
 
     return stoerungen
 

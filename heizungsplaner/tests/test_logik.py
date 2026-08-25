@@ -879,6 +879,28 @@ pruefe(len(st) == 1 and st[0]["art"] == "batterie",
        f"schwache Batterie gemeldet ({st[0]['text'] if st else '-'})")
 pruefe(lage(batterie=80) == [], "volle Batterie meldet nichts")
 
+# Ein veralteter Stand darf nicht warnen: Nach einem Batteriewechsel zeigen
+# manche Geraete tagelang den alten Wert.
+def lage_batterie(prozent, gemeldet):
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat A"}},
+           "climate.b": {"entity_id": "climate.b", "state": "heat",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat B"}},
+           "sensor.a_batterie": {"entity_id": "sensor.a_batterie",
+                                 "state": str(prozent),
+                                 "last_reported": gemeldet, "attributes": {}}}
+    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w,
+                            {"climate.a": "sensor.a_batterie"})
+
+frisch = lage_batterie(10, "2026-08-25T10:00:00+00:00")
+pruefe(len(frisch) == 1 and "Stand" in frisch[0]["text"],
+       f"frischer Stand warnt und nennt die Uhrzeit ({frisch[0]['text'] if frisch else '-'})")
+alt = lage_batterie(10, "2026-08-24T00:25:00+00:00")
+pruefe(alt == [],
+       f"ein 36 Stunden alter Stand warnt nicht mehr ({alt})")
+
 # Ein ausgefallenes Geraet wird nicht zusaetzlich wegen Batterie gemeldet
 st = lage(a_zustand="unavailable", batterie=5)
 pruefe(len(st) == 1 and st[0]["art"] == "unerreichbar",

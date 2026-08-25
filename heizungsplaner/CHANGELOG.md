@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.7.6
+
+- **Veraltete Batteriestände warnen nicht mehr.** Manche Geräte melden den
+  Ladestand nur bei Änderung; nach einem Batteriewechsel steht dort noch der
+  alte Wert, und die Warnung schickte jemanden nach Batterien, die längst
+  gewechselt waren. Stände, die älter als zwölf Stunden sind, bleiben
+  unberücksichtigt; die Meldung nennt jetzt die Uhrzeit der Messung.
+
 ## 1.7.4
 
 - **Ein verschluckter Befehl wird nicht mehr für einen Handeingriff gehalten.**
