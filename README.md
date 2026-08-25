@@ -65,7 +65,7 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
 | `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum, mit Begründung als Attribut |
 | `switch.heizungsplaner_party` | Partytaste, mit Restzeit als Attribut |
-| `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr |
+| `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr; Meldungen nach Schwere getrennt als Attribute |
 | `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
 
 ## Prüflauf

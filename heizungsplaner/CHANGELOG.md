@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.8.3
+
+- Die Störungsentität trennt Meldungen nach Schwere (`fehler`, `warnungen`
+  samt Anzahl). Damit kann ein Dashboard Ausfälle und bloße Hinweise
+  unterschiedlich darstellen, statt beides in eine Liste zu werfen.
+
 ## 1.8.1
 
 - Das Protokoll färbt Einträge nach ihrer Schwere: Störungen rot, Fehlschläge

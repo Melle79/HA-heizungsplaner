@@ -246,9 +246,15 @@ class Publisher:
         # über die Lautsprecher etwa.
         stoerungen = bericht.get("stoerungen") or []
         schwer = [s for s in stoerungen if s.get("schwere") == "fehler"]
+        leicht = [s for s in stoerungen if s.get("schwere") != "fehler"]
+        # Getrennt nach Schwere, damit das Dashboard Ausfälle und bloße
+        # Hinweise unterschiedlich darstellen kann.
         self._zustand("stoerung", "ON" if stoerungen else "OFF",
                       {"anzahl": len(stoerungen), "ausgefallen": len(schwer),
-                       "meldungen": [s["text"] for s in stoerungen]})
+                       "warnungen_anzahl": len(leicht),
+                       "meldungen": [s["text"] for s in stoerungen],
+                       "fehler": [s["text"] for s in schwer],
+                       "warnungen": [s["text"] for s in leicht]})
         self._zustand("stoerungen", str(len(schwer)),
                       {"geraete": [s["entity_id"] for s in schwer],
                        "meldungen": [s["text"] for s in stoerungen]})
