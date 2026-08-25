@@ -402,6 +402,49 @@ def api_party_raeume():
     return jsonify({"raeume": [r["id"] for r in config["raeume"] if r["party"]]})
 
 
+@app.route("/api/zustand")
+def api_zustand():
+    """Der Laufzeitzustand, wie der Planer ihn sich gemerkt hat.
+
+    Für den Fall, dass ein Raum sich anders verhält als erwartet: Hier steht,
+    was der Planer zuletzt geschrieben hat, ob er einen Handeingriff vermutet
+    und wie oft ein Gerät sich verweigert hat.
+    """
+    zustand = store.load_state()
+    # Der Temperaturverlauf ist für die Diagnose uninteressant und lang.
+    schlank = {k: v for k, v in zustand.items() if k != "raeume"}
+    schlank["raeume"] = {
+        rid: {k: v for k, v in daten.items() if k != "verlauf"}
+        for rid, daten in (zustand.get("raeume") or {}).items()
+    }
+    return jsonify(schlank)
+
+
+@app.route("/api/thermostate/vergessen", methods=["POST"])
+def api_thermostate_vergessen():
+    """Das Gedächtnis zu den Thermostaten verwerfen.
+
+    Vermuteter Handeingriff, gezählte Fehlschläge, zuletzt geschriebener Wert –
+    alles zurück auf Anfang. Danach stellt der Planer beim nächsten Takt wieder
+    frei nach Plan.
+    """
+    entity_id = (request.get_json(silent=True) or {}).get("entity_id")
+    with _takt_lock:
+        zustand = store.load_state()
+        vorher = len(zustand.get("thermostate") or {})
+        if entity_id:
+            zustand["thermostate"].pop(entity_id, None)
+            betroffen = 1
+        else:
+            zustand["thermostate"] = {}
+            betroffen = vorher
+        store.save_state(zustand)
+    logbuch.eintragen("Alle Räume", "zurückgesetzt",
+                      f"Gedächtnis zu {betroffen} Thermostat(en) verworfen")
+    _sofort_rechnen()
+    return jsonify({"zurueckgesetzt": betroffen})
+
+
 @app.route("/api/wachhund/probe", methods=["POST"])
 def api_wachhund_probe():
     """Eine Probemeldung über die eingestellten Wege schicken.
