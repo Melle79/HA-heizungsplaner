@@ -210,11 +210,16 @@ def uebersteuerung_lage(raum: dict, states_index: dict,
     """
     regeln = raum.get("uebersteuerung") or []
     if not regeln:
-        return {"name": "", "greift": False, "lage": ""}
+        return {"name": "", "greift": False, "lage": "", "bis": ""}
 
     greifend = _uebersteuerung(raum, states_index, jetzt)
     if greifend:
-        return {"name": greifend["name"], "greift": True, "lage": "greift gerade"}
+        # „bis 14:00 Uhr“ ist die Angabe, die man auf einer Kachel sehen will –
+        # der Zielwert steht ohnehin daneben. Ohne Zeitfenster bleibt es bei
+        # „läuft“, denn ein Ende gibt es dann nicht.
+        bis = greifend.get("fenster", "").strip(" ()")
+        return {"name": greifend["name"], "greift": True, "lage": "greift gerade",
+                "bis": bis or "läuft"}
 
     # Sonst die erste Regel erklären – sie ist die ranghöchste.
     regel = regeln[0]
@@ -243,9 +248,10 @@ def uebersteuerung_lage(raum: dict, states_index: dict,
                      else f"{anzeige} läuft nicht" if art == "calendar"
                      else f"{anzeige} ist aus")
         vorspann = "greift heute nicht" if tagesfrage else "greift gerade nicht"
-        return {"name": name, "greift": False, "lage": f"{vorspann} – {grund}"}
+        return {"name": name, "greift": False, "bis": "",
+                "lage": f"{vorspann} – {grund}"}
 
-    return {"name": name, "greift": False,
+    return {"name": name, "greift": False, "bis": "",
             "lage": (f"greift gerade nicht – außerhalb {regel.get('von')}–"
                      f"{regel.get('bis')} Uhr")}
 

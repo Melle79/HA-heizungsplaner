@@ -297,6 +297,7 @@ class Publisher:
                 "uebersteuerung": (raum.get("uebersteuerung") or {}).get("name", ""),
                 "uebersteuerung_greift": (raum.get("uebersteuerung") or {}).get("greift", False),
                 "uebersteuerung_lage": (raum.get("uebersteuerung") or {}).get("lage", ""),
+                "uebersteuerung_bis": (raum.get("uebersteuerung") or {}).get("bis", ""),
                 "ist_temperatur": raum.get("ist"),
                 "seit": raum.get("seit"),
                 "naechster_wechsel": raum.get("naechster_wechsel"),

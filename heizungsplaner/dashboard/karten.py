@@ -123,8 +123,9 @@ def regelkarte(sensor, name="Homeoffice", icon="mdi:laptop"):
     """Eine Kachel, sichtbar nur solange die Übersteuerungsregel greift.
 
     ``sensor`` ist der Raum-Sensor des Planers, etwa
-    ``sensor.heizungsplaner_raum_wohnzimmer``. Angezeigt wird der Zielwert des
-    Raumes; ein Klick öffnet den Sensor mit Begründung und Lage.
+    ``sensor.heizungsplaner_raum_wohnzimmer``. Angezeigt wird, bis wann die
+    Regel läuft – „bis 14:00 Uhr“; ein Klick öffnet den Sensor mit Zielwert,
+    Begründung und Lage.
     """
     return {
         "type": "tile",
@@ -132,7 +133,7 @@ def regelkarte(sensor, name="Homeoffice", icon="mdi:laptop"):
         "name": name,
         "icon": icon,
         "color": "green",
-        "state_content": ["state"],
+        "state_content": ["uebersteuerung_bis"],
         "visibility": [{
             "condition": "template",
             "value_template": (f"{{{{ state_attr('{sensor}', "

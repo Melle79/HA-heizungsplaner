@@ -24,8 +24,8 @@ python3 heizungsplaner/dashboard/erzeuge_yaml.py
 ## Eine Übersteuerungsregel im Blick behalten
 
 `regelkarte("sensor.heizungsplaner_raum_wohnzimmer")` liefert eine Kachel, die
-**nur erscheint, solange die Regel greift** – mit dem Zielwert des Raumes und
-grünem Akzent. Ruht die Regel, ist die Kachel weg und nimmt keinen Platz.
+**nur erscheint, solange die Regel greift** – mit der Endzeit („bis 14:00
+Uhr") und grünem Akzent. Ruht die Regel, ist die Kachel weg und nimmt keinen Platz.
 Warum sie ruht, steht in der App und im Attribut `uebersteuerung_lage`.
 
 Sie gehört nicht in den Planer-Abschnitt, sondern dorthin, wo man den Raum

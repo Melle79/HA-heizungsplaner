@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.13.1
+
+- Der Raum-Sensor trägt zusätzlich `uebersteuerung_bis` – „bis 14:00 Uhr“,
+  solange eine Regel greift, sonst „läuft“ bei Regeln ohne Zeitfenster. Für
+  eine Dashboard-Kachel ist das die nützlichere Angabe als der Zielwert.
+
 ## 1.13.0
 
 - **Die Lage der Übersteuerungsregel geht über MQTT nach Home Assistant.** Der
