@@ -317,8 +317,20 @@ def api_gesundheit():
                              "text": f"{beschriftung}: {entity_id} gibt es in "
                                      f"Home Assistant nicht."})
 
+    zustand_je_id = {s.get("entity_id"): s.get("state") for s in states}
+    zugeordnete_kontakte = {e for raum in config["raeume"] for e in raum["fenster"]}
+
     belegt: dict[str, str] = {}
     for raum in config["raeume"]:
+        # Ein Kontakt, der nichts meldet, gilt nicht als „geschlossen“ – sonst
+        # macht ein leerer Knopf den Raum stillschweigend blind.
+        for entity_id in raum["fenster"]:
+            if zustand_je_id.get(entity_id) not in ("on", "off"):
+                hinweise.append({
+                    "art": "warnung",
+                    "text": f"Fensterkontakt {entity_id} (Raum „{raum['name']}“) "
+                            f"meldet nichts – der Raum fällt auf die "
+                            f"Temperatursturz-Erkennung zurück."})
         if not raum["thermostate"]:
             hinweise.append({"art": "warnung",
                              "text": f"Raum „{raum['name']}“ hat kein Thermostat."})
@@ -338,6 +350,28 @@ def api_gesundheit():
                                          f"dasselbe Thermostat gegeneinander stellen."})
             else:
                 belegt[entity_id] = raum["name"]
+
+    # Neu nachgerüstete Fensterkontakte anbieten: Was im Bereich eines Raumes
+    # liegt und noch keinem zugeordnet ist, wäre sonst leicht zu übersehen.
+    raum_je_name = {raum["name"]: raum for raum in config["raeume"]}
+    bereiche = ha_api.bereiche_je_entitaet(("binary_sensor",))
+    for s in states:
+        eid = s.get("entity_id", "")
+        if not eid.startswith("binary_sensor.") or eid in zugeordnete_kontakte:
+            continue
+        attrs = s.get("attributes") or {}
+        name = attrs.get("friendly_name", eid)
+        if not ha_api.ist_fensterkontakt(eid, name, attrs.get("device_class")):
+            continue
+        bereich = bereiche.get(eid)
+        raum = raum_je_name.get(bereich) if bereich else None
+        if raum:
+            hinweise.append({
+                "art": "info",
+                "text": f"„{name}“ liegt im Bereich „{bereich}“ und ist noch keinem "
+                        f"Raum zugeordnet. Im Raum „{raum['name']}“ unter "
+                        f"„Fensterkontakte“ eintragen, damit der Planer ihn nutzt.",
+                "raum_id": raum["id"], "entity_id": eid})
 
     return jsonify({"hinweise": hinweise, "mqtt": _publisher is not None
                     and _publisher.connected.is_set()})

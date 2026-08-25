@@ -94,25 +94,45 @@ def raumtemperatur(raum: dict, states_index: dict) -> float | None:
     return round(sum(werte) / len(werte), 1) if werte else None
 
 
-def fenster_offen(raum: dict, states_index: dict, rz: dict,
-                  ist: float | None, jetzt: datetime, fenster_cfg: dict) -> tuple[bool, str]:
-    """Fenstererkennung: erst die Sensoren, dann der Temperatursturz.
+def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
+                  jetzt: datetime, fenster_cfg: dict) -> tuple[bool, str, str]:
+    """Fenstererkennung: erst die Kontakte, dann ersatzweise der Temperatursturz.
 
-    Dieses Haus hat an den Wohnräumen keine Fensterkontakte. Deshalb der
-    zweite Weg: Fällt die Raumtemperatur binnen weniger Minuten deutlich ab,
-    steht mit hoher Wahrscheinlichkeit ein Fenster offen.
+    Rückgabe: offen, Begründung, Hinweis zum Verfahren.
+
+    Sobald ein Raum verlässliche Kontakte hat, entscheiden allein sie – der
+    Temperatursturz ist der Notbehelf für Räume ohne Kontakte und schlägt
+    sonst auch mal grundlos an (ein anlaufender Heizkörper verwirbelt die
+    Luft am Thermostatfühler). Wer beides will, schaltet es am Raum zu.
+
+    **Ein Kontakt, der nichts meldet, gilt nicht als „geschlossen“.** Ein
+    leerer Knopf, ein abgezogener Zigbee-Stick oder ein noch nicht angelernter
+    Sensor würde den Raum sonst stillschweigend blind machen. In dem Fall
+    springt die Sturzerkennung wieder ein.
     """
     if not fenster_cfg.get("aktiv"):
-        return False, ""
+        return False, "", ""
 
-    for entity_id in raum.get("fenster") or []:
-        if _bool_state(states_index, entity_id):
+    kontakte = raum.get("fenster") or []
+    verlaesslich, stumm = 0, []
+    for entity_id in kontakte:
+        zustand = _bool_state(states_index, entity_id)
+        if zustand is None:
+            stumm.append(entity_id)
+            continue
+        verlaesslich += 1
+        if zustand:
             name = (states_index[entity_id].get("attributes") or {}).get(
                 "friendly_name", entity_id)
-            return True, f"{name} ist offen"
+            return True, f"{name} ist offen", ""
 
-    if ist is None:
-        return False, ""
+    hinweis = ""
+    if stumm:
+        hinweis = (f"{len(stumm)} Fensterkontakt(e) melden nichts – "
+                   f"ersatzweise Temperatursturz")
+    sturz_erlaubt = verlaesslich == 0 or raum.get("sturz_auch_mit_kontakten") or stumm
+    if not sturz_erlaubt or ist is None:
+        return False, "", hinweis
 
     fenster_min = int(fenster_cfg.get("sturz_min", 10))
     schwelle = float(fenster_cfg.get("sturz_k", 1.2))
@@ -124,8 +144,8 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict,
         hoechster = max(frueher)
         if hoechster - ist >= schwelle:
             return True, (f"Temperatursturz um {hoechster - ist:.1f} K "
-                          f"in {fenster_min} Minuten")
-    return False, ""
+                          f"in {fenster_min} Minuten"), hinweis
+    return False, "", hinweis
 
 
 def _verlauf_fortschreiben(rz: dict, ist: float | None, jetzt: datetime) -> None:
@@ -167,8 +187,8 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
 
     # 2 — Fenster
     sperre_bis = _aus_iso(rz.get("fenster_bis"))
-    offen, fenster_grund = fenster_offen(raum, states_index, rz, ist, jetzt,
-                                         einst["fenster"])
+    offen, fenster_grund, fenster_hinweis = fenster_offen(
+        raum, states_index, rz, ist, jetzt, einst["fenster"])
     if offen:
         sperre_bis = jetzt + timedelta(minutes=int(einst["fenster"]["sperre_min"]))
         rz["fenster_bis"] = _iso(sperre_bis)
@@ -258,6 +278,9 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
         if abs(korrektur) >= 0.05:
             vorzeichen = "+" if korrektur > 0 else ""
             begruendung += f" · Heizkurve {vorzeichen}{korrektur:.1f} K"
+
+    if fenster_hinweis:
+        begruendung += f" · {fenster_hinweis}"
 
     return ergebnis(zustand, basis + korrektur, begruendung, korrektur=korrektur)
 

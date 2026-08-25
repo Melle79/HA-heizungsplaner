@@ -17,6 +17,7 @@ import logging
 import os
 import urllib.request
 
+import ha_api
 import zeitplan as zp
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,6 +53,10 @@ BEREICHS_TEMPLATE = (
     "{%- for s in states.sensor if s.attributes.device_class == 'temperature' %}"
     "{{ s.entity_id }}|{{ area_name(s.entity_id) or '' }}|{{ s.name }}|fuehler\n"
     "{% endfor -%}"
+    "{%- for s in states.binary_sensor %}"
+    "{{ s.entity_id }}|{{ area_name(s.entity_id) or '' }}|{{ s.name }}|"
+    "{{ 'melder' if s.attributes.device_class in ['motion','occupancy','presence'] "
+    "else 'binaer' }}\n{% endfor -%}"
 )
 
 
@@ -109,6 +114,8 @@ def vorschlag() -> list[dict]:
 
     thermostate_je_bereich: dict[str, list[tuple[str, str]]] = {}
     fuehler_je_bereich: dict[str, list[str]] = {}
+    fenster_je_bereich: dict[str, list[str]] = {}
+    praesenz_je_bereich: dict[str, list[str]] = {}
     for entity_id, bereich, anzeigename, art in zeilen:
         if not bereich:
             continue
@@ -117,6 +124,11 @@ def vorschlag() -> list[dict]:
         elif art == "einzeln":
             thermostate_je_bereich.setdefault(bereich, []).append(
                 (entity_id, anzeigename))
+        elif art == "melder":
+            praesenz_je_bereich.setdefault(bereich, []).append(entity_id)
+        elif art == "binaer" and ha_api.ist_fensterkontakt(
+                entity_id, anzeigename, None):
+            fenster_je_bereich.setdefault(bereich, []).append(entity_id)
 
     raeume = []
     for bereich, eintraege in sorted(thermostate_je_bereich.items()):
@@ -141,8 +153,8 @@ def vorschlag() -> list[dict]:
             "aktiv": True,
             "thermostate": eindeutig,
             "personen": zugeordnet,
-            "praesenz": [],
-            "fenster": [],
+            "praesenz": praesenz_je_bereich.get(bereich, []),
+            "fenster": fenster_je_bereich.get(bereich, []),
             "raumtemp": "",
             "komfort": komfort,
             "eco": eco,
@@ -152,6 +164,7 @@ def vorschlag() -> list[dict]:
             "max": 26.0,
             "heizkurve": True,
             "anwesenheit": art != "nebenraum",
+            "sturz_auch_mit_kontakten": False,
             "zeitplan": zp.standardplan(art),
             "_art": art,
             "_fuehler_vorschlag": fuehler_je_bereich.get(bereich, []),

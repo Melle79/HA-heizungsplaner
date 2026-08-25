@@ -1,5 +1,22 @@
 # Änderungen
 
+## 1.1.0
+
+Fensterkontakte lassen sich jetzt schrittweise nachrüsten.
+
+- Die Auswahl der Fensterkontakte ist nach Bereich gruppiert und enthält nur
+  noch, was nach Geräteklasse oder Namen ein Kontakt ist. Alles übrige Binäre
+  steht getrennt unter „Sonstige Melder“.
+- Ein neuer Kontakt im Bereich eines Raumes wird auf der Übersicht gemeldet,
+  mit Knopf „Zuordnen“, der den Raum mit vorgewähltem Kontakt öffnet.
+- **Ein Kontakt, der nichts meldet, gilt nicht mehr als „geschlossen“.** Bei
+  leerer Batterie oder gestörtem Funk fällt der Raum auf die
+  Temperatursturz-Erkennung zurück, statt blind zu werden; die Übersicht warnt.
+- Sobald ein Raum verlässliche Kontakte hat, entscheiden allein sie. Die neue
+  Raumoption „Zusätzlich auf Temperatursturz achten“ schaltet beides zu.
+- Die Ersteinrichtung übernimmt Fensterkontakte und Präsenzmelder des Bereichs
+  gleich mit.
+
 ## 1.0.5
 
 - Räume mit geschlossenem Ventil zeigen „Aus · Ventil zu“ statt der

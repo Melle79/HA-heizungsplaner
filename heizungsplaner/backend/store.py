@@ -94,6 +94,7 @@ STANDARD_RAUM = {
     "max": 26.0,
     "heizkurve": True,
     "anwesenheit": True,
+    "sturz_auch_mit_kontakten": False,
     "zeitplan": [],
 }
 
@@ -228,6 +229,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         "max": maximum,
         "heizkurve": bool(raum.get("heizkurve", True)),
         "anwesenheit": bool(raum.get("anwesenheit", True)),
+        "sturz_auch_mit_kontakten": bool(raum.get("sturz_auch_mit_kontakten", False)),
         "zeitplan": validate_zeitplan(raum.get("zeitplan") or []),
         **temperaturen,
     }

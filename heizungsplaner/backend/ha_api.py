@@ -171,16 +171,92 @@ def person_entities(states: list[dict] | None = None) -> list[dict]:
     return out
 
 
-def sensor_candidates(states: list[dict] | None = None) -> dict:
+TEMPLATE_API = f"{API_BASE}/template"
+
+# Wörter, an denen ein Fensterkontakt auch ohne Geräteklasse zu erkennen ist.
+FENSTER_WORTE = ("fenster", "window", "kipp", "balkontür", "balkontuer",
+                 "terrassentür", "terrassentuer")
+
+
+def template(vorlage: str) -> str:
+    """Ein Jinja-Template in Home Assistant auswerten lassen.
+
+    Der einzige Weg, aus einem Add-on an die Bereichszuordnung zu kommen: Das
+    Geräte- und Entitätenregister gibt es nur über die Websocket-API, die einem
+    Add-on nicht offensteht. ``area_name()`` liefert dieselbe Auskunft.
+    """
+    if not available():
+        return ""
+    req = urllib.request.Request(
+        TEMPLATE_API, method="POST",
+        data=json.dumps({"template": vorlage}).encode("utf-8"),
+        headers={"Authorization": f"Bearer {_token()}",
+                 "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return resp.read().decode("utf-8")
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Template konnte nicht ausgewertet werden: %s", err)
+        return ""
+
+
+_bereich_cache: dict[tuple, tuple[float, dict]] = {}
+BEREICH_CACHE_SEKUNDEN = 300
+
+
+def bereiche_je_entitaet(domains: tuple[str, ...] = ("binary_sensor",),
+                         hoechstalter: float = BEREICH_CACHE_SEKUNDEN) -> dict:
+    """Entity-ID → Bereichsname für die angegebenen Domänen.
+
+    Kurz zwischengespeichert: Bereiche ändern sich selten, die Oberfläche
+    fragt aber alle halbe Minute nach.
+    """
+    import time
+
+    gespeichert = _bereich_cache.get(domains)
+    if gespeichert and time.monotonic() - gespeichert[0] < hoechstalter:
+        return gespeichert[1]
+
+    teile = [
+        "{%- for s in states." + domain + " %}{{ s.entity_id }}|"
+        "{{ area_name(s.entity_id) or '' }}\n{% endfor -%}"
+        for domain in domains
+    ]
+    zuordnung = {}
+    for zeile in template("".join(teile)).splitlines():
+        entity_id, _, bereich = zeile.partition("|")
+        if entity_id and bereich:
+            zuordnung[entity_id] = bereich
+    if zuordnung or gespeichert is None:
+        _bereich_cache[domains] = (time.monotonic(), zuordnung)
+    return zuordnung if zuordnung else (gespeichert[1] if gespeichert else {})
+
+
+def ist_fensterkontakt(entity_id: str, name: str, klasse: str | None) -> bool:
+    """Fensterkontakt an Geräteklasse oder Bezeichnung erkennen.
+
+    Die Fenster-offen-Meldung mancher Thermostate kommt ohne Geräteklasse –
+    sie trägt den Zweck nur im Namen.
+    """
+    if klasse in ("window", "door", "opening"):
+        return True
+    text = f"{entity_id} {name}".lower()
+    return any(wort in text for wort in FENSTER_WORTE)
+
+
+def sensor_candidates(states: list[dict] | None = None,
+                      mit_bereichen: bool = True) -> dict:
     """Kandidaten für die Auswahllisten der Oberfläche.
 
-    Fensterkontakte und Präsenzmelder werden über ihre Geräteklasse erkannt.
-    Weil in diesem Haus die Fenster-offen-Meldung mancher Thermostate ohne
-    Geräteklasse kommt, wandern zusätzlich alle Binärsensoler in die
-    Schalterliste – dort lässt sich alles auswählen, was ``on``/``off`` kennt.
+    Die Fensterliste enthält, was nach Geräteklasse oder Namen ein Kontakt ist;
+    alles übrige Binäre steht getrennt unter ``sonstige_melder``. Ohne diese
+    Trennung stünden in der Auswahl auch Dinge wie Tankstellen-Öffnungszeiten.
     """
-    aussen, fenster, praesenz, raumtemp, schalter = [], [], [], [], []
-    for s in states if states is not None else get_states():
+    aussen, fenster, sonstige, praesenz, raumtemp, schalter = [], [], [], [], [], []
+    zustaende = states if states is not None else get_states()
+    bereiche = bereiche_je_entitaet(("binary_sensor",)) if mit_bereichen else {}
+
+    for s in zustaende:
         eid = s.get("entity_id", "")
         attrs = s.get("attributes", {}) or {}
         name = attrs.get("friendly_name", eid)
@@ -194,20 +270,22 @@ def sensor_candidates(states: list[dict] | None = None) -> dict:
             aussen.append(eintrag)
             raumtemp.append(eintrag)
         elif domain == "binary_sensor":
-            eintrag = {"entity_id": eid, "name": name}
-            if klasse in ("window", "door", "opening"):
-                fenster.append(eintrag)
-            elif klasse in ("motion", "occupancy", "presence"):
+            eintrag = {"entity_id": eid, "name": name,
+                       "bereich": bereiche.get(eid, ""),
+                       "zustand": s.get("state")}
+            if klasse in ("motion", "occupancy", "presence"):
                 praesenz.append(eintrag)
+            elif ist_fensterkontakt(eid, name, klasse):
+                fenster.append(eintrag)
             else:
-                fenster.append(eintrag)      # z. B. „Offenes Fenster erkannt“
+                sonstige.append(eintrag)
             schalter.append(eintrag)
         elif domain in ("input_boolean", "switch"):
             schalter.append({"entity_id": eid, "name": name})
-    for liste in (aussen, fenster, praesenz, raumtemp, schalter):
+    for liste in (aussen, fenster, sonstige, praesenz, raumtemp, schalter):
         liste.sort(key=lambda e: e["name"])
-    return {"aussen": aussen, "fenster": fenster, "praesenz": praesenz,
-            "raumtemp": raumtemp, "schalter": schalter}
+    return {"aussen": aussen, "fenster": fenster, "sonstige_melder": sonstige,
+            "praesenz": praesenz, "raumtemp": raumtemp, "schalter": schalter}
 
 
 def zone_home(states: list[dict] | None = None) -> tuple[float, float, float] | None:

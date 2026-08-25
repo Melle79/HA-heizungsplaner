@@ -101,15 +101,46 @@ Auch mehrstufige Übergänge (Nacht → Eco → Komfort) werden erkannt.
 
 ## Fenstererkennung
 
-Zuerst zählen die eingetragenen Fensterkontakte. Wo es keine gibt, greift der
-**Temperatursturz**: Fällt die Raumtemperatur um mehr als den eingestellten
-Wert innerhalb des Zeitfensters, gilt das Fenster als offen. Danach bleibt der
-Raum für die Sperrzeit auf Frostschutz, damit ein kurzes Stoßlüften nicht
-sofort wieder gegengeheizt wird.
+Zwei Wege, in dieser Rangfolge:
 
-Der Planer führt dafür je Raum ein Temperaturgedächtnis über eine Stunde.
-Als Raumtemperatur dient der eingetragene Fühler, sonst der Mittelwert der
-`current_temperature` aller Thermostate des Raumes.
+**Fensterkontakte.** Was im Raum unter *Fensterkontakte* eingetragen ist,
+entscheidet. Sobald ein Raum mindestens einen Kontakt hat, der etwas meldet,
+tritt die Temperatursturz-Erkennung für diesen Raum zurück – ein echter
+Kontakt ist genauer, und der Sturz schlägt gelegentlich grundlos an, wenn ein
+anlaufender Heizkörper die Luft am Thermostatfühler verwirbelt. Wer beides
+will, schaltet am Raum *Zusätzlich auf Temperatursturz achten* ein.
+
+**Temperatursturz.** Für Räume ohne Kontakte: Fällt die Raumtemperatur um mehr
+als den eingestellten Wert innerhalb des Zeitfensters, gilt das Fenster als
+offen. Der Planer führt dafür je Raum ein Temperaturgedächtnis über eine
+Stunde. Als Raumtemperatur dient der eingetragene Fühler, sonst der Mittelwert
+der `current_temperature` aller Thermostate des Raumes.
+
+Nach beiden Wegen bleibt der Raum für die Sperrzeit auf Frostschutz, damit ein
+kurzes Stoßlüften nicht sofort wieder gegengeheizt wird.
+
+### Kontakte nachrüsten
+
+Neue Kontakte müssen nur in Home Assistant einem **Bereich** zugeordnet sein,
+der einem Raum des Planers entspricht. Dann erscheint auf der Übersicht ein
+Hinweis samt Knopf *Zuordnen*, der den Raum mit vorgewähltem Kontakt öffnet –
+Speichern genügt.
+
+In der Auswahlliste stehen die Kontakte nach Bereich gruppiert. Als Kontakt
+gilt, was die Geräteklasse `window`, `door` oder `opening` trägt **oder** ein
+entsprechendes Wort im Namen führt – so werden auch die
+„Offenes Fenster erkannt“-Meldungen mancher Thermostate gefunden, die ohne
+Geräteklasse kommen. Alles übrige Binäre steht unter *Sonstige Melder*.
+
+### Wenn ein Kontakt ausfällt
+
+**Ein Kontakt, der nichts meldet, gilt nicht als „geschlossen“.** Eine leere
+Batterie, ein abgezogener Funkstick oder ein noch nicht angelerntes Gerät
+würde den Raum sonst stillschweigend blind machen. Meldet ein eingetragener
+Kontakt weder `on` noch `off`, springt für diesen Raum die
+Temperatursturz-Erkennung wieder ein, die Begründung sagt es
+(„… melden nichts – ersatzweise Temperatursturz“), und auf der Übersicht steht
+eine Warnung.
 
 ## Handeingriffe
 

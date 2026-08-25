@@ -21,7 +21,8 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
 * **Vorheizen** – der Vorlauf richtet sich nach der Außentemperatur. Bei 12 °C
   reichen 30 Minuten, bei −10 °C sind es zwei Stunden.
 * **Fenster** – über Fensterkontakte oder, wo es keine gibt, über den
-  Temperatursturz im Raum.
+  Temperatursturz im Raum. Nachgerüstete Kontakte meldet der Planer von selbst
+  zur Zuordnung; fällt einer aus, gilt er nicht als „geschlossen“.
 * **Urlaub** – ein Schalter in Home Assistant legt das ganze Haus auf die
   Urlaubstemperatur.
 

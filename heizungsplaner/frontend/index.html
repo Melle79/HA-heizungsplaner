@@ -457,8 +457,16 @@
     </div>
     <div class="zeile">
       <div class="field"><label>Fensterkontakte</label>
-        <select id="r-fenster" multiple size="5"></select></div>
+        <select id="r-fenster" multiple size="6"></select>
+        <div class="hint">Sobald hier ein Kontakt steht, entscheidet er allein –
+          die Temperatursturz-Erkennung tritt zurück. Meldet ein Kontakt nichts,
+          springt sie wieder ein.</div></div>
     </div>
+    <label class="schalter">
+      <input type="checkbox" id="r-sturz">
+      <span>Zusätzlich auf Temperatursturz achten, auch wenn alle Kontakte
+            geschlossen melden</span>
+    </label>
     <label class="schalter" style="margin-top:8px">
       <input type="checkbox" id="r-heizkurve">
       <span>Heizkurve auf diesen Raum anwenden</span>
@@ -560,6 +568,49 @@ function fuelleAuswahl(select, liste, wert, leerText) {
   }
 }
 
+function fuelleFensterAuswahl(select, wert) {
+  // Nach Bereich gruppiert, damit ein nachgerüsteter Kontakt sofort beim
+  // richtigen Raum steht. Was nicht nach Fenster aussieht, kommt ans Ende –
+  // erreichbar, aber nicht im Weg.
+  select.innerHTML = '';
+  const gruppen = new Map();
+  for (const eintrag of entitaeten.fenster || []) {
+    const schlüssel = eintrag.bereich || 'Ohne Bereich';
+    if (!gruppen.has(schlüssel)) gruppen.set(schlüssel, []);
+    gruppen.get(schlüssel).push(eintrag);
+  }
+  const vorhanden = new Set();
+  const anhaengen = (ziel, eintrag) => {
+    const option = document.createElement('option');
+    option.value = eintrag.entity_id;
+    const stumm = eintrag.zustand && !['on', 'off'].includes(eintrag.zustand)
+      ? '  ⚠ meldet nichts' : '';
+    option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
+    ziel.appendChild(option);
+    vorhanden.add(eintrag.entity_id);
+  };
+  for (const name of [...gruppen.keys()].sort()) {
+    const gruppe = document.createElement('optgroup');
+    gruppe.label = name;
+    for (const eintrag of gruppen.get(name)) anhaengen(gruppe, eintrag);
+    select.appendChild(gruppe);
+  }
+  const sonstige = entitaeten.sonstige_melder || [];
+  if (sonstige.length) {
+    const gruppe = document.createElement('optgroup');
+    gruppe.label = 'Sonstige Melder';
+    for (const eintrag of sonstige) anhaengen(gruppe, eintrag);
+    select.appendChild(gruppe);
+  }
+  for (const fehlend of (wert || []).filter(w => w && !vorhanden.has(w))) {
+    const option = document.createElement('option');
+    option.value = fehlend;
+    option.textContent = fehlend + '  (zurzeit nicht in Home Assistant)';
+    select.appendChild(option);
+  }
+  for (const option of select.options) option.selected = (wert || []).includes(option.value);
+}
+
 const gewaehlt = (select) =>
   Array.from(select.selectedOptions).map(o => o.value).filter(Boolean);
 
@@ -659,9 +710,27 @@ async function gesundheitLaden() {
     $('kopf-mqtt').textContent = daten.mqtt ? 'MQTT' : 'kein MQTT';
     $('hinweise').innerHTML = (daten.hinweise || []).map(h => {
       const zeichen = h.art === 'fehler' ? '✕' : h.art === 'warnung' ? '!' : 'i';
+      const knopf = h.raum_id
+        ? `<button class="ghost" data-hinweis-raum="${h.raum_id}"
+                   data-hinweis-entity="${h.entity_id || ''}">Zuordnen</button>` : '';
       return `<div class="hinweis ${h.art}"><span class="zeichen">${zeichen}</span>
-              <span>${h.text}</span></div>`;
+              <span style="flex:1">${h.text}</span>${knopf}</div>`;
     }).join('');
+    // Aus dem Hinweis heraus direkt in den Raum springen, mit dem gemeldeten
+    // Kontakt schon vorausgewählt.
+    $('hinweise').querySelectorAll('[data-hinweis-raum]').forEach(knopf => {
+      knopf.onclick = () => {
+        const raum = raeume.find(r => r.id === knopf.dataset.hinweisRaum);
+        if (!raum) return;
+        raumOeffnen(raum);
+        const entity = knopf.dataset.hinweisEntity;
+        if (entity) {
+          for (const option of $('r-fenster').options) {
+            if (option.value === entity) { option.selected = true; option.scrollIntoView(); }
+          }
+        }
+      };
+    });
   } catch (err) { /* Hinweise sind Beiwerk */ }
 }
 
@@ -859,7 +928,8 @@ function raumOeffnen(raum) {
   const daten = raum || {
     name: '', aktiv: true, thermostate: [], personen: [], praesenz: [], fenster: [],
     raumtemp: '', komfort: 21, eco: 19, nacht: 18, abwesend: 17, min: 5, max: 26,
-    heizkurve: true, anwesenheit: true, zeitplan: [],
+    heizkurve: true, anwesenheit: true, sturz_auch_mit_kontakten: false,
+    zeitplan: [],
   };
   $('dialog-titel').textContent = neu ? 'Neuer Raum' : daten.name;
   $('r-name').value = daten.name;
@@ -872,6 +942,7 @@ function raumOeffnen(raum) {
   $('r-max').value = daten.max;
   $('r-heizkurve').checked = daten.heizkurve;
   $('r-anwesenheit').checked = daten.anwesenheit;
+  $('r-sturz').checked = daten.sturz_auch_mit_kontakten;
   $('btn-raum-loeschen').style.display = neu ? 'none' : 'inline-block';
 
   const einzelthermostate = entitaeten.thermostate.filter(
@@ -879,7 +950,7 @@ function raumOeffnen(raum) {
   fuelleAuswahl($('r-thermostate'), einzelthermostate, daten.thermostate);
   fuelleAuswahl($('r-personen'), entitaeten.personen, daten.personen);
   fuelleAuswahl($('r-praesenz'), entitaeten.praesenz, daten.praesenz);
-  fuelleAuswahl($('r-fenster'), entitaeten.fenster, daten.fenster);
+  fuelleFensterAuswahl($('r-fenster'), daten.fenster);
   fuelleAuswahl($('r-raumtemp'), entitaeten.raumtemp, daten.raumtemp,
                 'Mittelwert der Thermostate');
 
@@ -908,6 +979,7 @@ $('btn-raum-speichern').onclick = async () => {
     max: parseFloat($('r-max').value),
     heizkurve: $('r-heizkurve').checked,
     anwesenheit: $('r-anwesenheit').checked,
+    sturz_auch_mit_kontakten: $('r-sturz').checked,
     zeitplan: zeitplanEntwurf,
   };
   try {
