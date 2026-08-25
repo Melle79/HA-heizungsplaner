@@ -40,6 +40,12 @@ BESTAETIGUNG_MIN = 15
 # Feinere Sollwerte als ein halbes Grad kann kein Heizkörperthermostat.
 SCHRITT = 0.5
 
+# Betriebsart „nur absenken“: So lange nach einem Absenkzeitpunkt versucht der
+# Planer, den Wert zu setzen. Danach gehört der Raum wieder der Hand, die ihn
+# stellt. Das Fenster überbrückt einen ausgefallenen Takt oder ein Thermostat,
+# das gerade nicht antwortet – ein einzelner Schuss ginge dabei verloren.
+AUSLOESE_FENSTER_MIN = 30
+
 
 def _jetzt() -> datetime:
     return datetime.now()
@@ -174,9 +180,17 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
 
     ist = raumtemperatur(raum, states_index)
     _verlauf_fortschreiben(rz, ist, jetzt)
+    nur_absenken = raum.get("betriebsart") == "nur_absenken"
 
     def ergebnis(zustand: str, ziel: float, begruendung: str, **extra) -> dict:
         ziel = _runden(max(float(raum["min"]), min(float(raum["max"]), ziel)))
+        # In der Betriebsart „nur absenken“ gehört der Sollwert der Hand, die
+        # ihn gestellt hat. Greift ein Sonderzustand ein, wird der vorgefundene
+        # Wert gemerkt und hinterher wiederhergestellt – sonst bliebe der Raum
+        # nach einmal Lüften für immer auf Frostschutz stehen.
+        if nur_absenken and zustand in ("fenster", "urlaub", "sommer"):
+            extra.setdefault("merken", True)
+            extra.setdefault("erzwingen", True)
         return {"zustand": zustand, "ziel": ziel, "begruendung": begruendung,
                 "ist": ist, **extra}
 
@@ -212,8 +226,13 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                         f"{gedaempft:.1f} °C" if gedaempft is not None
                         else "Sommerbetrieb", ventil_zu=True)
 
-    # 5 — Zeitplan, ggf. vorgezogen
+    # 5a — Betriebsart „nur absenken“: der Plan stößt an, statt zu führen
     plan = raum.get("zeitplan") or []
+    if nur_absenken:
+        return _nur_absenken(raum, rz, umgebung, plan, ist, ergebnis,
+                             fenster_hinweis)
+
+    # 5 — Zeitplan, ggf. vorgezogen
     eintrag = zp.aktueller_eintrag(plan, jetzt, umgebung.get("schulfrei"))
     modus = eintrag["modus"] if eintrag else "eco"
     basis = zp.modus_temperatur(raum, modus, frostschutz)
@@ -285,6 +304,75 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     return ergebnis(zustand, basis + korrektur, begruendung, korrektur=korrektur)
 
 
+def _eingestellter_sollwert(raum: dict, states_index: dict) -> float | None:
+    """Was gerade an den Thermostaten des Raumes steht – Mittel über alle."""
+    werte = []
+    for entity_id in raum.get("thermostate") or []:
+        eintrag = states_index.get(entity_id)
+        if not eintrag:
+            continue
+        wert = ha_api.as_float((eintrag.get("attributes") or {}).get("temperature"))
+        if wert is not None:
+            werte.append(wert)
+    return round(sum(werte) / len(werte), 1) if werte else None
+
+
+def _nur_absenken(raum: dict, rz: dict, umgebung: dict, plan: list[dict],
+                  ist: float | None, ergebnis, fenster_hinweis: str) -> dict:
+    """Betriebsart „von Hand, nur zu festen Zeiten absenken“.
+
+    Der Raum wird von Hand gestellt. Der Planer greift allein zu den
+    Zeitpunkten des Plans ein und lässt ihn sonst in Ruhe – auch dann, wenn
+    jemand hochdreht. Das ist der Unterschied zum geführten Zeitplan, bei dem
+    der letzte Umschaltpunkt dauerhaft gilt.
+
+    Beim ersten Lauf wird der zurückliegende Zeitpunkt nur vermerkt, nicht
+    ausgeführt: Ein Add-on-Start um 22 Uhr soll nicht die Absenkung von 21 Uhr
+    nachholen und dabei eine Handeinstellung überfahren.
+    """
+    jetzt = umgebung["jetzt"]
+    einst = umgebung["einstellungen"]
+    frostschutz = float(einst["frostschutz"])
+    eingestellt = _eingestellter_sollwert(raum, umgebung["states_index"])
+
+    def ruhen(begruendung: str) -> dict:
+        anzeige = eingestellt if eingestellt is not None else (ist or frostschutz)
+        if fenster_hinweis:
+            begruendung += f" · {fenster_hinweis}"
+        return ergebnis("manuell", anzeige, begruendung,
+                        nicht_schreiben=True, wiederherstellen=True)
+
+    treffer = zp.letzter_zeitpunkt(plan, jetzt, umgebung.get("schulfrei"))
+    if not treffer:
+        return ruhen("Von Hand gestellt – kein Absenkzeitpunkt hinterlegt")
+
+    zeitpunkt, eintrag = treffer
+    zuletzt = _aus_iso(rz.get("zuletzt_ausgeloest"))
+    naechster = zp.naechster_wechsel(plan, jetzt, umgebung.get("schulfrei"))
+    ausblick = (f" – nächste Absenkung {naechster[1]['start']} Uhr"
+                if naechster else "")
+
+    if zuletzt is None:
+        rz["zuletzt_ausgeloest"] = _iso(zeitpunkt)
+        return ruhen(f"Von Hand gestellt{ausblick}")
+
+    if zeitpunkt > zuletzt:
+        faellig_seit = jetzt - zeitpunkt
+        if faellig_seit <= timedelta(minutes=AUSLOESE_FENSTER_MIN):
+            ziel = zp.modus_temperatur(raum, eintrag["modus"], frostschutz)
+            # Genau dieser Eingriff soll die Handeinstellung überschreiben –
+            # sonst hielte ihn die Handeingriff-Erkennung für einen Konflikt.
+            return ergebnis("absenkung", ziel,
+                            f"Absenkung um {eintrag['start']} Uhr auf "
+                            f"{ziel:.1f} °C", erzwingen=True)
+        # Verpasst – etwa weil das Add-on stand. Nicht nachholen, nur vermerken.
+        rz["zuletzt_ausgeloest"] = _iso(zeitpunkt)
+        return ruhen(f"Absenkung um {eintrag['start']} Uhr verpasst, "
+                     f"nicht nachgeholt{ausblick}")
+
+    return ruhen(f"Von Hand gestellt{ausblick}")
+
+
 # ------------------------------------------------------------- Ausführung ----
 
 def _thermostat_grenzen(attrs: dict) -> tuple[float, float]:
@@ -314,6 +402,31 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
         gedaechtnis = state["thermostate"].setdefault(entity_id, {})
         zuletzt_am = _aus_iso(gedaechtnis.get("gesetzt_am"))
         frisch = bool(zuletzt_am and (jetzt - zuletzt_am) < timedelta(minutes=BESTAETIGUNG_MIN))
+        ist_soll_jetzt = ha_api.as_float(attrs.get("temperature"))
+
+        # -- Handeinstellung vor einem Sonderzustand sichern ------------------
+        if entscheidung.get("merken") and gedaechtnis.get("vor_sonderzustand") is None:
+            if ist_soll_jetzt is not None:
+                gedaechtnis["vor_sonderzustand"] = ist_soll_jetzt
+
+        # -- Raum ruht: nur eine gesicherte Handeinstellung zurückgeben -------
+        if entscheidung.get("nicht_schreiben"):
+            gesichert = gedaechtnis.get("vor_sonderzustand")
+            if entscheidung.get("wiederherstellen") and gesichert is not None:
+                gedaechtnis["vor_sonderzustand"] = None
+                if trockenlauf:
+                    aktionen.append({"entity_id": entity_id, "aktion": "zurück",
+                                     "wert": gesichert, "trocken": True})
+                elif ist_soll_jetzt is None or abs(ist_soll_jetzt - gesichert) >= SCHRITT / 2:
+                    if ha_api.set_temperature(entity_id, gesichert):
+                        gedaechtnis.update({"soll": gesichert, "gesetzt_am": _iso(jetzt),
+                                            "hvac": "heat"})
+                        aktionen.append({"entity_id": entity_id, "aktion": "zurück",
+                                         "wert": gesichert})
+                        protokoll(raum["name"], f"zurück auf {gesichert:.1f} °C",
+                                  "Sonderzustand vorbei – die Handeinstellung von "
+                                  "vorher gilt wieder", entity_id)
+            continue
 
         # -- Ventil schließen (Sommer / Raum abgeschaltet) --------------------
         if ventil_zu and "off" in (attrs.get("hvac_modes") or []):
@@ -340,7 +453,8 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
         # Weicht der Sollwert am Gerät von unserem zuletzt geschriebenen Wert
         # ab, hat jemand von Hand gedreht. Das gilt bis zum nächsten
         # Zeitplanwechsel, danach führt wieder der Plan.
-        if einst.get("manuell_respektieren") and not frisch:
+        erzwingen = bool(entscheidung.get("erzwingen"))
+        if einst.get("manuell_respektieren") and not frisch and not erzwingen:
             geschrieben = gedaechtnis.get("soll")
             if (geschrieben is not None and ist_soll is not None
                     and abs(ist_soll - geschrieben) >= SCHRITT
@@ -356,7 +470,7 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                           entity_id)
                 continue
         manuell_bis = _aus_iso(gedaechtnis.get("manuell_bis"))
-        if manuell_bis and manuell_bis > jetzt:
+        if manuell_bis and manuell_bis > jetzt and not erzwingen:
             continue
         if manuell_bis:
             gedaechtnis["manuell_bis"] = None

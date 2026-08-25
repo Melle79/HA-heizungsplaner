@@ -34,12 +34,14 @@ def _passt(eintrag: dict, wochentag: str, schulfrei: bool | None) -> bool:
     return (gilt == "schulfrei") == schulfrei
 
 
-def aktueller_eintrag(zeitplan: list[dict], jetzt: datetime,
-                      schulfrei: bool | None) -> dict | None:
-    """Der zuletzt fällig gewordene Umschaltpunkt.
+def letzter_zeitpunkt(zeitplan: list[dict], jetzt: datetime,
+                      schulfrei: bool | None) -> tuple[datetime, dict] | None:
+    """Der zuletzt fällig gewordene Umschaltpunkt samt Zeitpunkt.
 
     Sucht rückwärts über Tagesgrenzen hinweg: Die Nachtabsenkung von gestern
-    Abend gilt bis zum ersten Punkt von heute früh.
+    Abend gilt bis zum ersten Punkt von heute früh. Der Zeitpunkt wird
+    gebraucht, um „ist gerade fällig geworden“ von „gilt schon seit gestern“
+    zu unterscheiden.
     """
     for versatz in range(8):
         tag = jetzt - timedelta(days=versatz)
@@ -48,8 +50,16 @@ def aktueller_eintrag(zeitplan: list[dict], jetzt: datetime,
         if versatz == 0:
             kandidaten = [e for e in kandidaten if _uhrzeit(e["start"]) <= jetzt.time()]
         if kandidaten:
-            return max(kandidaten, key=lambda e: e["start"])
+            eintrag = max(kandidaten, key=lambda e: e["start"])
+            return datetime.combine(tag.date(), _uhrzeit(eintrag["start"])), eintrag
     return None
+
+
+def aktueller_eintrag(zeitplan: list[dict], jetzt: datetime,
+                      schulfrei: bool | None) -> dict | None:
+    """Der zuletzt fällig gewordene Umschaltpunkt."""
+    treffer = letzter_zeitpunkt(zeitplan, jetzt, schulfrei)
+    return treffer[1] if treffer else None
 
 
 def naechster_wechsel(zeitplan: list[dict], jetzt: datetime,

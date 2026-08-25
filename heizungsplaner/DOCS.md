@@ -6,6 +6,9 @@ In jedem Takt (Standard: alle fünf Minuten) durchläuft jeder Raum dieselbe
 Rangfolge. Der erste zutreffende Fall gewinnt, die späteren kommen nicht mehr
 zum Zug:
 
+Sie gilt für Räume in der Betriebsart *nach Zeitplan führen*; für
+*nur absenken* siehe unten.
+
 | Rang | Fall | Ergebnis |
 |---|---|---|
 | 1 | Raum im Planer abgeschaltet | Ventil zu |
@@ -22,6 +25,32 @@ angewandt: Das sind Haltewerte, kein Zielklima.
 
 Jede Entscheidung trägt ihre Begründung mit. Sie steht auf der Raumkachel und
 im Protokoll.
+
+## Betriebsarten je Raum
+
+**Nach Zeitplan führen** (Vorgabe) – der Planer bestimmt den Sollwert
+durchgehend, wie in der Rangfolge oben beschrieben.
+
+**Von Hand – nur zu festen Zeiten absenken** – der Raum wird von Hand gestellt,
+am Thermostat oder in Home Assistant. Der Planer greift allein zu den
+Zeitpunkten des Plans ein und lässt ihn sonst in Ruhe, auch wenn jemand
+hochdreht. Für Räume, die man nach Bedarf warm macht und abends nur
+zuverlässig heruntergefahren haben will – ein Gäste-WC etwa.
+
+In dieser Betriebsart gelten Anwesenheit, Vorheizen und Heizkurve nicht; sie
+setzen ein durchgehend geführtes Ziel voraus. Was weiter gilt:
+
+* Ein **Absenkzeitpunkt** stellt die Temperatur seines Modus einmal ein. Er
+  überschreibt dabei ausdrücklich eine Handeinstellung – dafür ist er da.
+  Danach gehört der Raum wieder der Hand.
+* Ein **verpasster** Zeitpunkt wird nicht nachgeholt. Startet das Add-on um
+  22 Uhr, holt es die Absenkung von 21 Uhr nicht nach und überfährt so keine
+  Handeinstellung. Innerhalb von 30 Minuten nach dem Zeitpunkt versucht es
+  weiter – das überbrückt einen ausgefallenen Takt.
+* **Fenster, Urlaub und Sommerbetrieb** greifen weiterhin. Der Planer merkt
+  sich dabei den vorgefundenen Sollwert und **stellt ihn wieder her**, sobald
+  der Sonderzustand vorbei ist. Ohne das bliebe der Raum nach einmal Lüften
+  für immer auf Frostschutz stehen.
 
 ## Zeitplan
 

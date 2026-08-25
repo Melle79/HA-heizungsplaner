@@ -28,6 +28,11 @@ TAGE = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 MODI = ["komfort", "eco", "nacht", "aus"]
 GELTUNG = ["immer", "schultag", "schulfrei"]
 
+# "plan"         – der Planer führt den Sollwert durchgehend.
+# "nur_absenken" – der Raum wird von Hand gestellt; der Planer greift allein zu
+#                  den Zeitpunkten des Plans ein und lässt ihn sonst in Ruhe.
+BETRIEBSARTEN = ["plan", "nur_absenken"]
+
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
@@ -81,6 +86,7 @@ STANDARD_EINSTELLUNGEN = {
 STANDARD_RAUM = {
     "name": "Neuer Raum",
     "aktiv": True,
+    "betriebsart": "plan",
     "thermostate": [],
     "personen": [],       # leer = jede Person zählt
     "praesenz": [],
@@ -216,10 +222,15 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         temperaturen[schluessel] = _zahl(raum.get(schluessel, vorgabe),
                                          schluessel.capitalize(), minimum, maximum)
 
+    betriebsart = str(raum.get("betriebsart") or "plan").strip()
+    if betriebsart not in BETRIEBSARTEN:
+        raise ValidationError(f"Unbekannte Betriebsart {betriebsart!r}")
+
     return {
         "id": vorhandene_id or uuid.uuid4().hex[:8],
         "name": name,
         "aktiv": bool(raum.get("aktiv", True)),
+        "betriebsart": betriebsart,
         "thermostate": thermostate,
         "personen": [str(e).strip() for e in (raum.get("personen") or []) if str(e).strip()],
         "praesenz": [str(e).strip() for e in (raum.get("praesenz") or []) if str(e).strip()],

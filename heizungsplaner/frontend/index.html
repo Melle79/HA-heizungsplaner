@@ -111,6 +111,8 @@
   .pille.eco{background:rgba(122,162,255,.15); color:var(--eco)}
   .pille.nacht{background:rgba(143,127,214,.18); color:var(--nacht)}
   .pille.abwesend{background:rgba(90,100,114,.25); color:#a8b2c0}
+  .pille.manuell{background:rgba(232,162,61,.14); color:var(--warm)}
+  .pille.absenkung{background:rgba(143,127,214,.18); color:var(--nacht)}
   .pille.urlaub{background:rgba(76,195,138,.15); color:var(--ok)}
   .pille.fenster{background:rgba(227,109,109,.15); color:var(--danger)}
   .pille.sommer,.pille.aus{background:rgba(90,100,114,.2); color:var(--kalt)}
@@ -398,6 +400,14 @@
         <input type="text" id="r-name" maxlength="60"></div>
       <label class="schalter"><input type="checkbox" id="r-aktiv"><span>Raum aktiv</span></label>
     </div>
+    <div class="zeile">
+      <div class="field"><label>Betriebsart</label>
+        <select id="r-betriebsart">
+          <option value="plan">Nach Zeitplan führen</option>
+          <option value="nur_absenken">Von Hand – nur zu festen Zeiten absenken</option>
+        </select>
+        <div class="hint" id="betriebsart-hinweis"></div></div>
+    </div>
 
     <h3>Thermostate</h3>
     <select id="r-thermostate" multiple></select>
@@ -422,7 +432,7 @@
         <input type="number" id="r-max" step="0.5" min="4" max="35"></div>
     </div>
 
-    <h3>Zeitplan</h3>
+    <h3 id="zeitplan-titel">Zeitplan</h3>
     <div id="r-zeitplan"></div>
     <div class="zeile" style="margin-top:8px">
       <button class="ghost" id="btn-slot-neu">Umschaltpunkt hinzufügen</button>
@@ -434,8 +444,8 @@
         <option value="nebenraum">Nebenraum</option>
       </select>
     </div>
-    <div class="hint">Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des
-      Tages reicht über Mitternacht.</div>
+    <div class="hint" id="zeitplan-hinweis">Jeder Punkt gilt, bis der nächste
+      kommt. Der letzte Punkt des Tages reicht über Mitternacht.</div>
 
     <h3>Anwesenheit</h3>
     <label class="schalter">
@@ -809,9 +819,12 @@ function zeichneRaumliste() {
     <div class="raumzeile">
       <span class="rname">${raum.aktiv ? '' : '⏻ '}${raum.name}</span>
       <span class="rinfo">${raum.thermostate.length} Thermostat(e) ·
-        Komfort ${raum.komfort} °C / Eco ${raum.eco} °C ·
-        ${raum.zeitplan.length} Umschaltpunkte ·
-        ${raum.personen.length ? raum.personen.length + ' Person(en)' : 'ganze Familie'}</span>
+        ${raum.betriebsart === 'nur_absenken'
+          ? `von Hand, ${raum.zeitplan.length} Absenkzeitpunkt(e)`
+          : `Komfort ${raum.komfort} °C / Eco ${raum.eco} °C · `
+            + `${raum.zeitplan.length} Umschaltpunkte · `
+            + (raum.personen.length ? raum.personen.length + ' Person(en)'
+                                    : 'ganze Familie')}</span>
       <button class="ghost" data-raum="${raum.id}">Bearbeiten</button>
     </div>`).join('');
   ziel.querySelectorAll('button[data-raum]').forEach(knopf => {
@@ -912,6 +925,30 @@ const VORLAGEN = {
   ],
 };
 
+function betriebsartAnzeigen() {
+  const handbetrieb = $('r-betriebsart').value === 'nur_absenken';
+  $('betriebsart-hinweis').textContent = handbetrieb
+    ? 'Der Planer stellt den Raum nur zu den Zeitpunkten unten. Dazwischen '
+      + 'bleibt er unangetastet – auch wenn jemand hochdreht. Anwesenheit, '
+      + 'Vorheizen und Heizkurve gelten hier nicht.'
+    : 'Der Planer führt den Sollwert durchgehend nach Zeitplan, Anwesenheit '
+      + 'und Außentemperatur.';
+  $('zeitplan-titel').textContent = handbetrieb ? 'Absenkzeitpunkte' : 'Zeitplan';
+  $('zeitplan-hinweis').textContent = handbetrieb
+    ? 'Zu jedem Zeitpunkt wird die zugehörige Temperatur einmal gestellt. '
+      + 'Verpasst der Planer einen (etwa weil er stand), holt er ihn nicht nach.'
+    : 'Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des Tages '
+      + 'reicht über Mitternacht.';
+  for (const id of ['r-anwesenheit', 'r-heizkurve', 'r-sturz']) {
+    $(id).disabled = handbetrieb && id !== 'r-sturz';
+    $(id).parentElement.style.opacity = $(id).disabled ? .45 : 1;
+  }
+  $('btn-slot-neu').textContent = handbetrieb
+    ? 'Absenkzeitpunkt hinzufügen' : 'Umschaltpunkt hinzufügen';
+}
+
+$('r-betriebsart').onchange = betriebsartAnzeigen;
+
 $('r-vorlage').onchange = (ereignis) => {
   const vorlage = VORLAGEN[ereignis.target.value];
   if (vorlage) {
@@ -929,11 +966,12 @@ function raumOeffnen(raum) {
     name: '', aktiv: true, thermostate: [], personen: [], praesenz: [], fenster: [],
     raumtemp: '', komfort: 21, eco: 19, nacht: 18, abwesend: 17, min: 5, max: 26,
     heizkurve: true, anwesenheit: true, sturz_auch_mit_kontakten: false,
-    zeitplan: [],
+    betriebsart: 'plan', zeitplan: [],
   };
   $('dialog-titel').textContent = neu ? 'Neuer Raum' : daten.name;
   $('r-name').value = daten.name;
   $('r-aktiv').checked = daten.aktiv;
+  $('r-betriebsart').value = daten.betriebsart || 'plan';
   $('r-komfort').value = daten.komfort;
   $('r-eco').value = daten.eco;
   $('r-nacht').value = daten.nacht;
@@ -956,6 +994,7 @@ function raumOeffnen(raum) {
 
   zeitplanEntwurf = JSON.parse(JSON.stringify(daten.zeitplan || []));
   zeichneZeitplan();
+  betriebsartAnzeigen();
   $('raum-meldung').textContent = '';
   $('raum-dialog').showModal();
 }
@@ -966,6 +1005,7 @@ $('btn-raum-speichern').onclick = async () => {
   const koerper = {
     name: $('r-name').value,
     aktiv: $('r-aktiv').checked,
+    betriebsart: $('r-betriebsart').value,
     thermostate: gewaehlt($('r-thermostate')),
     personen: gewaehlt($('r-personen')),
     praesenz: gewaehlt($('r-praesenz')),

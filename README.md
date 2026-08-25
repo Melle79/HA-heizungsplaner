@@ -25,6 +25,8 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   zur Zuordnung; fällt einer aus, gilt er nicht als „geschlossen“.
 * **Urlaub** – ein Schalter in Home Assistant legt das ganze Haus auf die
   Urlaubstemperatur.
+* **Handbetrieb je Raum** – wer einen Raum selbst stellen will, lässt den
+  Planer nur zu festen Zeiten absenken. Dazwischen rührt er ihn nicht an.
 
 ## Installation
 

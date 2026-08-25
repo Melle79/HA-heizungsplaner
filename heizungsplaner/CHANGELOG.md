@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.2.0
+
+Neue Betriebsart je Raum: **von Hand, nur zu festen Zeiten absenken**.
+
+- Der Raum wird von Hand gestellt; der Planer greift allein zu den Zeitpunkten
+  des Plans ein und lässt ihn sonst unangetastet, auch wenn jemand hochdreht.
+- Ein Absenkzeitpunkt überschreibt die Handeinstellung ausdrücklich – dafür
+  ist er da. Ein verpasster Zeitpunkt wird nicht nachgeholt.
+- Fenster, Urlaub und Sommerbetrieb greifen weiterhin; der vorgefundene
+  Sollwert wird gemerkt und danach wiederhergestellt, damit der Raum nach
+  einmal Lüften nicht auf Frostschutz stehen bleibt.
+
 ## 1.1.2
 
 - Türkontakte werden nur noch über die Geräteklasse `door` erkannt, nicht mehr
