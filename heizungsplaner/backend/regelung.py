@@ -554,7 +554,25 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
         erzwingen = bool(entscheidung.get("erzwingen"))
         if einst.get("manuell_respektieren") and not frisch and not erzwingen:
             geschrieben = gedaechtnis.get("soll")
-            if (geschrieben is not None and ist_soll is not None
+            vor_schreiben = gedaechtnis.get("vor_schreiben")
+            # Steht am Gerät noch genau der Wert, den es vor unserem Befehl
+            # hatte, dann hat niemand gedreht – das Gerät hat den Befehl
+            # schlicht nicht umgesetzt. Das als Handeingriff zu werten wäre
+            # der teuerste Irrtum: Der Planer zöge sich zurück und der Raum
+            # bliebe auf einem Wert, den niemand gewollt hat.
+            nicht_umgesetzt = (vor_schreiben is not None and ist_soll is not None
+                               and abs(ist_soll - vor_schreiben) < SCHRITT / 2)
+            if nicht_umgesetzt and geschrieben is not None \
+                    and abs(ist_soll - ziel) >= SCHRITT:
+                fehler = gedaechtnis.get("schreib_fehler", 0) + 1
+                gedaechtnis["schreib_fehler"] = fehler
+                gedaechtnis["fehler_zuletzt"] = _iso(jetzt)
+                if fehler <= FEHLSCHLAEGE_BIS_SCHONUNG:
+                    protokoll(raum["name"], "nicht übernommen",
+                              f"{attrs.get('friendly_name', entity_id)} hat "
+                              f"{geschrieben:.1f} °C bestätigt, steht aber weiter "
+                              f"auf {ist_soll:.1f} °C", entity_id)
+            elif (geschrieben is not None and ist_soll is not None
                     and abs(ist_soll - geschrieben) >= SCHRITT
                     and abs(ist_soll - ziel) >= SCHRITT):
                 manuell_bis = umgebung["raum_wechsel"].get(raum["id"])
@@ -582,7 +600,9 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
 
         # -- Sollwert nur auf Flanke -----------------------------------------
         if ist_soll is not None and abs(ist_soll - ziel) < SCHRITT / 2:
-            gedaechtnis["soll"] = ziel
+            # Angekommen: Gedächtnis auffrischen und den Fehlerzähler löschen.
+            gedaechtnis.update({"soll": ziel, "schreib_fehler": 0,
+                                "fehler_zuletzt": None, "vor_schreiben": None})
             continue
         if frisch and gedaechtnis.get("soll") is not None \
                 and abs(gedaechtnis["soll"] - ziel) < SCHRITT / 2:
@@ -602,9 +622,11 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
             if letzter and (jetzt - letzter) < timedelta(minutes=SCHONFRIST_MIN):
                 continue
 
+        gedaechtnis["vor_schreiben"] = ist_soll
         if ha_api.set_temperature(entity_id, ziel):
-            gedaechtnis.update({"soll": ziel, "gesetzt_am": _iso(jetzt), "hvac": "heat",
-                                "schreib_fehler": 0, "fehler_zuletzt": None})
+            gedaechtnis.update({"soll": ziel, "gesetzt_am": _iso(jetzt), "hvac": "heat"})
+            # Fehlerzähler nur zurücksetzen, wenn der Wert auch angekommen ist –
+            # das entscheidet sich erst beim nächsten Takt.
             aktionen.append({"entity_id": entity_id, "aktion": "soll",
                              "wert": ziel, "vorher": ist_soll})
             protokoll(raum["name"],

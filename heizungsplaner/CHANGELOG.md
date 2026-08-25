@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.7.4
+
+- **Ein verschluckter Befehl wird nicht mehr für einen Handeingriff gehalten.**
+  Im Betrieb aufgefallen: Ein Thermostat quittierte den Sollwert und stand
+  danach unverändert da. Nach Ablauf der Bestätigungsfrist hätte der Planer das
+  als Handeingriff gewertet und sich bis zum nächsten Zeitplanwechsel
+  zurückgezogen – der Raum wäre auf einem Wert geblieben, den niemand wollte.
+  Jetzt merkt er sich den Wert vor dem Befehl: Steht das Gerät noch genau
+  darauf, versucht er es erneut und meldet es nach drei Fehlschlägen.
+
 ## 1.7.3
 
 - Die Partytaste meldet die Restzeit als fertigen Text (`anzeige`), etwa

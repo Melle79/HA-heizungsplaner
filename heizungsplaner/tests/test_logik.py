@@ -553,6 +553,72 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Befehl bestaetigt, aber nicht umgesetzt ===")
+# Beobachtet an einem SwitchBot-Thermostat: Es quittiert den Sollwert und
+# steht danach unveraendert da. Wird das als Handeingriff gewertet, zieht sich
+# der Planer zurueck - und der Raum bleibt auf einem Wert, den niemand wollte.
+zust_nu = {"thermostate": {"climate.n": {
+    "soll": 23.0,                 # das haben wir geschickt
+    "vor_schreiben": 13.5,        # das stand vorher da
+    "gesetzt_am": montag.replace(hour=12).isoformat(timespec="seconds")}},
+    "raeume": {}}
+protokoll_nu = []
+raum_nu = store.validate_raum({
+    "name": "Wohnzimmer", "thermostate": ["climate.n"], "personen": [],
+    "komfort": 23.0, "eco": 19.0, "nacht": 19.0, "abwesend": 17.0,
+    "min": 5.0, "max": 26.0, "zeitplan": plan})
+
+def umg_nu(steht_auf):
+    idx = {"climate.n": {"entity_id": "climate.n", "state": "heat",
+                         "attributes": {"friendly_name": "Essbereich",
+                                        "temperature": steht_auf,
+                                        "current_temperature": 24.0,
+                                        "min_temp": 5, "max_temp": 30,
+                                        "hvac_modes": ["off","heat"]}}}
+    u = umgebung(montag.replace(hour=14), states_index=idx)
+    u["raum_wechsel"] = {raum_nu["id"]: montag.replace(hour=21)}
+    return u
+
+import ha_api
+gesendet_nu = []
+ha_api.set_temperature = lambda e, t: (gesendet_nu.append((e, t)), True)[1]
+ha_api.set_hvac_mode = lambda e, m: True
+einst["trockenlauf"] = False
+
+# Das Geraet steht noch auf dem alten Wert -> kein Handeingriff, neuer Versuch
+regelung.anwenden(raum_nu, {"zustand": "komfort", "ziel": 23.0, "begruendung": "x"},
+                  zust_nu, umg_nu(13.5),
+                  lambda r, w, g, e="": protokoll_nu.append((w, g)))
+gedaechtnis = zust_nu["thermostate"]["climate.n"]
+pruefe(gedaechtnis.get("manuell_bis") is None,
+       "kein Handeingriff, wenn der Wert unveraendert blieb")
+pruefe(gedaechtnis.get("schreib_fehler") == 1, "der Fehlschlag wird gezaehlt")
+pruefe(any("nicht übernommen" in w for w, _ in protokoll_nu),
+       f"und benannt ({protokoll_nu[0][1][:60] if protokoll_nu else '-'})")
+pruefe(gesendet_nu == [("climate.n", 23.0)], "es wird erneut geschickt")
+
+# Hat dagegen jemand von Hand auf einen dritten Wert gedreht, gilt weiter
+# der Handeingriff
+zust_h = {"thermostate": {"climate.n": {
+    "soll": 23.0, "vor_schreiben": 13.5,
+    "gesetzt_am": montag.replace(hour=12).isoformat(timespec="seconds")}},
+    "raeume": {}}
+gesendet_nu.clear()
+regelung.anwenden(raum_nu, {"zustand": "komfort", "ziel": 23.0, "begruendung": "x"},
+                  zust_h, umg_nu(19.5), lambda *a, **k: None)
+pruefe(zust_h["thermostate"]["climate.n"].get("manuell_bis") is not None,
+       "ein dritter Wert gilt weiterhin als Handeingriff")
+pruefe(not gesendet_nu, "und wird nicht ueberschrieben")
+
+# Kommt der Wert an, ist der Zaehler wieder bei null
+zust_ok = {"thermostate": {"climate.n": {"soll": 23.0, "schreib_fehler": 2}},
+           "raeume": {}}
+regelung.anwenden(raum_nu, {"zustand": "komfort", "ziel": 23.0, "begruendung": "x"},
+                  zust_ok, umg_nu(23.0), lambda *a, **k: None)
+pruefe(zust_ok["thermostate"]["climate.n"]["schreib_fehler"] == 0,
+       "ein angekommener Wert loescht den Fehlerzaehler")
+einst["trockenlauf"] = True
+
 print("\n=== Partytaste ===")
 party_raum = store.validate_raum({
     "name": "Wohnzimmer", "thermostate": ["climate.a"], "personen": [],

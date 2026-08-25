@@ -318,6 +318,15 @@ Danach führt wieder der Plan. Abschaltbar über *Einstellungen → Betrieb*.
 Funkthermostate melden verzögert. Deshalb wertet der Planer eine Abweichung
 erst 15 Minuten nach dem eigenen Schreibvorgang als Handeingriff.
 
+**Nicht jede Abweichung ist eine Hand.** Manche Geräte quittieren einen
+Sollwert und setzen ihn trotzdem nicht um – sie stehen danach unverändert da.
+Der Planer merkt sich deshalb, welcher Wert *vor* seinem Befehl am Gerät
+stand: Ist es noch genau dieser, hat niemand gedreht, sondern das Gerät hat
+den Befehl verschluckt. Er versucht es dann erneut und meldet es nach drei
+Fehlschlägen als Störung. Diese Unterscheidung ist wichtig – als Handeingriff
+gedeutet, zöge sich der Planer zurück und der Raum bliebe auf einem Wert, den
+niemand gewollt hat.
+
 ## Wie geschrieben wird
 
 Ein Sollwert geht nur dann an ein Thermostat, wenn dort tatsächlich etwas
