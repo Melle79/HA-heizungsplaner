@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.1.2
+
+- Türkontakte werden nur noch über die Geräteklasse `door` erkannt, nicht mehr
+  über das Wort „Tür“ im Namen. Sonst galten die Nebenmelder eines Thermostats,
+  dessen Gerät „Heizung Eingangstür“ heißt (Sommermodus, Tastensperre), alle
+  als Fensterkontakt.
+
 ## 1.1.1
 
 - Die Erkennung von Fensterkontakten trennt jetzt zwei Fallgruben ab: Die

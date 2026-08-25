@@ -174,8 +174,10 @@ def person_entities(states: list[dict] | None = None) -> list[dict]:
 TEMPLATE_API = f"{API_BASE}/template"
 
 # Wörter, an denen ein Fensterkontakt auch ohne Geräteklasse zu erkennen ist.
-FENSTER_WORTE = ("fenster", "window", "kipp", "balkontür", "balkontuer",
-                 "terrassentür", "terrassentuer", "tür", "tuer", "door")
+# „Tür“ steht bewusst nicht darin: Es steckt in Gerätenamen wie „Heizung
+# Eingangstür“, deren Nebenmelder (Sommermodus, Tastensperre) sonst alle als
+# Kontakt gälten. Türkontakte erkennt die Geräteklasse ``door`` zuverlässig.
+FENSTER_WORTE = ("fenster", "window", "kipp")
 
 # Was trotz passender Geräteklasse oder passendem Namen keiner ist. Zwei
 # Fallgruben aus der Praxis: Die Öffnungszeiten von Tankstellen kommen als
@@ -183,7 +185,8 @@ FENSTER_WORTE = ("fenster", "window", "kipp", "balkontür", "balkontuer",
 # Fenster im Namen, an dem sie hängen.
 KEIN_KONTAKT_WORTE = ("status", "blocking", "obstacle", "sun program",
                       "sonnenprogramm", "aufnahme", "update", "verfügbar",
-                      "battery", "batterie", "signal")
+                      "battery", "batterie", "signal", "calibration",
+                      "tastensperre", "sommermodus", "urlaubsmodus")
 
 
 def template(vorlage: str) -> str:
