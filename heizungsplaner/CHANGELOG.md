@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.7.3
+
+- Die Partytaste meldet die Restzeit als fertigen Text (`anzeige`), etwa
+  „noch 2 h 47 min, bis 19:03 Uhr“ – die Kachel zeigt damit die verbleibende
+  Zeit statt eines „Ein“, das ohnehin am Schalter steht.
+- Die Auswahl der Party-Räume speichert sich beim Anklicken selbst. Bisher
+  hing sie am gemeinsamen „Speichern“ und wurde mitgeschrieben, sobald jemand
+  nur die Dauer änderte – dabei konnte eine veraltete Liste die Auswahl still
+  überschreiben.
+- Party-Symbol in der Raumübersicht ergänzt.
+
 ## 1.7.2
 
 - Die Partytaste liefert das Ende zusätzlich als fertige Uhrzeit

@@ -1221,6 +1221,9 @@ function raumlisteZeichnen() {
 async function raeumeLaden() {
   raeume = await hole('raeume');
   raumlisteZeichnen();
+  // Die Party-Auswahl zeigt dieselben Räume – sie muss mitwandern, sonst
+  // steht dort ein veralteter Stand.
+  if (einstellungen.party) einstellungenZeichnen();
 }
 
 // ─────────────────────────────────────── Zeitplan-Editor ──
@@ -1483,6 +1486,22 @@ function einstellungenZeichnen() {
     <label class="haken"><input type="checkbox" class="party-haken"
       value="${r.id}"${r.party ? ' checked' : ''}><span>${r.name}</span></label>`)
     .join('') || '<div class="notiz">Noch keine Räume eingerichtet.</div>';
+  // Jedes Häkchen speichert sich sofort. Hinge die Auswahl am gemeinsamen
+  // „Speichern“, würde sie mitgeschrieben, sobald jemand nur die Dauer ändert –
+  // und wäre still verloren, wenn die Liste veraltet war.
+  $('party-raeume').querySelectorAll('.party-haken').forEach(haken => {
+    haken.onchange = async () => {
+      const gewaehlt = Array.from(document.querySelectorAll('.party-haken:checked'))
+        .map(h => h.value);
+      try {
+        await sendeJSON('party/raeume', 'PUT', {raeume: gewaehlt});
+        await raeumeLaden();
+        meldung('m-einstellungen',
+                gewaehlt.length ? `${gewaehlt.length} Räume machen mit`
+                                : 'Kein Raum macht mit', true);
+      } catch (err) { meldung('m-einstellungen', err.message); }
+    };
+  });
 
   const wacht = e.wachhund || {};
   $('e-wh-aktiv').checked = wacht.aktiv;
@@ -1606,12 +1625,6 @@ $('btn-speichern-einst').onclick = async () => {
   };
   try {
     einstellungen = await sendeJSON('einstellungen', 'PUT', koerper);
-    // Die Party-Räume stehen am Raum, nicht in den Einstellungen – sie werden
-    // im selben Zug mitgespeichert, damit ein Klick auf „Speichern“ genügt.
-    const gewaehlt = Array.from(document.querySelectorAll('.party-haken:checked'))
-      .map(h => h.value);
-    await sendeJSON('party/raeume', 'PUT', {raeume: gewaehlt});
-    await raeumeLaden();
     meldung('m-einstellungen', 'Gespeichert', true);
     setTimeout(statusLaden, 800);
   } catch (err) { meldung('m-einstellungen', err.message); }

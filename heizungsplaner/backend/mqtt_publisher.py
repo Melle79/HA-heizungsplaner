@@ -266,9 +266,17 @@ class Publisher:
                 uhrzeit = ende.strftime("%H:%M")
             except ValueError:
                 pass
+        # Fertiger Anzeigetext für die Kachel: Dass die Taste an ist, sieht man
+        # am Schalter – interessant ist, wie lange noch.
+        if bis and rest > 0:
+            dauer = (f"{rest // 60} h {rest % 60:02d} min" if rest >= 60
+                     else f"{rest} min")
+            anzeige = f"noch {dauer}, bis {uhrzeit} Uhr"
+        else:
+            anzeige = "aus"
         self._zustand("party", "ON" if bis else "OFF",
                       {"laeuft_bis": bis, "bis_uhrzeit": uhrzeit,
-                       "restminuten": rest,
+                       "restminuten": rest, "anzeige": anzeige,
                        "raeume": [r["name"] for r in raeume
                                   if r["zustand"] == "party"]})
 
