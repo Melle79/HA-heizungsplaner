@@ -460,20 +460,53 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
             continue
 
         # -- Ventil schließen (Sommer / Raum abgeschaltet) --------------------
-        if ventil_zu and "off" in (attrs.get("hvac_modes") or []):
+        #
+        # Nicht jedes Thermostat lässt sich abschalten. Manche Matter-Geräte
+        # nehmen den Befehl an und springen eine Minute später von selbst
+        # zurück auf „heat“. Wer das nicht bemerkt, schickt bei jedem Takt
+        # aufs Neue ein „aus“ – Dauerfeuer, das nichts bewirkt außer die
+        # Batterie zu leeren. Nach zwei vergeblichen Versuchen weicht der
+        # Planer deshalb dauerhaft auf den Frostschutzwert aus; das schließt
+        # das Ventil genauso, nur über den Sollwert.
+        kann_aus = "off" in (attrs.get("hvac_modes") or [])
+        if ventil_zu and kann_aus and not gedaechtnis.get("aus_vergeblich"):
             if eintrag.get("state") == "off":
-                gedaechtnis["hvac"] = "off"
+                gedaechtnis.update({"hvac": "off", "aus_fehlversuche": 0})
                 continue
             if frisch and gedaechtnis.get("hvac") == "off":
                 continue  # eben erst geschickt, Thermostat meldet noch nicht zurück
-            if trockenlauf:
-                aktionen.append({"entity_id": entity_id, "aktion": "aus", "trocken": True})
+            if gedaechtnis.get("hvac") == "off":
+                # Wir hatten ausgeschaltet, das Gerät steht wieder auf „heat“.
+                fehlversuche = gedaechtnis.get("aus_fehlversuche", 0) + 1
+                gedaechtnis["aus_fehlversuche"] = fehlversuche
+                if fehlversuche >= 2:
+                    gedaechtnis["aus_vergeblich"] = True
+                    protokoll(raum["name"], "bleibt an",
+                              f"{attrs.get('friendly_name', entity_id)} nimmt das "
+                              f"Ausschalten nicht an – von nun an schließt der "
+                              f"Planer das Ventil über den Frostschutzwert",
+                              entity_id)
+                    # kein continue: unten wird jetzt der Sollwert gesetzt
+                else:
+                    if trockenlauf:
+                        aktionen.append({"entity_id": entity_id, "aktion": "aus",
+                                         "trocken": True})
+                        continue
+                    if ha_api.set_hvac_mode(entity_id, "off"):
+                        gedaechtnis.update({"hvac": "off", "gesetzt_am": _iso(jetzt)})
+                        aktionen.append({"entity_id": entity_id, "aktion": "aus"})
+                    continue
+            else:
+                if trockenlauf:
+                    aktionen.append({"entity_id": entity_id, "aktion": "aus",
+                                     "trocken": True})
+                    continue
+                if ha_api.set_hvac_mode(entity_id, "off"):
+                    gedaechtnis.update({"hvac": "off", "gesetzt_am": _iso(jetzt),
+                                        "soll": None})
+                    aktionen.append({"entity_id": entity_id, "aktion": "aus"})
+                    protokoll(raum["name"], "aus", entscheidung["begruendung"], entity_id)
                 continue
-            if ha_api.set_hvac_mode(entity_id, "off"):
-                gedaechtnis.update({"hvac": "off", "gesetzt_am": _iso(jetzt), "soll": None})
-                aktionen.append({"entity_id": entity_id, "aktion": "aus"})
-                protokoll(raum["name"], "aus", entscheidung["begruendung"], entity_id)
-            continue
 
         ziel = float(entscheidung["ziel"])
         unten, oben = _thermostat_grenzen(attrs)

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.5.3
+
+- **Thermostate, die sich nicht abschalten lassen.** Im Betrieb beobachtet:
+  Ein SwitchBot-Thermostat nimmt das „aus“ an und steht eine Minute später
+  wieder auf `heat`. Der Planer hätte das bei jedem Takt wiederholt –
+  Dauerfeuer, das nur Batterie kostet. Nach zwei vergeblichen Versuchen
+  schließt er das Ventil nun über den Frostschutzwert und schreibt es ins
+  Protokoll.
+
 ## 1.5.2
 
 - Zeitzonenfehler in der Überwachung behoben: Die zeitzonenlose Ortszeit des

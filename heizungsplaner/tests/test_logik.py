@@ -532,6 +532,80 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Thermostat, das sich nicht abschalten laesst ===")
+# Beobachtet an einem SwitchBot-Thermostat: Es nimmt das \"aus\" an und steht
+# eine Minute spaeter wieder auf \"heat\". Ohne Gegenmassnahme schickt der
+# Planer bei jedem Takt ein neues \"aus\" - Dauerfeuer auf Kosten der Batterie.
+zust = {"thermostate": {}, "raeume": {}}
+protokoll_aus = []
+def sammle(raum, was, warum, entity_id=""):
+    protokoll_aus.append((was, warum))
+
+raum_sommer = store.validate_raum({
+    "name": "Testraum", "thermostate": ["climate.stur"], "personen": [],
+    "zeitplan": plan})
+
+def umgebung_stur(zustand, minuten_her=60):
+    idx = {"climate.stur": {"entity_id": "climate.stur", "state": zustand,
+                            "attributes": {"friendly_name": "Sturer",
+                                           "hvac_modes": ["off", "heat"],
+                                           "temperature": 20.0,
+                                           "current_temperature": 21.0,
+                                           "min_temp": 5, "max_temp": 30}}}
+    u = umgebung(montag.replace(hour=14), states_index=idx)
+    u["raum_wechsel"] = {raum_sommer["id"]: montag.replace(hour=21)}
+    return u
+
+einst["trockenlauf"] = False
+sommer_entscheidung = {"zustand": "sommer", "ziel": 8.0, "ventil_zu": True,
+                       "begruendung": "Sommerbetrieb"}
+
+# Damit kein echter Aufruf hinausgeht, wird das Schalten hier abgefangen.
+import ha_api
+gesendet = []
+ha_api.set_hvac_mode = lambda e, m: (gesendet.append((e, m)), True)[1]
+ha_api.set_temperature = lambda e, t: (gesendet.append((e, t)), True)[1]
+
+# 1. Versuch: Gerät steht auf heat -> wir schalten aus
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust, umgebung_stur("heat"), sammle)
+pruefe(gesendet == [("climate.stur", "off")], f"erstes Ausschalten ({gesendet})")
+
+# Gerät springt zurück auf heat, Schreibvorgang liegt zurueck -> zweiter Versuch
+zust["thermostate"]["climate.stur"]["gesetzt_am"] = \
+    montag.replace(hour=12).isoformat(timespec="seconds")
+gesendet.clear()
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust, umgebung_stur("heat"), sammle)
+pruefe(gesendet == [("climate.stur", "off")], "zweiter Versuch")
+
+# Dritter Anlauf: der Planer gibt das Ausschalten auf und stellt den Sollwert
+zust["thermostate"]["climate.stur"]["gesetzt_am"] = \
+    montag.replace(hour=12).isoformat(timespec="seconds")
+gesendet.clear()
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust, umgebung_stur("heat"), sammle)
+pruefe(zust["thermostate"]["climate.stur"].get("aus_vergeblich") is True,
+       "nach zwei Fehlversuchen wird aufgegeben")
+pruefe(gesendet == [("climate.stur", 8.0)],
+       f"stattdessen wird der Frostschutzwert gestellt ({gesendet})")
+pruefe(any("nimmt das Ausschalten nicht an" in w for _, w in protokoll_aus),
+       "der Verzicht steht im Protokoll")
+
+# Kein weiteres Dauerfeuer: der Sollwert steht schon
+gesendet.clear()
+idx_kalt = umgebung_stur("heat")
+idx_kalt["states_index"]["climate.stur"]["attributes"]["temperature"] = 8.0
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust, idx_kalt, sammle)
+pruefe(gesendet == [], "danach wird nichts mehr geschickt")
+
+# Ein Gerät, das sich abschalten laesst, wird weiter abgeschaltet
+zust2 = {"thermostate": {}, "raeume": {}}
+gesendet.clear()
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust2, umgebung_stur("heat"), sammle)
+regelung.anwenden(raum_sommer, sommer_entscheidung, zust2, umgebung_stur("off"), sammle)
+pruefe(zust2["thermostate"]["climate.stur"].get("aus_fehlversuche", 0) == 0,
+       "ein folgsames Geraet sammelt keine Fehlversuche")
+
+einst["trockenlauf"] = True
+
 print("\n=== Wachhund ===")
 import wachhund
 from datetime import timezone

@@ -101,6 +101,14 @@ Ohne Glättung würde ein sonniger Februarnachmittag die Heizung abstellen.
 Thermostate, die `off` können, werden abgeschaltet – das spart Batterie und
 schließt das Ventil vollständig. Alle anderen bekommen den Frostschutzwert.
 
+**Wenn ein Gerät sich nicht abschalten lässt:** Manche Matter-Thermostate
+nehmen den Befehl an und stehen eine Minute später wieder auf `heat`. Ohne
+Gegenmaßnahme schickt der Planer bei jedem Takt ein neues „aus“ – Dauerfeuer,
+das nichts bewirkt außer die Batterie zu leeren. Nach zwei vergeblichen
+Versuchen schließt er das Ventil deshalb dauerhaft über den Frostschutzwert
+und vermerkt das im Protokoll. Meldet sich das Gerät später doch einmal als
+abgeschaltet, gilt wieder der normale Weg.
+
 ## Freigabe: Räume, die nur zeitweise gebraucht werden
 
 Ein Raum kann an einen Schalter in Home Assistant gehängt werden (*Freigabe*).
