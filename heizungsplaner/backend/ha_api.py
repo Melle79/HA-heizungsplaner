@@ -205,6 +205,16 @@ TEMPLATE_API = f"{API_BASE}/template"
 # Kontakt gälten. Türkontakte erkennt die Geräteklasse ``door`` zuverlässig.
 FENSTER_WORTE = ("fenster", "window", "kipp")
 
+# Manche Thermostate erkennen ein offenes Fenster selbst – am Temperatursturz
+# an ihrem eigenen Fühler – und melden das als eigene Entität. Das ist kein
+# Kontakt am Fenster, sondern dasselbe Verfahren wie die Sturzerkennung des
+# Planers, nur im Gerät. Solche Melder dürfen die Sturzerkennung deshalb nicht
+# verdrängen: Steht das Gerät in der Sommerpause oder ist es abgeschaltet,
+# meldet es nie – der Raum wäre stillschweigend ohne Fenstererkennung.
+GERAETEEIGENE_WORTE = ("offenes fenster erkannt", "offenes_fenster",
+                       "fenster offen erkannt", "window open detected",
+                       "open_window", "window_open")
+
 # Was trotz passender Geräteklasse oder passendem Namen keiner ist. Zwei
 # Fallgruben aus der Praxis: Die Öffnungszeiten von Tankstellen kommen als
 # `device_class: opening`, und die Diagnosemelder eines Rollladens tragen das
@@ -289,6 +299,12 @@ def ist_fensterkontakt(entity_id: str, name: str, klasse: str | None) -> bool:
     return any(wort in text for wort in FENSTER_WORTE)
 
 
+def ist_geraeteeigene_erkennung(entity_id: str, name: str) -> bool:
+    """Meldet hier ein Thermostat seine eigene Fenstererkennung?"""
+    text = f"{entity_id} {name}".lower().replace("-", " ")
+    return any(wort in text for wort in GERAETEEIGENE_WORTE)
+
+
 def sensor_candidates(states: list[dict] | None = None,
                       mit_bereichen: bool = True,
                       bereiche: dict | None = None) -> dict:
@@ -323,6 +339,7 @@ def sensor_candidates(states: list[dict] | None = None,
             if klasse in ("motion", "occupancy", "presence"):
                 praesenz.append(eintrag)
             elif ist_fensterkontakt(eid, name, klasse):
+                eintrag["geraeteeigen"] = ist_geraeteeigene_erkennung(eid, name)
                 fenster.append(eintrag)
             else:
                 sonstige.append(eintrag)

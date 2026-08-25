@@ -336,6 +336,16 @@ Kontakt ist genauer, und der Sturz schlägt gelegentlich grundlos an, wenn ein
 anlaufender Heizkörper die Luft am Thermostatfühler verwirbelt. Wer beides
 will, schaltet am Raum *Zusätzlich auf Temperatursturz achten* ein.
 
+**Die geräteeigene Erkennung eines Thermostats ist kein Kontakt.** Manche
+Thermostate – die FRITZ!Smart Thermo etwa – erkennen ein offenes Fenster
+selbst am Sturz an ihrem eigenen Fühler und melden das als eigene Entität.
+Der Planer nimmt eine solche Meldung als Auslöser an, lässt die
+Sturz-Erkennung daneben aber weiterlaufen. Sie macht schließlich dasselbe,
+nur im Gerät, und schweigt, sobald das Gerät abgeschaltet ist oder in der
+Sommerpause steht. Ein Raum, dessen einziger Eintrag eine solche Meldung ist,
+stünde sonst ohne Fenstererkennung da. In der Auswahlliste sind sie als
+*geräteeigene Erkennung* gekennzeichnet.
+
 **Temperatursturz.** Für Räume ohne Kontakte: Fällt die Raumtemperatur um mehr
 als den eingestellten Wert innerhalb des Zeitfensters, gilt das Fenster als
 offen. Der Planer führt dafür je Raum ein Temperaturgedächtnis über eine

@@ -1,5 +1,15 @@
 # Änderungen
 
+## 1.9.0
+
+- **Die geräteeigene Fenstererkennung eines Thermostats gilt nicht mehr als
+  Kontakt.** Sie löst weiterhin aus, verdrängt die Temperatursturz-Erkennung
+  aber nicht mehr. Bisher genügte eine solche Meldung, um den Sturz
+  abzuschalten – die Gästetoilette stand damit ohne Fenstererkennung da, denn
+  ihr FRITZ!-Thermostat meldet in der Sommerpause gar nichts.
+- In der Auswahlliste sind solche Melder als *geräteeigene Erkennung*
+  gekennzeichnet, und ihr Schweigen wird nicht mehr als Ausfall angemahnt.
+
 ## 1.8.11
 
 - **Behoben: Ein Raum zeigte die Personen des zuvor geöffneten Raumes.** Die

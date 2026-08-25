@@ -297,6 +297,30 @@ e = fensterlage(["binary_sensor.fenster_wz"], {"binary_sensor.fenster_wz": "unav
 pruefe("melden nichts" in e["begruendung"],
        f"ausgefallener Kontakt wird benannt ({e['begruendung']})")
 
+# Die geraeteeigene Fenstererkennung eines Thermostats ist kein Kontakt: Sie
+# loest aus, verdraengt die Sturzerkennung aber nicht. Sonst stuende ein Raum,
+# dessen einziger "Kontakt" eine solche Meldung ist, ohne Fenstererkennung da,
+# sobald das Geraet abgeschaltet ist - so war es in der Gaestetoilette.
+GERAETEEIGEN = "binary_sensor.heizung_gaeste_offenes_fenster_erkannt"
+
+e = fensterlage([GERAETEEIGEN], {GERAETEEIGEN: "on"})
+pruefe(e["zustand"] == "fenster" and "meldet ein offenes Fenster" in e["begruendung"],
+       f"geraeteeigene Erkennung schlaegt an ({e['begruendung']})")
+
+e = fensterlage([GERAETEEIGEN], {GERAETEEIGEN: "off"})
+pruefe(e["zustand"] == "fenster" and "Temperatursturz" in e["begruendung"],
+       f"geraeteeigene Erkennung verdraengt den Sturz nicht ({e['begruendung']})")
+
+e = fensterlage([GERAETEEIGEN], {GERAETEEIGEN: "unavailable"}, verlauf_sturz=False)
+pruefe("melden nichts" not in e["begruendung"],
+       f"stumme geraeteeigene Erkennung wird nicht angemahnt ({e['begruendung']!r})")
+
+# Ein echter Kontakt daneben behaelt seine Wirkung.
+e = fensterlage([GERAETEEIGEN, "binary_sensor.fenster_wz"],
+                {GERAETEEIGEN: "off", "binary_sensor.fenster_wz": "off"})
+pruefe(e["zustand"] != "fenster",
+       f"echter Kontakt unterdrueckt den Sturz weiterhin ({e['zustand']})")
+
 e = fensterlage(["binary_sensor.a", "binary_sensor.b"],
                 {"binary_sensor.a": "off", "binary_sensor.b": "on"})
 pruefe(e["zustand"] == "fenster", "ein offener unter mehreren genuegt")

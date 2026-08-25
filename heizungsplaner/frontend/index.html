@@ -741,9 +741,12 @@
       <div class="abschnitt">
         <h3>Fensterkontakte</h3>
         <div id="r-fenster" class="hakenliste"></div>
-        <div class="notiz" style="margin-top:var(--l2)">Sobald hier ein Kontakt steht,
-          entscheidet er allein – die Temperatursturz-Erkennung tritt zurück. Meldet
-          ein Kontakt nichts, springt sie wieder ein.</div>
+        <div class="notiz" style="margin-top:var(--l2)">Sobald hier ein echter Kontakt
+          steht, entscheidet er allein – die Temperatursturz-Erkennung tritt zurück.
+          Meldet ein Kontakt nichts, springt sie wieder ein. Die <em>geräteeigene
+          Erkennung</em> eines Thermostats löst zwar mit aus, verdrängt die
+          Sturz-Erkennung aber nicht: Sie schweigt, sobald das Gerät abgeschaltet
+          ist.</div>
         <label class="haken" style="margin-top:var(--l2)">
           <input type="checkbox" id="r-sturz">
           <span>Zusätzlich auf Temperatursturz achten, auch wenn alle Kontakte
@@ -943,10 +946,13 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
   const zeile = (eintrag, angehakt) => {
     const stumm = eintrag.zustand && !['on','off'].includes(eintrag.zustand)
       ? '  ⚠ meldet nichts' : '';
+    // Geräteeigene Fenstererkennung wird benannt – sie ist kein Kontakt am
+    // Fenster und wirkt anders.
+    const art = eintrag.geraeteeigen ? '  · geräteeigene Erkennung' : '';
     if (!haken) {
       const option = document.createElement('option');
       option.value = eintrag.entity_id;
-      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
+      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm + art;
       return option;
     }
     const label = document.createElement('label');
@@ -956,7 +962,7 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
     kasten.checked = angehakt;
     const text = document.createElement('span');
     text.className = 'h-text';
-    text.textContent = eintrag.name + stumm;
+    text.textContent = eintrag.name + stumm + art;
     // Die Entitäts-ID nur, wo sie etwas hinzufügt: Die Meldewege heißen wie
     // ihre ID, dort stünde sonst alles doppelt.
     if (eintrag.entity_id && eintrag.entity_id !== eintrag.name) {

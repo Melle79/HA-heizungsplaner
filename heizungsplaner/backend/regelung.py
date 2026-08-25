@@ -119,6 +119,13 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     sonst auch mal grundlos an (ein anlaufender Heizkörper verwirbelt die
     Luft am Thermostatfühler). Wer beides will, schaltet es am Raum zu.
 
+    **Die geräteeigene Fenstererkennung eines Thermostats zählt dabei nicht
+    als Kontakt.** Sie löst zwar aus, verdrängt die Sturzerkennung aber nicht:
+    Sie macht dasselbe wie diese, nur im Gerät, und schweigt, sobald das Gerät
+    abgeschaltet ist oder in der Sommerpause steht. Ein Raum, dessen einziger
+    „Kontakt“ eine solche Meldung ist, wäre sonst ohne Fenstererkennung – so
+    stand die Gästetoilette am 25.08.2026 da.
+
     **Ein Kontakt, der nichts meldet, gilt nicht als „geschlossen“.** Ein
     leerer Knopf, ein abgezogener Zigbee-Stick oder ein noch nicht angelernter
     Sensor würde den Raum sonst stillschweigend blind machen. In dem Fall
@@ -130,15 +137,22 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     kontakte = raum.get("fenster") or []
     verlaesslich, stumm = 0, []
     for entity_id in kontakte:
+        name = ((states_index.get(entity_id) or {}).get("attributes") or {}).get(
+            "friendly_name", entity_id)
+        geraeteeigen = ha_api.ist_geraeteeigene_erkennung(entity_id, name)
         zustand = _bool_state(states_index, entity_id)
         if zustand is None:
-            stumm.append(entity_id)
+            # Ein stummer geräteeigener Melder ist kein Grund zur Sorge – die
+            # Sturzerkennung läuft ohnehin weiter. Fällt das Gerät ganz aus,
+            # meldet es der Wachhund.
+            if not geraeteeigen:
+                stumm.append(entity_id)
             continue
-        verlaesslich += 1
+        if not geraeteeigen:
+            verlaesslich += 1
         if zustand:
-            name = (states_index[entity_id].get("attributes") or {}).get(
-                "friendly_name", entity_id)
-            return True, f"{name} ist offen", ""
+            return True, (f"{name} meldet ein offenes Fenster" if geraeteeigen
+                          else f"{name} ist offen"), ""
 
     hinweis = ""
     if stumm:
