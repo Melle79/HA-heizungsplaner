@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.13.2
+
+- `uebersteuerung_bis` ist nie mehr leer: „bis 14:00 Uhr“, solange die Regel
+  greift, sonst „ruht“. Eine Tile-Karte fällt bei einem leeren Attribut auf
+  den Zustand des Sensors zurück – auf der Homeoffice-Kachel stand dann der
+  Zielwert von 8 °C, der wie eine Außentemperatur aussah.
+
 ## 1.13.1
 
 - Der Raum-Sensor trägt zusätzlich `uebersteuerung_bis` – „bis 14:00 Uhr“,

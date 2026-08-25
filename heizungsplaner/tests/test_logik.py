@@ -349,6 +349,10 @@ a = lage_auskunft()
 pruefe(a["greift"] and a["name"] == "Homeoffice", f"Lage: greift ({a})")
 pruefe(a["bis"] == "bis 18:00 Uhr",
        f"Lage: nennt das Ende fuer die Kachel ({a.get('bis')!r})")
+# Ein leeres Attribut lässt eine Tile-Karte auf den Zustand zurückfallen –
+# dann stuende dort der Zielwert. Deshalb ist "bis" nie leer.
+a = lage_auskunft(ferien="on")
+pruefe(a["bis"] == "ruht", f"Lage: „bis“ bleibt gefuellt ({a.get('bis')!r})")
 a = lage_auskunft(ferien="on")
 pruefe(not a["greift"] and a["lage"] == "greift heute nicht – Ferien & Feiertage läuft",
        f"Lage: Ferientag wird als heute benannt ({a['lage']})")
