@@ -75,7 +75,10 @@ STANDARD_EINSTELLUNGEN = {
         "grund_min": 30,          # Vorlauf bei milder Witterung
         "min_pro_grad": 2.0,      # zusätzliche Minuten je Grad unter 15 °C
         "max_min": 120,
-        "heimkehr_km": 8.0,       # ab dieser Entfernung gilt jemand als auf dem Heimweg
+        "heimkehr_km": 8.0,       # näher als das gilt jemand als möglicherweise heimkehrend
+        # … aber nur, wenn die Entfernung auch abnimmt. Ohne diese Prüfung
+        # gälte eine Schule im Nachbarort den ganzen Vormittag als Heimweg.
+        "heimkehr_annaeherung_km": 0.3,
     },
     "fenster": {
         "aktiv": True,
@@ -297,6 +300,8 @@ def validate_einstellungen(roh: dict) -> dict:
     v["min_pro_grad"] = _zahl(v["min_pro_grad"], "Minuten je Grad", 0.0, 15.0)
     v["max_min"] = int(_zahl(v["max_min"], "Maximaler Vorlauf", 0, 360))
     v["heimkehr_km"] = _zahl(v["heimkehr_km"], "Heimkehr-Entfernung", 0.0, 100.0)
+    v["heimkehr_annaeherung_km"] = _zahl(
+        v["heimkehr_annaeherung_km"], "Mindestannäherung", 0.0, 20.0)
 
     f = e["fenster"]
     f["aktiv"] = bool(f["aktiv"])

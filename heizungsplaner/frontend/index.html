@@ -455,10 +455,15 @@
         <div class="feld"><label>Höchstens (Min.)</label>
           <input type="number" id="e-vor-max" min="0" max="360" step="10"></div>
         <div class="feld"><label>Heimkehr ab (km)</label>
-          <input type="number" id="e-vor-km" min="0" max="100" step="0.5">
-          <div class="notiz">Ist eine zuständige Person näher, gilt der Raum wieder
-            als belegt.</div></div>
+          <input type="number" id="e-vor-km" min="0" max="100" step="0.5"></div>
+        <div class="feld"><label>Mindestannäherung (km)</label>
+          <input type="number" id="e-vor-naehe" min="0" max="20" step="0.1"></div>
       </div>
+      <div class="notiz" style="margin-top:var(--l2)">Als heimkehrend gilt nur, wer
+        näher als die Schwelle ist, <b>in keiner Zone steht</b> und dessen Entfernung
+        in den letzten 15 Minuten um mindestens den genannten Wert abgenommen hat.
+        Die Entfernung allein genügt nicht: Eine Schule in einem Kilometer Abstand
+        hielte das Kinderzimmer sonst den ganzen Vormittag auf Komforttemperatur.</div>
       <div class="notiz" id="vor-beispiel" style="margin-top:var(--l2)"></div>
     </div>
   </div>
@@ -938,9 +943,12 @@ function berichtZeichnen(bericht) {
 
   const personen = bericht.personen || {};
   const eintraege = Object.entries(personen).map(([id, p]) => {
-    const wo = p.zuhause ? 'zu Hause'
-      : (p.entfernung_km !== null && p.entfernung_km !== undefined
-          ? `${zahl(p.entfernung_km)} km entfernt` : p.zustand);
+    let wo;
+    if (p.zuhause) wo = 'zu Hause';
+    else if (p.in_zone) wo = p.in_zone;
+    else if (p.entfernung_km !== null && p.entfernung_km !== undefined) {
+      wo = `${zahl(p.entfernung_km)} km` + (p.naehert_sich ? ' · kommt näher' : '');
+    } else wo = p.zustand;
     return `<span class="person${p.zuhause ? ' daheim' : ''}">
       <span class="zu-hause"></span>${p.name}<span class="wo">${wo}</span></span>`;
   }).join('');
@@ -1366,6 +1374,7 @@ function einstellungenZeichnen() {
   $('e-vor-grad').value = e.vorheizen.min_pro_grad;
   $('e-vor-max').value = e.vorheizen.max_min;
   $('e-vor-km').value = e.vorheizen.heimkehr_km;
+  $('e-vor-naehe').value = e.vorheizen.heimkehr_annaeherung_km;
   $('e-fe-aktiv').checked = e.fenster.aktiv;
   $('e-fe-sturz').value = e.fenster.sturz_k;
   $('e-fe-min').value = e.fenster.sturz_min;
@@ -1447,6 +1456,7 @@ $('btn-speichern-einst').onclick = async () => {
       min_pro_grad: parseFloat($('e-vor-grad').value),
       max_min: parseInt($('e-vor-max').value, 10),
       heimkehr_km: parseFloat($('e-vor-km').value),
+      heimkehr_annaeherung_km: parseFloat($('e-vor-naehe').value),
     },
     fenster: {
       aktiv: $('e-fe-aktiv').checked,

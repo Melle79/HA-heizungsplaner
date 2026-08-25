@@ -583,7 +583,11 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     urlaub = _bool_state(states_index, einst.get("urlaub_entity", "")) or False
     schulfrei = _bool_state(states_index, einst.get("schulfrei_entity", ""))
     heim = ha_api.zone_home(states)
-    personen = anwesenheit.personen_status(states_index, heim)
+    zonen = anwesenheit.zonennamen(states_index)
+    personen = anwesenheit.personen_status(states_index, heim, zonen)
+    anwesenheit.bewegung_fortschreiben(
+        personen, state.setdefault("personen", {}), jetzt,
+        float(einst["vorheizen"].get("heimkehr_annaeherung_km", 0.3)))
 
     raum_wechsel = {}
     for raum in config["raeume"]:

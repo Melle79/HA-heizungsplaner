@@ -18,6 +18,10 @@ import math
 
 ERDRADIUS_KM = 6371.0
 
+# Über diese Spanne wird geprüft, ob jemand näher kommt. Kürzer wäre zu sehr
+# vom GPS-Rauschen abhängig, länger würde die Heimkehr zu spät bemerken.
+ANNAEHERUNG_FENSTER_MIN = 15
+
 
 def entfernung_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Großkreisentfernung zweier Punkte in Kilometern."""
@@ -28,14 +32,34 @@ def entfernung_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * ERDRADIUS_KM * math.asin(math.sqrt(a))
 
 
-def personen_status(states_index: dict, heim: tuple[float, float, float] | None) -> dict:
-    """Für jede Person: zu Hause? wie weit weg?"""
+def zonennamen(states_index: dict) -> set[str]:
+    """Die Anzeigenamen aller Zonen außer der Heimzone.
+
+    Eine Person, die in einer Zone steht, meldet deren Namen als Zustand –
+    „Realschule“ statt ``not_home``. Genau daran lässt sich erkennen, dass
+    jemand angekommen ist und nicht unterwegs.
+    """
+    namen = set()
+    for entity_id, eintrag in states_index.items():
+        if not entity_id.startswith("zone.") or entity_id == "zone.home":
+            continue
+        name = (eintrag.get("attributes") or {}).get("friendly_name")
+        if name:
+            namen.add(name)
+    return namen
+
+
+def personen_status(states_index: dict, heim: tuple[float, float, float] | None,
+                    zonen: set[str] | None = None) -> dict:
+    """Für jede Person: zu Hause? wie weit weg? in einer Zone?"""
+    zonen = zonen if zonen is not None else zonennamen(states_index)
     out = {}
     for entity_id, eintrag in states_index.items():
         if not entity_id.startswith("person."):
             continue
         attrs = eintrag.get("attributes", {}) or {}
-        zuhause = eintrag.get("state") == "home"
+        zustand = eintrag.get("state")
+        zuhause = zustand == "home"
         distanz = None
         if heim and not zuhause:
             try:
@@ -48,10 +72,56 @@ def personen_status(states_index: dict, heim: tuple[float, float, float] | None)
         out[entity_id] = {
             "name": attrs.get("friendly_name", entity_id),
             "zuhause": zuhause,
-            "zustand": eintrag.get("state"),
+            "zustand": zustand,
             "entfernung_km": distanz,
+            "in_zone": zustand if (not zuhause and zustand in zonen) else None,
+            "naehert_sich": False,
         }
     return out
+
+
+def bewegung_fortschreiben(personen: dict, gedaechtnis: dict, jetzt,
+                           mindest_annaeherung_km: float) -> None:
+    """Je Person merken, wie weit sie weg war, und daraus die Richtung ableiten.
+
+    Ohne diese Prüfung wäre die Entfernung allein aussagelos: Wer eine
+    Schule in einem Kilometer Entfernung besucht, ist den ganzen Vormittag
+    „nah“, ohne je auf dem Heimweg zu sein.
+    """
+    from datetime import timedelta
+
+    grenze = jetzt - timedelta(minutes=ANNAEHERUNG_FENSTER_MIN)
+    for entity_id, person in personen.items():
+        eintrag = gedaechtnis.setdefault(entity_id, {})
+        verlauf = [(stempel, wert) for stempel, wert in (eintrag.get("verlauf") or [])]
+
+        distanz = person.get("entfernung_km")
+        if distanz is None:
+            # Ohne Standort lässt sich nichts über die Richtung sagen. Der
+            # Verlauf bleibt stehen, damit ein einzelner Aussetzer ihn nicht
+            # verwirft.
+            continue
+
+        frueher = [wert for stempel, wert in verlauf
+                   if _zeit(stempel) and _zeit(stempel) <= grenze]
+        if frueher:
+            # Der größte Wert im Fenster: Wer zwischendurch näher war und sich
+            # wieder entfernt hat, gilt nicht als heimkehrend.
+            person["naehert_sich"] = (max(frueher) - distanz) >= mindest_annaeherung_km
+
+        verlauf.append((jetzt.isoformat(timespec="seconds"), distanz))
+        eintrag["verlauf"] = [
+            [stempel, wert] for stempel, wert in verlauf
+            if _zeit(stempel) and _zeit(stempel) >= jetzt - timedelta(
+                minutes=ANNAEHERUNG_FENSTER_MIN * 3)][-40:]
+
+
+def _zeit(text):
+    from datetime import datetime
+    try:
+        return datetime.fromisoformat(text)
+    except (TypeError, ValueError):
+        return None
 
 
 def zustaendige(raum: dict, alle_personen: dict) -> list[str]:
@@ -108,7 +178,19 @@ def raum_besetzt(raum: dict, states_index: dict, personen: dict) -> tuple[bool, 
 
 
 def kommt_heim(raum: dict, personen: dict, schwelle_km: float) -> tuple[bool, str]:
-    """Ist eine zuständige Person auf dem Heimweg, also näher als die Schwelle?"""
+    """Ist eine zuständige Person auf dem Heimweg?
+
+    Drei Bedingungen, alle nötig:
+
+    * näher als die Schwelle,
+    * **nicht in einer Zone** – wer in der Schule oder im Büro sitzt, ist dort
+      angekommen, auch wenn das nur einen Kilometer entfernt ist,
+    * **erkennbar näher kommend** – die Entfernung muss über die letzten
+      Minuten abgenommen haben.
+
+    Die Entfernung allein genügt nicht: Eine Schule in Sichtweite hielte den
+    Raum sonst den ganzen Schultag auf Komforttemperatur.
+    """
     if schwelle_km <= 0:
         return False, ""
     naechste, name = None, ""
@@ -117,8 +199,10 @@ def kommt_heim(raum: dict, personen: dict, schwelle_km: float) -> tuple[bool, st
         distanz = person.get("entfernung_km")
         if person["zuhause"] or distanz is None:
             continue
+        if person.get("in_zone") or not person.get("naehert_sich"):
+            continue
         if naechste is None or distanz < naechste:
             naechste, name = distanz, person["name"]
     if naechste is not None and naechste <= schwelle_km:
-        return True, f"{name} ist noch {naechste:.1f} km entfernt"
+        return True, f"{name} kommt näher, noch {naechste:.1f} km"
     return False, ""

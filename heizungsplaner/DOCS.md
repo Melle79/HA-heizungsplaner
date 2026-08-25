@@ -140,10 +140,20 @@ Jeder Raum kann eine eigene Karenzzeit bekommen – ein Büro, dessen
 Bewegungsmelder nach zwei Minuten abfällt, braucht eine kürzere als ein
 Wohnzimmer.
 
-Die **Heimkehr** wird vorhergesehen: Ist eine zuständige Person näher als die
-eingestellte Entfernung zur Heimzone, gilt der Raum wieder als belegt und wird
-vorgeheizt. Grundlage sind die Koordinaten der `person`-Entität und der
-Heimzone.
+Die **Heimkehr** wird vorhergesehen. Dafür müssen drei Dinge zutreffen:
+
+1. die Person ist näher als die eingestellte Entfernung zur Heimzone,
+2. sie steht **in keiner Zone** – wer in der Schule oder im Büro sitzt, ist
+   dort angekommen, auch wenn das nur einen Kilometer entfernt ist,
+3. ihre Entfernung hat in den letzten 15 Minuten um die eingestellte
+   **Mindestannäherung** abgenommen.
+
+Die Entfernung allein genügt nicht. Liegt die Schule einen Kilometer
+entfernt, wären die Kinder den ganzen Vormittag „nah" – ihre Zimmer würden
+durchheizen und die Anwesenheitsabsenkung liefe ins Leere. Die
+Mindestannäherung filtert zugleich das GPS-Rauschen heraus: Ein Wert von
+0,3 km spricht nicht auf die hundert Meter an, um die eine ruhende Position
+schwankt.
 
 Geprüft wird ausschließlich auf `home`. Tracker, die unterwegs eigene
 Standzonen melden statt `not_home`, funktionieren damit korrekt.

@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.4.1
+
+- **Die Heimkehr-Erkennung sah nur die Entfernung an.** Wer eine Schule in
+  einem Kilometer Abstand besucht, galt damit den ganzen Vormittag als „auf
+  dem Heimweg", und die Anwesenheitsabsenkung des Kinderzimmers lief ins
+  Leere. Jetzt zählt eine Person nur dann als heimkehrend, wenn sie zusätzlich
+  **in keiner Zone steht** und ihre Entfernung über die letzten 15 Minuten um
+  eine einstellbare Mindestannäherung (Vorgabe 0,3 km) abgenommen hat.
+- Die Personenübersicht zeigt jetzt den Zonennamen („Realschule") statt einer
+  Entfernung und vermerkt, wer näher kommt.
+
 ## 1.4.0
 
 Die Oberfläche ist neu aufgebaut. Sie war über die vorangegangenen
