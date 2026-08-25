@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.0.2
+
+- Der Einrichtungsassistent schlägt für Schlafzimmer eigene Temperaturen vor
+  (Komfort 20 °C statt 23 °C).
+
+
 ## 1.0.1
 
 - Die Bereichszuordnung des Einrichtungsassistenten läuft jetzt über eine

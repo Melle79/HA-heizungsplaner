@@ -31,6 +31,16 @@ NEBENRAUM_WORTE = ("wc", "toilette", "bad", "flur", "eingang", "diele", "keller"
 SCHLAF_WORTE = ("schlafzimmer", "elternschlaf")
 KINDER_WORTE = ("zimmer",)
 
+# Vorgabetemperaturen je Raumart: Komfort, Eco, Nacht, Abwesend.
+# Die Wohn- und Kinderzimmerwerte entsprechen dem, was die bisherigen
+# Zeitpläne dieses Hauses geschaltet haben.
+TEMPERATUREN = {
+    "wohnraum":     (23.0, 19.0, 19.0, 17.0),
+    "kinderzimmer": (23.0, 19.0, 19.0, 17.0),
+    "schlafzimmer": (20.0, 18.0, 17.0, 16.0),
+    "nebenraum":    (21.0, 18.0, 17.0, 16.0),
+}
+
 # Vier Felder je Zeile: Entität, Bereich, Anzeigename, Rolle.
 # Rolle ist "gruppe" für Gruppen-Helfer, "einzeln" für echte Thermostate und
 # "fuehler" für Temperatursensoren.
@@ -125,6 +135,7 @@ def vorschlag() -> list[dict]:
         zugeordnet = [p["entity_id"] for p in personen
                       if p["vorname"] and p["vorname"] in bereich.lower()]
         art = _art(bereich, zugeordnet)
+        komfort, eco, nacht, abwesend = TEMPERATUREN[art]
         raeume.append({
             "name": bereich,
             "aktiv": True,
@@ -133,10 +144,10 @@ def vorschlag() -> list[dict]:
             "praesenz": [],
             "fenster": [],
             "raumtemp": "",
-            "komfort": 21.0 if art == "nebenraum" else 23.0,
-            "eco": 18.0 if art == "nebenraum" else 19.0,
-            "abwesend": 16.0 if art == "nebenraum" else 17.0,
-            "nacht": 17.0 if art == "nebenraum" else 19.0,
+            "komfort": komfort,
+            "eco": eco,
+            "abwesend": abwesend,
+            "nacht": nacht,
             "min": 5.0,
             "max": 26.0,
             "heizkurve": True,
