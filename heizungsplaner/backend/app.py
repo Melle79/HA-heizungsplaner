@@ -335,6 +335,26 @@ def api_vorschlag_abweisen():
     return jsonify({"ok": True, "abgewiesen": sorted(liste)})
 
 
+@app.route("/api/wachhund/probe", methods=["POST"])
+def api_wachhund_probe():
+    """Eine Probemeldung über die eingestellten Wege schicken.
+
+    Ob ein Meldeweg trägt, merkt man sonst erst im Ernstfall – und dann ist es
+    zu spät. Genau dafür ist diese Überwachung ja gebaut worden.
+    """
+    dienste = ((store.load_config()["einstellungen"].get("wachhund") or {})
+               .get("melden_an") or [])
+    if not dienste:
+        return jsonify({"fehler": "Es ist kein Meldeweg eingestellt."}), 400
+    ergebnis = {}
+    for dienst in dienste:
+        ergebnis[dienst] = ha_api.notify(
+            dienst, "Heizungsplaner: Probemeldung",
+            "Wenn diese Nachricht ankommt, funktioniert der Meldeweg. So würde "
+            "sich auch ein ausgefallenes Thermostat melden.")
+    return jsonify({"gesendet": ergebnis})
+
+
 @app.route("/api/logbuch", methods=["GET", "DELETE"])
 def api_logbuch():
     if request.method == "DELETE":

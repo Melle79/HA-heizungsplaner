@@ -488,6 +488,12 @@
         Ausfall und einmal bei der Behebung – eine Warnung, die stündlich erneut
         kommt, wird bald weggewischt.</div>
     </div>
+    <div class="zeile-aktionen">
+      <button class="leise" id="btn-probe">Probemeldung senden</button>
+      <span class="meldung" id="m-probe"></span>
+    </div>
+    <div class="notiz">Erst speichern, dann die Probe senden – geprüft werden die
+      gespeicherten Meldewege.</div>
   </div>
 
   <div class="tafel">
@@ -1456,6 +1462,20 @@ $('btn-anlauf').onclick = async () => {
     berichtZeichnen(bericht);
   } catch (err) { meldung('m-anlauf', err.message); }
   finally { $('btn-anlauf').disabled = false; }
+};
+
+$('btn-probe').onclick = async () => {
+  $('btn-probe').disabled = true;
+  try {
+    const ergebnis = await hole('wachhund/probe', {method: 'POST'});
+    const wege = Object.entries(ergebnis.gesendet || {});
+    const gut = wege.filter(([, ok]) => ok).map(([d]) => d.split('.')[1]);
+    const schlecht = wege.filter(([, ok]) => !ok).map(([d]) => d.split('.')[1]);
+    meldung('m-probe', schlecht.length
+      ? `Fehlgeschlagen: ${schlecht.join(', ')}` + (gut.length ? ` · zugestellt: ${gut.join(', ')}` : '')
+      : `Gesendet über ${gut.join(', ')}`, !schlecht.length);
+  } catch (err) { meldung('m-probe', err.message); }
+  finally { $('btn-probe').disabled = false; }
 };
 
 $('btn-speichern-einst').onclick = async () => {

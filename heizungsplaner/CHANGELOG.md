@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.5.1
+
+- Knopf „Probemeldung senden“ in den Einstellungen. Ob ein Meldeweg trägt,
+  merkte man sonst erst im Ernstfall – und dann ist es zu spät.
+
 ## 1.5.0
 
 **Überwachung der Thermostate.** Anlass: Während eines Urlaubs fielen vier
