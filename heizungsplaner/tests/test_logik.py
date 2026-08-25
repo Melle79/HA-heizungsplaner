@@ -553,6 +553,58 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Partytaste ===")
+party_raum = store.validate_raum({
+    "name": "Wohnzimmer", "thermostate": ["climate.a"], "personen": [],
+    "komfort": 23.0, "eco": 19.0, "nacht": 19.0, "abwesend": 17.0,
+    "min": 5.0, "max": 26.0, "zeitplan": plan})
+bis = montag.replace(hour=23)
+
+def party_umgebung(**extra):
+    u = umgebung(montag.replace(hour=22), **extra)   # 22 Uhr: Plan sagt nacht
+    return u
+
+ohne = regelung.entscheide(party_raum, {"temperaturquelle": "thermostate"},
+                           party_umgebung())
+pruefe(ohne["ziel"] < 21,
+       f"ohne Party gilt um 22 Uhr die Nachtabsenkung ({ohne['ziel']})")
+
+e = regelung.entscheide(party_raum, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis))
+pruefe(e["zustand"] == "party" and e["ziel"] == 23.0,
+       f"Party hebt auf Komfort ({e['ziel']}, {e['begruendung']})")
+pruefe("Minuten" in e["begruendung"] and "noch" in e["begruendung"],
+       f"die Restzeit steht dabei ({e['begruendung']})")
+
+# Urlaub und Sommerbetrieb treten zurueck - wer drueckt, ist da
+e = regelung.entscheide(party_raum, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis, urlaub=True))
+pruefe(e["zustand"] == "party", "Party schlaegt den Urlaub")
+e = regelung.entscheide(party_raum, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis, sommerbetrieb=True))
+pruefe(e["zustand"] == "party" and "Sommerbetrieb" in e["begruendung"],
+       f"Party schlaegt den Sommer, weist aber darauf hin ({e['begruendung'][:60]})")
+
+# Ein offenes Fenster bleibt staerker
+idx_fenster = {"binary_sensor.f": {"entity_id": "binary_sensor.f", "state": "on",
+                                   "attributes": {"friendly_name": "Fenster"}}}
+r_fenster = store.validate_raum({**party_raum, "fenster": ["binary_sensor.f"]})
+e = regelung.entscheide(r_fenster, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis, states_index=idx_fenster))
+pruefe(e["zustand"] == "fenster",
+       f"gegen ein offenes Fenster heizt auch die Party nicht ({e['zustand']})")
+
+# Ein abgeschalteter Raum bleibt aus, und wer nicht mitfeiert, bleibt im Plan
+r_aus = store.validate_raum({**party_raum, "aktiv": False})
+e = regelung.entscheide(r_aus, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis))
+pruefe(e["zustand"] == "aus", "ein abgeschalteter Raum feiert nicht mit")
+r_ohne_party = store.validate_raum({**party_raum, "party": False})
+e = regelung.entscheide(r_ohne_party, {"temperaturquelle": "thermostate"},
+                        party_umgebung(party_bis=bis))
+pruefe(e["zustand"] != "party" and e["ziel"] < 21,
+       f"ein ausgenommener Raum bleibt beim Plan ({e['zustand']}, {e['ziel']})")
+
 print("\n=== Raum mit blosser Mindesttemperatur ===")
 # Muster fuer das Schlafzimmer: ein einziger Schaltpunkt haelt den Sollwert
 # dauerhaft. Das Thermostat heizt dann nur, wenn der Raum darunter faellt.

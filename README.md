@@ -32,6 +32,8 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   Planer nur zu festen Zeiten absenken. Dazwischen rührt er ihn nicht an.
 * **Freigabe je Raum** – ein Gästezimmer wird nur geheizt, wenn ein Schalter
   in Home Assistant es freigibt.
+* **Partytaste** – hebt die gewählten Räume für ein paar Stunden auf Komfort
+  und stellt sich danach von selbst zurück.
 
 ## Installation
 
@@ -62,6 +64,7 @@ Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
 | `binary_sensor.heizungsplaner_sommerbetrieb` | Sommerbetrieb aktiv |
 | `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
 | `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum, mit Begründung als Attribut |
+| `switch.heizungsplaner_party` | Partytaste, mit Restzeit als Attribut |
 | `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr |
 | `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
 

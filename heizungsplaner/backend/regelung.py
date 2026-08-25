@@ -5,11 +5,12 @@ Rangfolge. Der erste zutreffende Fall gewinnt:
 
 1. Raum abgeschaltet      → Ventil zu
 2. Fenster offen          → Frostschutz, für eine Sperrzeit
-3. Urlaub                 → Urlaubstemperatur
-4. Sommerbetrieb          → Ventil zu
-5. Zeitplan               → Komfort / Eco / Nacht, ggf. vorgezogen (Vorheizen)
-6. niemand zuständig da   → auf Abwesenheitstemperatur absenken
-7. Heizkurve              → Aufschlag nach Außentemperatur
+3. Partytaste läuft       → Komfort, bis sie abläuft
+4. Urlaub                 → Urlaubstemperatur
+5. Sommerbetrieb          → Ventil zu
+6. Zeitplan               → Komfort / Eco / Nacht, ggf. vorgezogen (Vorheizen)
+7. niemand zuständig da   → auf Abwesenheitstemperatur absenken
+8. Heizkurve              → Aufschlag nach Außentemperatur
 
 Jede Entscheidung trägt ihre Begründung mit sich; sie steht später in der
 Oberfläche und im Protokoll. Wer wissen will, warum ein Raum gerade 17 °C
@@ -245,12 +246,27 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                         f"Fenster war offen – Sperre noch {rest} Minuten")
     rz["fenster_bis"] = None
 
-    # 3 — Urlaub
+    # 3 — Partytaste
+    #
+    # Sie steht vor Urlaub und Sommerbetrieb: Wer sie drückt, ist im Haus und
+    # will es warm haben – ganz gleich, was der Kalender sagt. Nur ein offenes
+    # Fenster bleibt stärker; dagegen anzuheizen wäre sinnlos.
+    party_bis = umgebung.get("party_bis")
+    if party_bis and raum.get("party", True):
+        rest = int((party_bis - jetzt).total_seconds() // 60) + 1
+        ziel = zp.modus_temperatur(raum, einst["party"]["modus"], frostschutz)
+        hinweis = ""
+        if umgebung.get("sommerbetrieb"):
+            hinweis = " · Achtung: Sommerbetrieb, die Anlage heizt womöglich nicht"
+        return ergebnis("party", ziel,
+                        f"Partytaste – noch {rest} Minuten{hinweis}")
+
+    # 4 — Urlaub
     if umgebung.get("urlaub"):
         return ergebnis("urlaub", float(einst["urlaub_temperatur"]),
                         "Urlaub ist eingeschaltet")
 
-    # 4 — Sommerbetrieb
+    # 5 — Sommerbetrieb
     if umgebung.get("sommerbetrieb"):
         gedaempft = umgebung.get("aussen_gedaempft")
         return ergebnis("sommer", frostschutz,
@@ -258,13 +274,13 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                         f"{gedaempft:.1f} °C" if gedaempft is not None
                         else "Sommerbetrieb", ventil_zu=True)
 
-    # 5a — Betriebsart „nur absenken“: der Plan stößt an, statt zu führen
+    # 6a — Betriebsart „nur absenken“: der Plan stößt an, statt zu führen
     plan = raum.get("zeitplan") or []
     if nur_absenken:
         return _nur_absenken(raum, rz, umgebung, plan, ist, ergebnis,
                              fenster_hinweis)
 
-    # 5 — Zeitplan, ggf. vorgezogen
+    # 6 — Zeitplan, ggf. vorgezogen
     eintrag = zp.aktueller_eintrag(plan, jetzt, umgebung.get("schulfrei"))
     modus = eintrag["modus"] if eintrag else "eco"
     basis = zp.modus_temperatur(raum, modus, frostschutz)
@@ -284,7 +300,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                                f"{kommender_eintrag['start']} Uhr "
                                f"({vorlauf} Minuten Vorlauf)")
 
-    # 6 — Anwesenheit
+    # 7 — Anwesenheit
     zustand = modus
     if einst["anwesenheit"]["aktiv"] and raum.get("anwesenheit", True):
         besetzt, anwesenheits_grund = anwesenheit.raum_besetzt(
@@ -324,7 +340,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                 rest = int(karenz - leer_minuten) + 1
                 begruendung += f" – {anwesenheits_grund}, Absenkung in {rest} Minuten"
 
-    # 7 — Heizkurve
+    # 8 — Heizkurve
     #
     # Nur auf gewollte Raumtemperaturen, nicht auf Sparwerte: Die Kurve soll
     # dafür sorgen, dass ein Raum sein Komfortziel auch bei Kälte erreicht.
@@ -626,6 +642,13 @@ def takt(config: dict, state: dict, protokoll) -> dict:
                   f"Gedämpfte Außentemperatur {gedaempft:.1f} °C" if gedaempft is not None
                   else "Außentemperatur unbekannt")
 
+    # Läuft gerade eine Party? Abgelaufene Tasten räumen sich selbst weg.
+    party_bis = _aus_iso(state.get("party_bis"))
+    if party_bis and party_bis <= jetzt:
+        protokoll("Alle Räume", "Party vorbei", "Der Zeitplan führt wieder")
+        party_bis = None
+        state["party_bis"] = None
+
     urlaub = _bool_state(states_index, einst.get("urlaub_entity", "")) or False
     schulfrei = _bool_state(states_index, einst.get("schulfrei_entity", ""))
     heim = ha_api.zone_home(states)
@@ -656,7 +679,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
         "jetzt": jetzt, "einstellungen": einst, "states_index": states_index,
         "aussen": aussen, "aussen_gedaempft": gedaempft, "sommerbetrieb": sommer,
         "urlaub": urlaub, "schulfrei": schulfrei, "personen": personen,
-        "raum_wechsel": raum_wechsel,
+        "raum_wechsel": raum_wechsel, "party_bis": party_bis,
     }
 
     automatik = bool(einst.get("automatik"))
@@ -729,6 +752,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
         "sommerbetrieb": sommer,
         "urlaub": urlaub,
         "schulfrei": schulfrei,
+        "party_bis": _iso(party_bis),
         "automatik": automatik,
         "trockenlauf": bool(einst.get("trockenlauf")),
         "personen": personen,

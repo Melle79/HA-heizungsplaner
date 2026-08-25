@@ -21,6 +21,7 @@ DISCOVERY_PREFIX = "homeassistant"
 BASE_TOPIC = "heizungsplaner"
 AVAILABILITY_TOPIC = f"{BASE_TOPIC}/availability"
 COMMAND_TOPIC = f"{BASE_TOPIC}/cmd"
+PARTY_COMMAND_TOPIC = f"{BASE_TOPIC}/party/set"
 DEVICE_ID = "heizungsplaner"
 
 # (component, key, Anzeigename, Icon, Einheit, device_class)
@@ -34,6 +35,10 @@ GRUND_ENTITAETEN = [
     ("sensor", "stoerungen", "Ausgefallene Thermostate", "mdi:alert-circle",
      None, None),
 ]
+
+# Die Partytaste ist bewusst ein Schalter und kein Knopf: Man will sehen, ob
+# sie noch läuft, und sie vorzeitig wieder ausschalten können.
+PARTY = ("party", "Partytaste", "mdi:party-popper")
 
 
 def _slug(text: str) -> str:
@@ -50,6 +55,7 @@ class Publisher:
         self.connected = threading.Event()
         self.on_ready = None
         self.on_command = None
+        self.on_party = None
         self._bekannte_raeume: set[str] = set()
         self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,
                                    client_id="heizungsplaner")
@@ -85,6 +91,7 @@ class Publisher:
             _LOGGER.info("Mit MQTT-Broker verbunden")
             client.publish(AVAILABILITY_TOPIC, "online", qos=1, retain=True)
             client.subscribe(COMMAND_TOPIC, qos=1)
+            client.subscribe(PARTY_COMMAND_TOPIC, qos=1)
             self.connected.set()
             if self.on_ready is not None:
                 try:
@@ -99,6 +106,13 @@ class Publisher:
         self.connected.clear()
 
     def _on_message(self, client, userdata, msg) -> None:
+        if msg.topic == PARTY_COMMAND_TOPIC:
+            if self.on_party is not None:
+                try:
+                    self.on_party(msg.payload.decode("utf-8").strip().upper() == "ON")
+                except Exception as err:  # noqa: BLE001
+                    _LOGGER.error("Partytaste: %s", err)
+            return
         if msg.topic != COMMAND_TOPIC or self.on_command is None:
             return
         try:
@@ -159,6 +173,20 @@ class Publisher:
                 payload["device_class"] = klasse
             self._publish(f"{DISCOVERY_PREFIX}/{component}/{DEVICE_ID}/{key}/config",
                           json.dumps(payload))
+
+        key, name, icon = PARTY
+        self._publish(f"{DISCOVERY_PREFIX}/switch/{DEVICE_ID}/{key}/config",
+                      json.dumps({
+                          "name": name,
+                          "unique_id": f"{DEVICE_ID}_{key}",
+                          "default_entity_id": f"switch.{DEVICE_ID}_{key}",
+                          "state_topic": f"{BASE_TOPIC}/{key}/state",
+                          "command_topic": PARTY_COMMAND_TOPIC,
+                          "json_attributes_topic": f"{BASE_TOPIC}/{key}/attributes",
+                          "availability_topic": AVAILABILITY_TOPIC,
+                          "icon": icon,
+                          "device": device,
+                      }))
 
         for raum in raeume or []:
             key = f"raum_{_slug(raum['name'])}"
@@ -225,6 +253,20 @@ class Publisher:
                       {"geraete": [s["entity_id"] for s in schwer],
                        "meldungen": [s["text"] for s in stoerungen]})
 
+        bis = bericht.get("party_bis")
+        rest = 0
+        if bis:
+            from datetime import datetime
+            try:
+                rest = max(0, int((datetime.fromisoformat(bis)
+                                   - datetime.now()).total_seconds() // 60))
+            except ValueError:
+                rest = 0
+        self._zustand("party", "ON" if bis else "OFF",
+                      {"laeuft_bis": bis, "restminuten": rest,
+                       "raeume": [r["name"] for r in raeume
+                                  if r["zustand"] == "party"]})
+
         for raum in raeume:
             key = f"raum_{_slug(raum['name'])}"
             self._zustand(key, f"{raum['ziel']:.1f}", {
@@ -246,7 +288,7 @@ class Publisher:
 
     def remove_all(self) -> None:
         """Alle Entitäten wieder aus Home Assistant entfernen."""
-        for component, key, *_ in GRUND_ENTITAETEN:
+        for component, key, *_ in GRUND_ENTITAETEN + [("switch",) + PARTY[:1]]:
             self._publish(f"{DISCOVERY_PREFIX}/{component}/{DEVICE_ID}/{key}/config", "")
             self._publish(f"{BASE_TOPIC}/{key}/state", "")
         for key in self._bekannte_raeume:

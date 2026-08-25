@@ -131,6 +131,27 @@ Versuchen schließt er das Ventil deshalb dauerhaft über den Frostschutzwert
 und vermerkt das im Protokoll. Meldet sich das Gerät später doch einmal als
 abgeschaltet, gilt wieder der normale Weg.
 
+## Partytaste
+
+Einmal drücken, und die gewählten Räume gehen für die eingestellte Dauer auf
+Komfort – gleich, was der Zeitplan sagt. Danach führt wieder der Plan; niemand
+muss daran denken, die Taste zurückzustellen.
+
+Zu finden an drei Stellen: als Knopf oben in der Oberfläche (mit Restzeit), als
+`switch.heizungsplaner_party` in Home Assistant – also auch auf dem Dashboard,
+per Sprachbefehl oder in Automationen – und über `POST /api/party`, wahlweise
+mit abweichender Dauer (`{"stunden": 5}`).
+
+**Welche Räume mitmachen**, steht in den Einstellungen unter *Partytaste*; ein
+Schlafzimmer will man dort meist nicht dabei haben. Dieselbe Einstellung findet
+sich auch im Raum selbst unter *Belegung*.
+
+In der Rangfolge steht die Party **vor Urlaub und Sommerbetrieb**: Wer sie
+drückt, ist im Haus und will es warm haben, gleich was der Kalender sagt. Nur
+ein **offenes Fenster** bleibt stärker – dagegen anzuheizen wäre sinnlos. Läuft
+gerade Sommerbetrieb, sagt die Begründung dazu, dass die Anlage möglicherweise
+gar nicht heizt.
+
 ## Freigabe: Räume, die nur zeitweise gebraucht werden
 
 Ein Raum kann an einen Schalter in Home Assistant gehängt werden (*Freigabe*).

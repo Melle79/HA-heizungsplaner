@@ -12,6 +12,7 @@ import os
 import threading
 import time
 import urllib.request
+from datetime import datetime, timedelta
 
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -161,6 +162,7 @@ def _mqtt_starten() -> None:
             _publisher.publish_status(_letzter_bericht)
 
     _publisher.on_ready = bereit
+    _publisher.on_party = lambda an: _party_setzen(an)
     _publisher.start()
 
 
@@ -344,6 +346,60 @@ def api_vorschlag_abweisen():
     liste.add(entity_id)
     store.update_einstellungen({"ignorierte_vorschlaege": sorted(liste)})
     return jsonify({"ok": True, "abgewiesen": sorted(liste)})
+
+
+def _party_setzen(an: bool, stunden: float | None = None) -> dict:
+    """Die Partytaste drücken oder vorzeitig beenden."""
+    with _takt_lock:
+        config = store.load_config()
+        zustand = store.load_state()
+        if an:
+            dauer = stunden if stunden else float(
+                (config["einstellungen"].get("party") or {}).get("dauer_stunden", 3))
+            bis = datetime.now() + timedelta(hours=dauer)
+            zustand["party_bis"] = bis.isoformat(timespec="seconds")
+            logbuch.eintragen("Alle Räume", "Party an",
+                              f"Komfort bis {bis.strftime('%H:%M')} Uhr")
+        else:
+            if not zustand.get("party_bis"):
+                return {"party_bis": None}
+            zustand["party_bis"] = None
+            logbuch.eintragen("Alle Räume", "Party aus",
+                              "Vorzeitig beendet – der Zeitplan führt wieder")
+        store.save_state(zustand)
+    _sofort_rechnen()
+    return {"party_bis": store.load_state().get("party_bis")}
+
+
+@app.route("/api/party", methods=["POST", "DELETE"])
+def api_party():
+    if request.method == "DELETE":
+        return jsonify(_party_setzen(False))
+    daten = request.get_json(silent=True) or {}
+    stunden = daten.get("stunden")
+    try:
+        stunden = float(stunden) if stunden else None
+    except (TypeError, ValueError):
+        return jsonify({"fehler": "Ungültige Dauer"}), 400
+    if stunden is not None and not 0.5 <= stunden <= 24:
+        return jsonify({"fehler": "Die Dauer muss zwischen 0,5 und 24 Stunden liegen"}), 400
+    return jsonify(_party_setzen(True, stunden))
+
+
+@app.route("/api/party/raeume", methods=["PUT"])
+def api_party_raeume():
+    """Festlegen, welche Räume die Partytaste mitnimmt.
+
+    Die Wahrheit steht am Raum – hier wird sie nur für alle auf einmal
+    gesetzt, damit man die Auswahl an einer Stelle überblickt.
+    """
+    gewaehlt = set((request.get_json(force=True) or {}).get("raeume") or [])
+    config = store.load_config()
+    for raum in config["raeume"]:
+        raum["party"] = raum["id"] in gewaehlt
+    store.save_config(config)
+    _sofort_rechnen()
+    return jsonify({"raeume": [r["id"] for r in config["raeume"] if r["party"]]})
 
 
 @app.route("/api/wachhund/probe", methods=["POST"])

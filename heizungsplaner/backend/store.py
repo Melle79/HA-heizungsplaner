@@ -86,6 +86,13 @@ STANDARD_EINSTELLUNGEN = {
         "sturz_min": 10,          # … innerhalb dieser Zeitspanne
         "sperre_min": 30,         # so lange bleibt der Raum danach auf Frostschutz
     },
+    # Die Partytaste: einmal drücken, und der Plan tritt für ein paar Stunden
+    # zurück. Danach läuft alles von selbst weiter – niemand muss daran denken,
+    # sie wieder auszuschalten.
+    "party": {
+        "dauer_stunden": 3.0,
+        "modus": "komfort",
+    },
     # Ein ausgefallenes Thermostat soll auffallen, ohne dass jemand hinsieht.
     "wachhund": {
         "aktiv": True,
@@ -113,6 +120,7 @@ STANDARD_RAUM = {
     "heizkurve": True,
     "anwesenheit": True,
     "nur_praesenz": False,
+    "party": True,             # macht dieser Raum bei der Partytaste mit?
     "karenz_min": None,        # None = die globale Karenzzeit gilt
     "freigabe_entity": "",     # leer = der Raum ist immer freigegeben
     "sturz_auch_mit_kontakten": False,
@@ -262,6 +270,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         "heizkurve": bool(raum.get("heizkurve", True)),
         "anwesenheit": bool(raum.get("anwesenheit", True)),
         "nur_praesenz": bool(raum.get("nur_praesenz", False)),
+        "party": bool(raum.get("party", True)),
         "karenz_min": karenz,
         "freigabe_entity": str(raum.get("freigabe_entity") or "").strip(),
         "sturz_auch_mit_kontakten": bool(raum.get("sturz_auch_mit_kontakten", False)),
@@ -309,6 +318,11 @@ def validate_einstellungen(roh: dict) -> dict:
     v["heimkehr_km"] = _zahl(v["heimkehr_km"], "Heimkehr-Entfernung", 0.0, 100.0)
     v["heimkehr_annaeherung_km"] = _zahl(
         v["heimkehr_annaeherung_km"], "Mindestannäherung", 0.0, 20.0)
+
+    pa = e["party"]
+    pa["dauer_stunden"] = _zahl(pa["dauer_stunden"], "Partydauer", 0.5, 24.0)
+    if str(pa.get("modus")) not in MODI:
+        pa["modus"] = "komfort"
 
     w = e["wachhund"]
     w["aktiv"] = bool(w["aktiv"])
@@ -372,6 +386,7 @@ def load_state() -> dict:
         state = {}
     state.setdefault("thermostate", {})   # entity_id -> {soll, gesetzt_am, modus}
     state.setdefault("raeume", {})        # raum_id  -> Laufzeitdaten
+    state.setdefault("party_bis", None)
     state.setdefault("veroeffentlichte_raeume", [])
     state.setdefault("aussen_gedaempft", None)
     state.setdefault("sommerbetrieb", False)

@@ -177,6 +177,7 @@
   .pille.urlaub{background:rgba(76,195,138,.14); color:var(--ok)}
   .pille.fenster{background:rgba(227,109,109,.14); color:var(--achtung)}
   .pille.manuell{background:rgba(232,162,61,.13); color:var(--warm)}
+  .pille.party{background:rgba(239,131,84,.2); color:var(--komfort)}
   .pille.sommer,.pille.aus,.pille.gesperrt{background:rgba(90,100,114,.2);
                                             color:var(--kalt)}
 
@@ -304,6 +305,7 @@
     <span class="zustand" id="k-aussen"></span>
     <span class="zustand"><span class="punkt" id="k-punkt"></span>
       <span id="k-mqtt">MQTT</span></span>
+    <button class="leise" id="btn-party">🎉 Party</button>
     <button class="leise" id="btn-rechnen">Jetzt rechnen</button>
   </div>
 </header>
@@ -465,6 +467,28 @@
         Die Entfernung allein genügt nicht: Eine Schule in einem Kilometer Abstand
         hielte das Kinderzimmer sonst den ganzen Vormittag auf Komforttemperatur.</div>
       <div class="notiz" id="vor-beispiel" style="margin-top:var(--l2)"></div>
+    </div>
+  </div>
+
+  <div class="tafel">
+    <h2>Partytaste</h2>
+    <div class="raster-felder eng">
+      <div class="feld"><label>Dauer (Stunden)</label>
+        <input type="number" id="e-party-dauer" min="0.5" max="24" step="0.5"></div>
+      <div class="feld"><label>Sollwert</label>
+        <select id="e-party-modus">
+          <option value="komfort">Komfort</option>
+          <option value="eco">Eco</option>
+          <option value="nacht">Nacht</option>
+        </select></div>
+    </div>
+    <div class="feld" style="margin-top:var(--l3)">
+      <label>Diese Räume machen mit</label>
+      <div id="party-raeume" class="raster-felder"
+           style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
+      <div class="notiz">Ein Druck hebt die gewählten Räume für die eingestellte
+        Dauer auf den Sollwert – danach führt wieder der Zeitplan. Ein offenes
+        Fenster bleibt stärker; Urlaub und Sommerbetrieb treten zurück.</div>
     </div>
   </div>
 
@@ -641,6 +665,8 @@
         <h3>Wer den Raum belegt</h3>
         <label class="haken"><input type="checkbox" id="r-anwesenheit">
           <span>Absenken, wenn niemand Zuständiges da ist</span></label>
+        <label class="haken"><input type="checkbox" id="r-party">
+          <span>Bei der Partytaste mitmachen</span></label>
         <label class="haken"><input type="checkbox" id="r-nur-praesenz">
           <span>Nur der Präsenzmelder zählt – Personen im Haus bleiben außer
             Betracht</span></label>
@@ -700,6 +726,7 @@ const ZUSTAND_NAME = {
   komfort:'Komfort', eco:'Eco', nacht:'Nacht', abwesend:'Abwesend',
   heimkehr:'Heimkehr', urlaub:'Urlaub', fenster:'Fenster offen', sommer:'Sommer',
   aus:'Aus', gesperrt:'Gesperrt', manuell:'Von Hand', absenkung:'Absenkung',
+  party:'Party',
 };
 // Zustände, in denen der Planer nichts stellt oder das Ventil schließt.
 const RUHT = ['sommer', 'aus', 'gesperrt'];
@@ -857,7 +884,11 @@ function lageZeichnen(bericht) {
     .map(r => r.naechster_wechsel).filter(Boolean).sort()[0];
 
   let betrieb = 'Regelbetrieb', betriebZusatz = '';
-  if (bericht.trockenlauf) {
+  if (bericht.party_bis) {
+    const rest = Math.max(0, Math.round((new Date(bericht.party_bis) - new Date()) / 60000));
+    betrieb = 'Party';
+    betriebZusatz = `noch ${rest} Minuten, bis ${uhr(bericht.party_bis)} Uhr`;
+  } else if (bericht.trockenlauf) {
     betrieb = 'Trockenlauf'; betriebZusatz = 'es wird nichts gestellt';
   } else if (bericht.automatik === false) {
     betrieb = 'Automatik aus'; betriebZusatz = 'der Planer greift nicht ein';
@@ -959,6 +990,7 @@ function berichtZeichnen(bericht) {
   $('k-aussen').textContent = aussen === null || aussen === undefined
     ? '' : `außen ${zahl(aussen)} °C`;
 
+  partyAnzeigen(bericht);
   lageZeichnen(bericht);
 
   const ziel = $('raumkarten');
@@ -1057,6 +1089,38 @@ async function statusLaden() {
   }
   gesundheitLaden();
 }
+
+function partyAnzeigen(bericht) {
+  const knopf = $('btn-party');
+  const bis = bericht.party_bis;
+  if (!bis) {
+    knopf.textContent = '🎉 Party';
+    knopf.classList.remove('an');
+    knopf.title = 'Die gewählten Räume für die eingestellte Dauer auf Komfort';
+    return;
+  }
+  const rest = Math.max(0, Math.round((new Date(bis) - new Date()) / 60000));
+  const text = rest >= 60
+    ? `${Math.floor(rest / 60)} h ${String(rest % 60).padStart(2, '0')} min`
+    : `${rest} min`;
+  knopf.textContent = `🎉 noch ${text}`;
+  knopf.classList.add('an');
+  knopf.title = `Läuft bis ${uhr(bis)} Uhr – klicken zum Beenden`;
+}
+
+$('btn-party').onclick = async () => {
+  const laeuft = $('btn-party').classList.contains('an');
+  $('btn-party').disabled = true;
+  try {
+    const antwort = laeuft
+      ? await hole('party', {method: 'DELETE'})
+      : await sendeJSON('party', 'POST', {});
+    partyAnzeigen(antwort);
+    setTimeout(statusLaden, 600);
+  } catch (err) {
+    $('k-aussen').textContent = err.message;
+  } finally { $('btn-party').disabled = false; }
+};
 
 $('btn-rechnen').onclick = async () => {
   $('btn-rechnen').disabled = true;
@@ -1305,6 +1369,7 @@ function raumOeffnen(raum, startblatt) {
   $('r-heizkurve').checked = d.heizkurve;
   $('r-anwesenheit').checked = d.anwesenheit;
   $('r-nur-praesenz').checked = d.nur_praesenz;
+  $('r-party').checked = d.party !== false;
   $('r-sturz').checked = d.sturz_auch_mit_kontakten;
   $('r-karenz').value = d.karenz_min === null || d.karenz_min === undefined
     ? '' : d.karenz_min;
@@ -1354,6 +1419,7 @@ $('btn-raum-speichern').onclick = async () => {
     heizkurve: $('r-heizkurve').checked,
     anwesenheit: $('r-anwesenheit').checked,
     nur_praesenz: $('r-nur-praesenz').checked,
+    party: $('r-party').checked,
     karenz_min: $('r-karenz').value === '' ? null : parseInt($('r-karenz').value, 10),
     freigabe_entity: $('r-freigabe').value,
     sturz_auch_mit_kontakten: $('r-sturz').checked,
@@ -1410,6 +1476,14 @@ function einstellungenZeichnen() {
   $('e-vor-max').value = e.vorheizen.max_min;
   $('e-vor-km').value = e.vorheizen.heimkehr_km;
   $('e-vor-naehe').value = e.vorheizen.heimkehr_annaeherung_km;
+  const party = e.party || {};
+  $('e-party-dauer').value = party.dauer_stunden;
+  $('e-party-modus').value = party.modus || 'komfort';
+  $('party-raeume').innerHTML = raeume.map(r => `
+    <label class="haken"><input type="checkbox" class="party-haken"
+      value="${r.id}"${r.party ? ' checked' : ''}><span>${r.name}</span></label>`)
+    .join('') || '<div class="notiz">Noch keine Räume eingerichtet.</div>';
+
   const wacht = e.wachhund || {};
   $('e-wh-aktiv').checked = wacht.aktiv;
   $('e-wh-stumm').value = wacht.stumm_stunden;
@@ -1513,6 +1587,10 @@ $('btn-speichern-einst').onclick = async () => {
       heimkehr_km: parseFloat($('e-vor-km').value),
       heimkehr_annaeherung_km: parseFloat($('e-vor-naehe').value),
     },
+    party: {
+      dauer_stunden: parseFloat($('e-party-dauer').value),
+      modus: $('e-party-modus').value,
+    },
     wachhund: {
       aktiv: $('e-wh-aktiv').checked,
       stumm_stunden: parseFloat($('e-wh-stumm').value),
@@ -1528,6 +1606,12 @@ $('btn-speichern-einst').onclick = async () => {
   };
   try {
     einstellungen = await sendeJSON('einstellungen', 'PUT', koerper);
+    // Die Party-Räume stehen am Raum, nicht in den Einstellungen – sie werden
+    // im selben Zug mitgespeichert, damit ein Klick auf „Speichern“ genügt.
+    const gewaehlt = Array.from(document.querySelectorAll('.party-haken:checked'))
+      .map(h => h.value);
+    await sendeJSON('party/raeume', 'PUT', {raeume: gewaehlt});
+    await raeumeLaden();
     meldung('m-einstellungen', 'Gespeichert', true);
     setTimeout(statusLaden, 800);
   } catch (err) { meldung('m-einstellungen', err.message); }

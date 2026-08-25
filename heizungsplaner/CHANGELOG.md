@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.7.0
+
+**Partytaste.** Einmal drücken, und die gewählten Räume gehen für die
+eingestellte Dauer (Vorgabe drei Stunden) auf Komfort. Danach stellt sie sich
+von selbst zurück.
+
+- Bedienbar über den Knopf in der Oberfläche (zeigt die Restzeit), über
+  `switch.heizungsplaner_party` in Home Assistant und über `POST /api/party`.
+- In den Einstellungen lässt sich festlegen, **welche Räume mitmachen** und mit
+  welchem Sollwert.
+- Rangfolge: vor Urlaub und Sommerbetrieb, aber nach dem offenen Fenster.
+
 ## 1.6.1
 
 - Anleitung um das Rezept „ein Raum soll nur vor dem Auskühlen geschützt
