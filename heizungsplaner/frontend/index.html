@@ -751,12 +751,22 @@ async function gesundheitLaden() {
       const knopf = h.raum_id
         ? `<button class="ghost" data-hinweis-raum="${h.raum_id}"
                    data-hinweis-entity="${h.entity_id || ''}"
-                   data-hinweis-feld="${h.feld || 'fenster'}">Zuordnen</button>` : '';
+                   data-hinweis-feld="${h.feld || 'fenster'}">Zuordnen</button>
+           <button class="ghost" data-abweisen="${h.entity_id || ''}"
+                   title="Diesen Vorschlag nicht mehr anzeigen">Nicht nötig</button>` : '';
       return `<div class="hinweis ${h.art}"><span class="zeichen">${zeichen}</span>
               <span style="flex:1">${h.text}</span>${knopf}</div>`;
     }).join('');
     // Aus dem Hinweis heraus direkt in den Raum springen, mit dem gemeldeten
     // Kontakt schon vorausgewählt.
+    $('hinweise').querySelectorAll('[data-abweisen]').forEach(knopf => {
+      knopf.onclick = async () => {
+        knopf.disabled = true;
+        await sendeJSON('vorschlag/abweisen', 'POST',
+                        {entity_id: knopf.dataset.abweisen});
+        gesundheitLaden();
+      };
+    });
     $('hinweise').querySelectorAll('[data-hinweis-raum]').forEach(knopf => {
       knopf.onclick = () => {
         const raum = raeume.find(r => r.id === knopf.dataset.hinweisRaum);

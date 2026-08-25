@@ -183,7 +183,10 @@ kurzes Stoßlüften nicht sofort wieder gegengeheizt wird.
 Neue Kontakte müssen nur in Home Assistant einem **Bereich** zugeordnet sein,
 der einem Raum des Planers entspricht. Dann erscheint auf der Übersicht ein
 Hinweis samt Knopf *Zuordnen*, der den Raum mit vorgewähltem Kontakt öffnet –
-Speichern genügt.
+Speichern genügt. Dasselbe gilt für neue Präsenz- und Bewegungsmelder.
+
+Was man dort nicht haben will, verschwindet mit *Nicht nötig* dauerhaft aus
+den Hinweisen.
 
 In der Auswahlliste stehen die Kontakte nach Bereich gruppiert. Als Kontakt
 gilt, was die Geräteklasse `window`, `door` oder `opening` trägt **oder** ein

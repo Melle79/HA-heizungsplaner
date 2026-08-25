@@ -53,6 +53,8 @@ STANDARD_EINSTELLUNGEN = {
     "frostschutz": 8.0,
     "takt_sekunden": 300,
     "manuell_respektieren": True,
+    # Melder, die der Planer nicht mehr zur Zuordnung vorschlagen soll.
+    "ignorierte_vorschlaege": [],
     "heizkurve": {
         "aktiv": True,
         "basis_aussen": 15.0,     # bei dieser Außentemperatur gilt der Sollwert unverändert
@@ -271,6 +273,8 @@ def validate_einstellungen(roh: dict) -> dict:
     e["frostschutz"] = _zahl(e["frostschutz"], "Frostschutz", 4.0, 15.0)
     e["daempfung_stunden"] = _zahl(e["daempfung_stunden"], "Dämpfung", 0.0, 48.0)
     e["takt_sekunden"] = int(_zahl(e["takt_sekunden"], "Takt", 60, 3600))
+    e["ignorierte_vorschlaege"] = sorted({
+        str(x).strip() for x in (e.get("ignorierte_vorschlaege") or []) if str(x).strip()})
 
     k = e["heizkurve"]
     k["aktiv"] = bool(k["aktiv"])

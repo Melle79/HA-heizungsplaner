@@ -280,6 +280,24 @@ def api_uebernahme():
     return jsonify({"angelegt": [r["name"] for r in angelegt]})
 
 
+@app.route("/api/vorschlag/abweisen", methods=["POST"])
+def api_vorschlag_abweisen():
+    """Einen Zuordnungsvorschlag dauerhaft verstummen lassen.
+
+    Ohne diesen Weg stünde ein Melder, den man in diesem Raum gar nicht will,
+    für immer im Hinweisbalken – und ein Balken, den man wegen Dauerrauschen
+    überliest, ist schlechter als keiner.
+    """
+    entity_id = str((request.get_json(force=True) or {}).get("entity_id") or "").strip()
+    if not entity_id:
+        return jsonify({"fehler": "Keine Entität angegeben"}), 400
+    config = store.load_config()
+    liste = set(config["einstellungen"].get("ignorierte_vorschlaege") or [])
+    liste.add(entity_id)
+    store.update_einstellungen({"ignorierte_vorschlaege": sorted(liste)})
+    return jsonify({"ok": True, "abgewiesen": sorted(liste)})
+
+
 @app.route("/api/logbuch", methods=["GET", "DELETE"])
 def api_logbuch():
     if request.method == "DELETE":
@@ -376,9 +394,10 @@ def api_gesundheit():
     # noch keinem zugeordnet ist, wäre sonst leicht zu übersehen.
     raum_je_name = {raum["name"]: raum for raum in config["raeume"]}
     bereiche = ha_api.bereiche_je_entitaet(("binary_sensor",))
+    abgewiesen = set(einst.get("ignorierte_vorschlaege") or [])
     for s in states:
         eid = s.get("entity_id", "")
-        if not eid.startswith("binary_sensor."):
+        if not eid.startswith("binary_sensor.") or eid in abgewiesen:
             continue
         attrs = s.get("attributes") or {}
         name = attrs.get("friendly_name", eid)
