@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.0.4
+
+- Knopf „Dämpfung neu anlaufen lassen“ in den Einstellungen: verwirft die
+  geglättete Außentemperatur, die dann wieder aus der Historie ansetzt.
+- Beim Wechsel der Außentemperatur-Quelle geschieht das von selbst – der
+  geglättete Wert der alten Quelle würde sonst tagelang nachwirken.
+
 ## 1.0.3
 
 - Die gedämpfte Außentemperatur wird beim ersten Lauf aus der Historie von

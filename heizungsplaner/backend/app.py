@@ -203,12 +203,33 @@ def api_raum(raum_id: str):
 def api_einstellungen():
     if request.method == "GET":
         return jsonify(store.load_config()["einstellungen"])
+    vorher = store.load_config()["einstellungen"].get("aussen_entity")
     try:
         einstellungen = store.update_einstellungen(request.get_json(force=True) or {})
     except store.ValidationError as err:
         return jsonify({"fehler": str(err)}), 400
+    if einstellungen.get("aussen_entity") != vorher:
+        # Andere Quelle, andere Vorgeschichte: Der geglättete Wert der alten
+        # Entität würde sonst noch tagelang nachwirken.
+        _anlauf_verwerfen()
     _sofort_rechnen()
     return jsonify(einstellungen)
+
+
+def _anlauf_verwerfen() -> None:
+    """Die gedämpfte Außentemperatur verwerfen – sie läuft neu aus der Historie an."""
+    with _takt_lock:
+        zustand = store.load_state()
+        zustand["aussen_gedaempft"] = None
+        store.save_state(zustand)
+
+
+@app.route("/api/anlauf", methods=["POST"])
+def api_anlauf():
+    _anlauf_verwerfen()
+    logbuch.eintragen("Alle Räume", "Anlauf",
+                      "Gedämpfte Außentemperatur zurückgesetzt")
+    return jsonify(_takt_ausfuehren())
 
 
 @app.route("/api/entitaeten")

@@ -309,7 +309,12 @@
           <input type="number" id="e-daempfung" min="0" max="48" step="0.5"></div>
       </div>
       <div class="hint">Die Dämpfung glättet die Außentemperatur, damit ein sonniger
-        Nachmittag im Februar nicht die Heizung abstellt.</div>
+        Nachmittag im Februar nicht die Heizung abstellt. Beim ersten Lauf holt
+        sich der Planer den Anlauf aus der Historie von Home Assistant.</div>
+      <div class="zeile" style="margin-top:10px; margin-bottom:0">
+        <button class="ghost" id="btn-anlauf">Dämpfung neu anlaufen lassen</button>
+        <span class="meldung" id="anlauf-meldung"></span>
+      </div>
     </div>
 
     <div class="panel">
@@ -1001,6 +1006,19 @@ function beispieleAktualisieren() {
 
 ['e-hk-basis','e-hk-steil','e-hk-max','e-vor-grund','e-vor-grad','e-vor-max']
   .forEach(id => { $(id).oninput = beispieleAktualisieren; });
+
+$('btn-anlauf').onclick = async () => {
+  $('btn-anlauf').disabled = true;
+  try {
+    const bericht = await hole('anlauf', {method: 'POST'});
+    const wert = bericht.aussen_gedaempft;
+    meldung('anlauf-meldung', wert === null || wert === undefined
+      ? 'Zurückgesetzt – noch kein Wert'
+      : `Neu angesetzt auf ${wert.toFixed(1)} °C`, true);
+    zeichneStatus(bericht);
+  } catch (err) { meldung('anlauf-meldung', err.message); }
+  finally { $('btn-anlauf').disabled = false; }
+};
 
 $('btn-einstellungen-speichern').onclick = async () => {
   const koerper = {
