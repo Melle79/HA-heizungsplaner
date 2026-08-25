@@ -222,3 +222,48 @@ def zone_home(states: list[dict] | None = None) -> tuple[float, float, float] | 
         if lat is not None and lon is not None:
             return lat, lon, radius
     return None
+
+
+def historien_mittel(entity_id: str, stunden: float = 48.0) -> float | None:
+    """Mittlere Außentemperatur der letzten Stunden aus der HA-Historie.
+
+    Beim allerersten Start hat der Planer keine Vorgeschichte. Ohne sie würde
+    die gedämpfte Außentemperatur beim aktuellen Messwert beginnen – an einem
+    kühlen Sommertag hieße das: Heizbetrieb, obwohl die Woche davor mild war.
+    Die Historie liefert den fehlenden Anlauf.
+
+    Zwei Eigenheiten der Historien-Schnittstelle sind zu beachten: Ohne
+    ``end_time`` gibt sie nur einen Tag ab dem Startzeitpunkt zurück, und der
+    Zeitstempel muss URL-kodiert sein, sonst antwortet sie mit 400.
+    """
+    import datetime
+    import urllib.parse
+
+    if not entity_id or not available():
+        return None
+    jetzt = datetime.datetime.now(datetime.timezone.utc)
+    seit = urllib.parse.quote((jetzt - datetime.timedelta(hours=stunden)).isoformat())
+    bis = urllib.parse.quote(jetzt.isoformat())
+    try:
+        daten = _request(
+            "GET",
+            f"/history/period/{seit}?filter_entity_id={entity_id}&end_time={bis}")
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Historie für %s nicht lesbar: %s", entity_id, err)
+        return None
+
+    werte = []
+    for reihe in daten if isinstance(daten, list) else []:
+        for punkt in reihe if isinstance(reihe, list) else []:
+            attrs = punkt.get("attributes") or {}
+            rohwert = (attrs.get("temperature") if entity_id.startswith("weather.")
+                       else punkt.get("state"))
+            wert = as_float(rohwert)
+            if wert is not None:
+                werte.append(wert)
+    if not werte:
+        return None
+    mittel = round(sum(werte) / len(werte), 2)
+    _LOGGER.info("Außentemperatur der letzten %.0f Stunden: %.1f °C aus %d Werten",
+                 stunden, mittel, len(werte))
+    return mittel

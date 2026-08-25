@@ -390,7 +390,21 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     aussen = witterung.aussentemperatur(states_index, einst.get("aussen_entity", ""))
     letzter_takt = _aus_iso(state.get("letzter_takt"))
     sekunden = (jetzt - letzter_takt).total_seconds() if letzter_takt else 0.0
-    gedaempft = witterung.daempfen(state.get("aussen_gedaempft"), aussen,
+
+    vorgeschichte = state.get("aussen_gedaempft")
+    if vorgeschichte is None and aussen is not None:
+        # Erster Lauf: Die Dämpfung braucht einen Anlauf. Ohne ihn beginnt sie
+        # beim aktuellen Messwert – an einem kühlen Sommertag hieße das
+        # Heizbetrieb, obwohl die Woche davor mild war.
+        vorgeschichte = ha_api.historien_mittel(
+            einst.get("aussen_entity", ""),
+            max(24.0, float(einst["daempfung_stunden"]) * 2))
+        if vorgeschichte is not None:
+            protokoll("Alle Räume", "Anlauf",
+                      f"Gedämpfte Außentemperatur aus der Historie übernommen: "
+                      f"{vorgeschichte:.1f} °C")
+
+    gedaempft = witterung.daempfen(vorgeschichte, aussen,
                                    sekunden, float(einst["daempfung_stunden"]))
     sommer = witterung.sommerbetrieb(gedaempft, einst["sommer"],
                                      bool(state.get("sommerbetrieb")))

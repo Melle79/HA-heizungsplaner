@@ -41,7 +41,7 @@ STANDARD_EINSTELLUNGEN = {
     "automatik": True,
     "trockenlauf": True,          # sicherer Start: erst rechnen, nicht schalten
     "aussen_entity": "weather.forecast_home",
-    "daempfung_stunden": 6.0,     # Zeitkonstante der gedämpften Außentemperatur
+    "daempfung_stunden": 24.0,    # Zeitkonstante der gedämpften Außentemperatur
     "schulfrei_entity": "input_boolean.wochenende_feiertag",
     "urlaub_entity": "input_boolean.urlaub",
     "urlaub_temperatur": 12.0,

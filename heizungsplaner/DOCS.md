@@ -62,8 +62,10 @@ am Kessel.
 
 ## Sommerbetrieb
 
-Die Außentemperatur wird exponentiell geglättet (Vorgabe: sechs Stunden
-Zeitkonstante). Steigt der geglättete Wert über die Grenze, schließen die
+Die Außentemperatur wird exponentiell geglättet (Vorgabe: 24 Stunden
+Zeitkonstante). Beim ersten Lauf holt sich der Planer den Anlauf aus der
+Historie von Home Assistant, damit die Glättung nicht bei einem
+Momentanwert beginnt. Steigt der geglättete Wert über die Grenze, schließen die
 Ventile; er muss um die Hysterese darunter fallen, bevor wieder geheizt wird.
 Ohne Glättung würde ein sonniger Februarnachmittag die Heizung abstellen.
 

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.0.3
+
+- Die gedämpfte Außentemperatur wird beim ersten Lauf aus der Historie von
+  Home Assistant angesetzt. Vorher begann sie beim aktuellen Messwert – an
+  einem kühlen Sommertag hätte der Planer dadurch die Heizung angeworfen,
+  obwohl die Woche davor mild war.
+- Die Zeitkonstante der Dämpfung liegt jetzt bei 24 statt 6 Stunden, näher an
+  der üblichen Heizgrenzenbetrachtung.
+
 ## 1.0.2
 
 - Der Einrichtungsassistent schlägt für Schlafzimmer eigene Temperaturen vor
