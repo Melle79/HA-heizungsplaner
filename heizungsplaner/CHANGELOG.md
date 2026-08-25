@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.8.1
+
+- Das Protokoll färbt Einträge nach ihrer Schwere: Störungen rot, Fehlschläge
+  und Handeingriffe gelb, Entwarnungen grün. Ältere Einträge werden anhand
+  ihres Stichworts eingeordnet, damit die Farbe auch rückwirkend stimmt.
+
 ## 1.8.0
 
 - **Der Planer setzt aus, solange Home Assistant startet.** Nach einem Neustart

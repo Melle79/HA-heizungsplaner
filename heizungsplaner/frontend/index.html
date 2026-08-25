@@ -266,7 +266,14 @@
   td{padding:var(--l2); border-bottom:1px solid var(--linie); vertical-align:top}
   tr:last-child td{border-bottom:none}
   td.zeit{color:var(--leise); white-space:nowrap; font-variant-numeric:tabular-nums}
-  td.was{white-space:nowrap; font-weight:500}
+  td.was{white-space:nowrap; font-weight:600}
+  tr.fehler td.was{color:var(--achtung)}
+  tr.warnung td.was{color:var(--warm)}
+  tr.gut td.was{color:var(--ok)}
+  tr.fehler{background:rgba(227,109,109,.07)}
+  tr.warnung{background:rgba(232,162,61,.06)}
+  tr.fehler td.grund{color:#f0a6a6}
+  tr.warnung td.grund{color:#e0bb84}
 
   /* ═══ Dialog ═══ */
   dialog{
@@ -1636,8 +1643,9 @@ async function protokollLaden() {
   try {
     const eintraege = await hole('logbuch');
     koerper.innerHTML = eintraege.length ? eintraege.map(e => `
-      <tr><td class="zeit">${zeitpunkt(e.zeit)}</td><td>${e.raum}</td>
-          <td class="was">${e.was}</td><td>${e.warum}</td></tr>`).join('')
+      <tr class="${e.art || ''}"><td class="zeit">${zeitpunkt(e.zeit)}</td>
+          <td>${e.raum}</td><td class="was">${e.was}</td>
+          <td class="grund">${e.warum}</td></tr>`).join('')
       : '<tr><td colspan="4" class="leer">Noch nichts geschehen.</td></tr>';
   } catch (err) {
     koerper.innerHTML = `<tr><td colspan="4" class="leer">${err.message}</td></tr>`;

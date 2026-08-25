@@ -106,10 +106,12 @@ def _stoerungen_melden(stoerungen: list, state: dict, einstellungen: dict) -> No
 
     for eintrag in hinzu:
         logbuch.eintragen(eintrag["raum"], "Störung", eintrag["text"],
-                          eintrag["entity_id"])
+                          eintrag["entity_id"],
+                          art="fehler" if eintrag["schwere"] == "fehler" else "warnung")
     for eintrag in weg:
         logbuch.eintragen(eintrag["raum"], "wieder da",
-                          f"{eintrag['name']} meldet sich wieder", eintrag["entity_id"])
+                          f"{eintrag['name']} meldet sich wieder",
+                          eintrag["entity_id"], art="gut")
 
     meldung = wachhund.meldung_bauen(hinzu, weg)
     if not meldung:

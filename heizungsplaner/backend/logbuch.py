@@ -37,7 +37,27 @@ def _save(eintraege: list[dict]) -> None:
     os.replace(tmp, LOGBUCH_FILE)
 
 
-def eintragen(raum: str, was: str, warum: str, entity_id: str = "") -> None:
+# Woran man einem Eintrag ansieht, wie ernst er ist. Der Aufrufer kann die Art
+# ausdrücklich setzen; sonst wird sie aus dem Stichwort abgeleitet, damit auch
+# ältere Einträge im Protokoll richtig eingefärbt sind.
+_ARTEN = {
+    "fehler": ("störung", "fehlt", "verschwunden"),
+    "warnung": ("fehlgeschlagen", "nicht übernommen", "bleibt an", "manuell",
+                "keine sollwerte"),
+    "gut": ("wieder da", "wieder in ordnung"),
+}
+
+
+def _art_raten(was: str, warum: str) -> str | None:
+    text = f"{was} {warum}".lower()
+    for art, worte in _ARTEN.items():
+        if any(wort in text for wort in worte):
+            return art
+    return None
+
+
+def eintragen(raum: str, was: str, warum: str, entity_id: str = "",
+              art: str | None = None) -> None:
     with _lock:
         eintraege = _load()
         eintraege.append({
@@ -46,6 +66,7 @@ def eintragen(raum: str, was: str, warum: str, entity_id: str = "") -> None:
             "was": was,
             "warum": warum,
             "entity_id": entity_id,
+            "art": art or _art_raten(was, warum),
         })
         _save(eintraege[-MAX_EINTRAEGE:])
 
