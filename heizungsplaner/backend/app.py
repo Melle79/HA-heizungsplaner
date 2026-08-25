@@ -416,11 +416,11 @@ def api_gesundheit():
         raum = raum_je_name.get(bereich) if bereich else None
         if raum:
             hinweise.append({
-                "art": "info",
-                "text": f"„{name}“ liegt im Bereich „{bereich}“ und ist noch keinem "
-                        f"Raum zugeordnet. Im Raum „{raum['name']}“ unter "
-                        f"„{feld}“ eintragen, damit der Planer ihn nutzt.",
-                "raum_id": raum["id"], "entity_id": eid, "feld": art})
+                "art": "vorschlag",
+                "text": f"„{name}“ – Bereich „{bereich}“, noch keinem Raum "
+                        f"zugeordnet.",
+                "raum_id": raum["id"], "entity_id": eid, "feld": art,
+                "feldname": feld})
 
     return jsonify({"hinweise": hinweise, "mqtt": _publisher is not None
                     and _publisher.connected.is_set()})

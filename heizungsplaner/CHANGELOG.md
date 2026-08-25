@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.3.4
+
+- Zuordnungsvorschläge sind kürzer gefasst und liegen ab dreien in einem
+  zugeklappten Fach, damit sie die echten Hinweise nicht zudecken.
+
 ## 1.3.3
 
 - Zuordnungsvorschläge lassen sich mit *Nicht nötig* dauerhaft abweisen. Ein
