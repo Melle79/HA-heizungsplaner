@@ -291,6 +291,12 @@ class Publisher:
             self._zustand(key, f"{raum['ziel']:.1f}", {
                 "zustand": raum["zustand"],
                 "begruendung": raum["begruendung"],
+                # Für Dashboard-Karten: greift eine Übersteuerungsregel, und
+                # wenn nicht, warum. Ohne das müsste eine Karte die Begründung
+                # nach Stichworten durchsuchen.
+                "uebersteuerung": (raum.get("uebersteuerung") or {}).get("name", ""),
+                "uebersteuerung_greift": (raum.get("uebersteuerung") or {}).get("greift", False),
+                "uebersteuerung_lage": (raum.get("uebersteuerung") or {}).get("lage", ""),
                 "ist_temperatur": raum.get("ist"),
                 "seit": raum.get("seit"),
                 "naechster_wechsel": raum.get("naechster_wechsel"),

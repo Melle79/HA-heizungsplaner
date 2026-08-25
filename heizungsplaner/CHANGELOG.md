@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.13.0
+
+- **Die Lage der Übersteuerungsregel geht über MQTT nach Home Assistant.** Der
+  Raum-Sensor trägt jetzt `uebersteuerung` (Name der Regel),
+  `uebersteuerung_greift` und `uebersteuerung_lage` (Grund im Klartext) als
+  Attribute – damit lässt sich eine Dashboard-Karte bauen, ohne die Begründung
+  nach Stichworten zu durchsuchen.
+
 ## 1.12.2
 
 - **„Heute nicht“ statt „nicht“.** Scheitert eine Regel an einem Ferientag

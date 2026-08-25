@@ -196,6 +196,60 @@ def _im_fenster(von: str | None, bis: str | None, jetzt: datetime) -> bool:
     return jetzt_hm >= von or jetzt_hm < bis
 
 
+def uebersteuerung_lage(raum: dict, states_index: dict,
+                        jetzt: datetime) -> dict:
+    """Wie steht es um die Übersteuerungsregeln des Raumes?
+
+    Gibt Name, ob sie greift, und – wenn nicht – warum. Dieselbe Auskunft, die
+    die Oberfläche in der Regel selbst anzeigt, damit sie auch über MQTT auf
+    dem Dashboard landen kann.
+
+    Unterschieden wird dabei zwischen „heute nicht“ und „gerade nicht“: Ein
+    Ferientag gilt bis Mitternacht, eine abwesende Person kann in fünf Minuten
+    zurück sein.
+    """
+    regeln = raum.get("uebersteuerung") or []
+    if not regeln:
+        return {"name": "", "greift": False, "lage": ""}
+
+    greifend = _uebersteuerung(raum, states_index, jetzt)
+    if greifend:
+        return {"name": greifend["name"], "greift": True, "lage": "greift gerade"}
+
+    # Sonst die erste Regel erklären – sie ist die ranghöchste.
+    regel = regeln[0]
+    name = regel.get("name") or "Übersteuerung"
+    for bedingung in regel.get("wenn") or []:
+        entity_id = bedingung.get("entity") or ""
+        ist = _bool_state(states_index, entity_id)
+        soll = (bedingung.get("zustand", "an") == "an")
+        if ist is not None and ist == soll:
+            continue
+        anzeige = ((states_index.get(entity_id) or {}).get("attributes") or {}).get(
+            "friendly_name", entity_id)
+        art = entity_id.split(".", 1)[0]
+        person = art in ("person", "device_tracker")
+        tagesfrage = art == "calendar" or any(
+            wort in entity_id for wort in
+            ("workday", "feiertag", "ferien", "schulfrei", "urlaub"))
+        if ist is None:
+            grund = f"{anzeige} meldet nichts"
+        elif not soll:
+            grund = (f"{anzeige} ist zu Hause" if person
+                     else f"{anzeige} läuft" if art == "calendar"
+                     else f"{anzeige} ist an")
+        else:
+            grund = (f"{anzeige} ist nicht zu Hause" if person
+                     else f"{anzeige} läuft nicht" if art == "calendar"
+                     else f"{anzeige} ist aus")
+        vorspann = "greift heute nicht" if tagesfrage else "greift gerade nicht"
+        return {"name": name, "greift": False, "lage": f"{vorspann} – {grund}"}
+
+    return {"name": name, "greift": False,
+            "lage": (f"greift gerade nicht – außerhalb {regel.get('von')}–"
+                     f"{regel.get('bis')} Uhr")}
+
+
 def _uebersteuerung(raum: dict, states_index: dict,
                     jetzt: datetime) -> dict | None:
     """Die erste zutreffende Übersteuerungsregel des Raumes.
@@ -226,10 +280,14 @@ def _uebersteuerung(raum: dict, states_index: dict,
             if namen:
                 # Hat die Regel einen Namen, steht der im Protokoll – „Homeoffice“
                 # sagt mehr als die Aufzählung ihrer drei Bedingungen.
-                fenster = (f" (bis {eintrag['bis']} Uhr)"
-                           if eintrag.get("von") and eintrag.get("bis") else "")
+                # Der Name bleibt rein – das Zeitfenster kommt als eigener
+                # Zusatz, damit ihn niemand mitschleppt, der nur den Namen
+                # der Regel braucht.
                 return {"modus": eintrag.get("modus", "komfort"),
-                        "name": (eintrag.get("name") or " · ".join(namen)) + fenster}
+                        "name": eintrag.get("name") or " · ".join(namen),
+                        "fenster": (f" (bis {eintrag['bis']} Uhr)"
+                                    if eintrag.get("von") and eintrag.get("bis")
+                                    else "")}
     return None
 
 
@@ -373,7 +431,8 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     if uebersteuerung:
         modus = uebersteuerung["modus"]
         basis = zp.modus_temperatur(raum, modus, frostschutz)
-        begruendung = f"{uebersteuerung['name']} – {modus} statt Zeitplan"
+        begruendung = (f"{uebersteuerung['name']}{uebersteuerung.get('fenster', '')}"
+                       f" – {modus} statt Zeitplan")
         if uebersteuerung["modus"] == "aus":
             return ergebnis("uebersteuert", frostschutz, begruendung,
                             ventil_zu=True)
@@ -842,6 +901,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             "zustand": entscheidung["zustand"], "ziel": entscheidung["ziel"],
             "ist": entscheidung.get("ist"), "begruendung": entscheidung["begruendung"],
             "handwert": entscheidung.get("handwert"),
+            "uebersteuerung": uebersteuerung_lage(raum, states_index, jetzt),
             "seit": rz.get("seit"), "aktionen": aktionen,
             "naechster_wechsel": _iso(naechster),
             "naechster_modus": (kommend or {}).get("modus"),

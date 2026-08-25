@@ -333,6 +333,30 @@ def lage_fenster(stunde, von="08:00", bis="18:00"):
     return regelung.entscheide(r, {"temperaturquelle": "thermostate"},
                                umgebung(montag.replace(hour=stunde), states_index=idx))
 
+# Die Lage-Auskunft, die auch ueber MQTT aufs Dashboard geht
+def lage_auskunft(isabel="home", ferien="off", stunde=10):
+    r = store.validate_raum({**wohnzimmer, "uebersteuerung": [{
+        "name": "Homeoffice", "modus": "komfort", "von": "08:00", "bis": "18:00",
+        "wenn": [{"entity": "calendar.ferien", "zustand": "aus"},
+                 {"entity": "person.isabel", "zustand": "an"}]}]})
+    idx = {"calendar.ferien": {"entity_id": "calendar.ferien", "state": ferien,
+                               "attributes": {"friendly_name": "Ferien & Feiertage"}},
+           "person.isabel": {"entity_id": "person.isabel", "state": isabel,
+                             "attributes": {"friendly_name": "Isabel"}}}
+    return regelung.uebersteuerung_lage(r, idx, montag.replace(hour=stunde))
+
+a = lage_auskunft()
+pruefe(a["greift"] and a["name"] == "Homeoffice", f"Lage: greift ({a})")
+a = lage_auskunft(ferien="on")
+pruefe(not a["greift"] and a["lage"] == "greift heute nicht – Ferien & Feiertage läuft",
+       f"Lage: Ferientag wird als heute benannt ({a['lage']})")
+a = lage_auskunft(isabel="not_home")
+pruefe(a["lage"] == "greift gerade nicht – Isabel ist nicht zu Hause",
+       f"Lage: abwesende Person ist eine Frage des Augenblicks ({a['lage']})")
+a = lage_auskunft(stunde=3)
+pruefe("außerhalb 08:00–18:00" in a["lage"],
+       f"Lage: das Zeitfenster wird benannt ({a['lage']})")
+
 pruefe(lage_fenster(10)["zustand"] == "komfort",
        "im Fenster greift die Regel")
 pruefe(lage_fenster(3)["zustand"] == "nacht",
