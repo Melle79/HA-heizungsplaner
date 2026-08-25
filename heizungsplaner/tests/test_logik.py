@@ -537,6 +537,9 @@ import wachhund
 from datetime import timezone
 
 jetzt_w = datetime(2026, 8, 25, 12, 0, tzinfo=timezone.utc)
+# Der Planer arbeitet mit zeitzonenloser Ortszeit; die Prüfung muss auch damit
+# stimmen, sonst verschiebt der Zeitzonenversatz jede Altersangabe.
+jetzt_ortszeit = datetime(2026, 8, 25, 14, 0)   # dieselbe Sekunde in Berlin
 cfg = {"raeume": [store.validate_raum({
     "name": "Wohnzimmer", "thermostate": ["climate.a", "climate.b"],
     "personen": [], "zeitplan": plan})]}
@@ -606,6 +609,23 @@ vorher = wachhund.als_gedaechtnis(lage(batterie=15))
 hinzu, weg = wachhund.vergleichen(lage(a_zustand="unavailable"), vorher)
 pruefe(len(hinzu) == 1 and len(weg) == 1,
        "Wechsel der Stoerungsart wird gemeldet")
+
+# Dieselbe Lage in Ortszeit gerechnet muss dieselbe Dauer ergeben
+def lage_ortszeit(gemeldet):
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "last_reported": gemeldet,
+                         "attributes": {"friendly_name": "Thermostat A"}},
+           "climate.b": {"entity_id": "climate.b", "state": "heat",
+                         "last_reported": "2026-08-25T11:58:00+00:00",
+                         "attributes": {"friendly_name": "Thermostat B"}}}
+    return wachhund.pruefen(cfg, idx, jetzt_ortszeit, einst_w, {})
+
+st_utc = lage(a_gemeldet="2026-08-25T02:00:00+00:00")
+st_lokal = lage_ortszeit("2026-08-25T02:00:00+00:00")
+pruefe(st_utc and st_lokal and st_utc[0]["text"] == st_lokal[0]["text"],
+       f"Ortszeit ergibt dieselbe Dauer wie UTC ({st_lokal[0]['text'] if st_lokal else '-'})")
+pruefe(lage_ortszeit("2026-08-25T10:00:00+00:00") == [],
+       "vor zwei Stunden gemeldet -> keine Stoerung (kein Zeitzonenversatz)")
 
 titel, text = wachhund.meldung_bauen(lage(a_zustand="unavailable"), [])
 pruefe("ausgefallen" in titel and "Thermostat A" in text,

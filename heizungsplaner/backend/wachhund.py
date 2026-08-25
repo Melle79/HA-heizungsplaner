@@ -72,8 +72,11 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
 
     stumm_ab = timedelta(hours=float(wacht.get("stumm_stunden", 6)))
     schwelle = float(wacht.get("batterie_prozent", 20))
-    jetzt_utc = jetzt.astimezone(timezone.utc) if jetzt.tzinfo else \
-        jetzt.replace(tzinfo=timezone.utc).astimezone(timezone.utc)
+    # Der Planer rechnet in lokaler Zeit ohne Zeitzone, Home Assistant meldet
+    # in UTC. `astimezone` liest eine zeitzonenlose Angabe als Ortszeit – ein
+    # `replace(tzinfo=utc)` hätte die Uhr um den Zeitzonenversatz verstellt und
+    # jedes Gerät zwei Stunden zu früh für tot erklärt.
+    jetzt_utc = jetzt.astimezone(timezone.utc)
 
     stoerungen = []
     for raum in config["raeume"]:

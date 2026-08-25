@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.5.2
+
+- Zeitzonenfehler in der Überwachung behoben: Die zeitzonenlose Ortszeit des
+  Planers wurde als UTC gelesen, wodurch jedes Gerät um den Zeitzonenversatz
+  zu alt erschien – im Sommer zwei Stunden. Bei einer Schweigefrist von sechs
+  Stunden hätte das zu frühem Alarm geführt.
+
 ## 1.5.1
 
 - Knopf „Probemeldung senden“ in den Einstellungen. Ob ein Meldeweg trägt,
