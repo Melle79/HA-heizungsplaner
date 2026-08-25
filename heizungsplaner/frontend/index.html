@@ -130,10 +130,11 @@
   .regel-zeile button{flex:none}
   .regel-zeit{display:inline-flex; align-items:center; gap:4px}
   .regel-zeit input[type=time]{width:auto; padding:5px 6px; font-size:.82rem}
-  .regel-lage{font-size:.76rem; padding:2px 8px; border-radius:999px;
-    white-space:nowrap}
+  .regel-lage{font-size:.76rem; padding:3px 9px; border-radius:999px;
+    flex-basis:100%; margin-top:6px; align-self:flex-start; width:fit-content;
+    flex-grow:0}
   .regel-lage.greift{background:rgba(90,190,120,.16); color:#7fd39b}
-  .regel-lage.ruht{background:var(--flaeche3); color:var(--grau)}
+  .regel-lage.ruht{background:var(--flaeche3); color:var(--text)}
   .regel-zeile .zeichen{flex:none; width:16px; text-align:center; font-size:.9rem}
   .regel-zeile .zeichen.ja{color:#7fd39b}
   .regel-zeile .zeichen.nein{color:var(--grau)}
@@ -1699,10 +1700,34 @@ function uebersteuerungZeichnen() {
           : (jetztHM >= regel.von || jetztHM < regel.bis));
     const greift = stand.length && stand.every(x => x === true) && imFenster;
     lage.classList.add(greift ? 'greift' : 'ruht');
-    lage.textContent = greift ? 'greift gerade'
-      : (!imFenster && stand.every(x => x === true) ? 'ruht – außerhalb der Zeit'
-                                                    : 'ruht');
-    kopf.append(bezeichnung, modus, zeitraum, lage, weg);
+    // „ruht“ allein beantwortet die Frage nicht, die man in dem Moment hat:
+    // warum eigentlich? Deshalb nennt die Anzeige den Grund – die erste
+    // Bedingung, die nicht zutrifft, oder das Zeitfenster.
+    if (greift) {
+      lage.textContent = 'greift gerade';
+      lage.title = 'Alle Bedingungen treffen zu und die Uhrzeit liegt im Fenster.';
+    } else {
+      const wo = stand.findIndex(x => x !== true);
+      if (wo >= 0) {
+        const bedingung = regel.wenn[wo];
+        const gemeint = auswahl.find(e => e.entity_id === bedingung.entity);
+        const kurz = (gemeint ? gemeint.name : bedingung.entity) || 'eine Bedingung';
+        lage.textContent = stand[wo] === null
+          ? 'greift nicht: ' + kurz + ' meldet nichts'
+          : 'greift nicht: ' + kurz;
+        lage.title = stand[wo] === null
+          ? kurz + ' meldet weder an noch aus.'
+          : kurz + ' ist gerade nicht „' +
+            (bedingung.zustand === 'aus' ? 'aus' : 'an') + '“.';
+      } else {
+        lage.textContent = 'greift nicht: außerhalb ' + regel.von + '–' + regel.bis;
+        lage.title = 'Alle Bedingungen treffen zu, aber die Uhrzeit liegt '
+          + 'außerhalb des Zeitfensters.';
+      }
+    }
+    // Die Lage steht unter dem Kopf, über die volle Breite – sonst
+    // schiebt ein langer Grund den Löschknopf in die nächste Zeile.
+    kopf.append(bezeichnung, modus, zeitraum, weg, lage);
     karte.appendChild(kopf);
 
     const wenn = document.createElement('div');

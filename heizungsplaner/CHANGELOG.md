@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.12.1
+
+- **„Ruht“ sagt jetzt, warum.** Statt eines Worts, das man erst deuten muss,
+  steht dort *greift nicht: Ferien & Feiertage* – die erste Bedingung, die
+  nicht zutrifft – oder *greift nicht: außerhalb 08:00–18:00*, wenn allein die
+  Uhrzeit sie zurückhält. Meldet eine Entität gar nichts, steht das dort.
+- Die Anzeige sitzt unter der Kopfzeile, damit ein langer Grund den
+  Löschknopf nicht verschiebt.
+
 ## 1.12.0
 
 - **Zeitfenster je Übersteuerungsregel.** Ohne eines liefe eine

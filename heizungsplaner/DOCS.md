@@ -240,10 +240,12 @@ Die **Bezeichnung** der Regel ist frei. Sie steht später in der Begründung und
 im Protokoll: „Homeoffice – komfort statt Zeitplan" ist dort lesbarer als die
 Aufzählung dreier Entitäten. Ohne Bezeichnung werden die Bedingungen genannt.
 
-**Woran man sieht, ob eine Regel läuft:** Die Regel selbst sagt es. Oben
-steht *greift gerade* oder *ruht*, und vor jeder Bedingung ein Häkchen oder
-ein Kreuz – im Bild oben scheitert die Homeoffice-Regel an den Ferien, obwohl
-Werktag und Isabel zutreffen. Greift eine Regel, steht ihre Bezeichnung
+**Woran man sieht, ob eine Regel läuft:** Die Regel selbst sagt es – und
+nennt den Grund. Unter der Kopfzeile steht *greift gerade* oder
+*greift nicht: Ferien & Feiertage*, und vor jeder Bedingung ein Häkchen oder
+ein Kreuz. Im Bild oben scheitert die Homeoffice-Regel an den Ferien, obwohl
+Werktag und Isabel zutreffen. Liegt es allein an der Uhrzeit, steht dort
+*greift nicht: außerhalb 08:00–18:00*. Greift eine Regel, steht ihre Bezeichnung
 außerdem in der Begründung auf der Raumkachel und im Protokoll:
 „Homeoffice – komfort statt Zeitplan".
 
