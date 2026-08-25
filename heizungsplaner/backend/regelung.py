@@ -635,10 +635,22 @@ def takt(config: dict, state: dict, protokoll) -> dict:
         personen, state.setdefault("personen", {}), jetzt,
         float(einst["vorheizen"].get("heimkehr_annaeherung_km", 0.3)))
 
-    raum_wechsel = {}
+    # Je Raum: wann der nächste Umschaltpunkt fällig ist und worauf er stellt.
+    # Der Zeitpunkt allein sagt wenig – wer auf die Übersicht schaut, will
+    # wissen, was gleich passiert.
+    raum_wechsel, naechste = {}, {}
     for raum in config["raeume"]:
         treffer = zp.naechster_wechsel(raum.get("zeitplan") or [], jetzt, schulfrei)
         raum_wechsel[raum["id"]] = treffer[0] if treffer else jetzt + timedelta(hours=12)
+        if treffer:
+            zeitpunkt, eintrag = treffer
+            naechste[raum["id"]] = {
+                "zeit": _iso(zeitpunkt),
+                "uhrzeit": eintrag["start"],
+                "modus": eintrag["modus"],
+                "ziel": zp.modus_temperatur(raum, eintrag["modus"],
+                                            float(einst["frostschutz"])),
+            }
 
     umgebung = {
         "jetzt": jetzt, "einstellungen": einst, "states_index": states_index,
@@ -666,6 +678,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             "aktualisiert": _iso(jetzt),
         })
         naechster = raum_wechsel.get(raum["id"])
+        kommend = naechste.get(raum["id"])
         ergebnisse.append({
             "id": raum["id"], "name": raum["name"],
             "zustand": entscheidung["zustand"], "ziel": entscheidung["ziel"],
@@ -673,6 +686,9 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             "handwert": entscheidung.get("handwert"),
             "seit": rz.get("seit"), "aktionen": aktionen,
             "naechster_wechsel": _iso(naechster),
+            "naechster_modus": (kommend or {}).get("modus"),
+            "naechstes_ziel": (kommend or {}).get("ziel"),
+            "naechste_uhrzeit": (kommend or {}).get("uhrzeit"),
             "thermostate": [
                 {
                     "entity_id": eid,

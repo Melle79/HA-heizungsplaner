@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.6.0
+
+- Jeder Raum meldet jetzt nicht nur, **wann** der nächste Umschaltpunkt fällig
+  ist, sondern auch **worauf** er stellt: Uhrzeit, Modus und Zielwert. Der
+  Zeitpunkt allein sagt wenig – wer auf die Übersicht schaut, will wissen, was
+  gleich passiert. Als Attribute an `sensor.heizungsplaner_raum_<name>`.
+
 ## 1.5.5
 
 - **Ein Wechsel des Raumfühlers löst keinen Fensteralarm mehr aus.** Zwei

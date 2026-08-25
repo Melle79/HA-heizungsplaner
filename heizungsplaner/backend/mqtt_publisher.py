@@ -233,6 +233,9 @@ class Publisher:
                 "ist_temperatur": raum.get("ist"),
                 "seit": raum.get("seit"),
                 "naechster_wechsel": raum.get("naechster_wechsel"),
+                "naechste_uhrzeit": raum.get("naechste_uhrzeit"),
+                "naechster_modus": raum.get("naechster_modus"),
+                "naechstes_ziel": raum.get("naechstes_ziel"),
                 "thermostate": [t["entity_id"] for t in raum.get("thermostate", [])],
             })
 
