@@ -224,7 +224,7 @@ e = regelung.entscheide(wohnzimmer, {}, umgebung(montag.replace(hour=5, minute=0
 pruefe(e["ziel"] > 22, f"05:00 Uhr wird für 05:30 vorgeheizt ({e['ziel']}, {e['begruendung']})")
 
 # Fenstersturz
-rz_fenster = {"verlauf": [
+rz_fenster = {"temperaturquelle": "thermostate", "verlauf": [
     [(montag.replace(hour=13, minute=55)).isoformat(timespec="seconds"), 22.5],
     [(montag.replace(hour=13, minute=58)).isoformat(timespec="seconds"), 21.6],
 ]}
@@ -239,7 +239,7 @@ pruefe(e["zustand"] == "fenster" and e["ziel"] == 8.0,
        f"Temperatursturz erkannt ({e['begruendung']})")
 
 # Sperre wirkt nach
-rz_sperre = {"fenster_bis": (montag.replace(hour=14, minute=20)).isoformat(timespec="seconds")}
+rz_sperre = {"temperaturquelle": "thermostate", "fenster_bis": (montag.replace(hour=14, minute=20)).isoformat(timespec="seconds")}
 e = regelung.entscheide(wohnzimmer, rz_sperre, umgebung(montag.replace(hour=14)))
 pruefe(e["zustand"] == "fenster", f"Fenstersperre läuft nach ({e['begruendung']})")
 
@@ -269,9 +269,9 @@ def fensterlage(kontakte, zustaende, verlauf_sturz=True, zusatz=False):
     for eid, zustand in zustaende.items():
         idx[eid] = {"entity_id": eid, "state": zustand,
                     "attributes": {"friendly_name": eid.split(".")[-1]}}
-    rz = {"verlauf": [
+    rz = {"temperaturquelle": "thermostate", "verlauf": [
         [(montag.replace(hour=13, minute=55)).isoformat(timespec="seconds"), 22.5],
-    ]} if verlauf_sturz else {}
+    ]} if verlauf_sturz else {"temperaturquelle": "thermostate"}
     return regelung.entscheide(r, rz, umgebung(montag.replace(hour=14),
                                                states_index=idx))
 
@@ -303,6 +303,27 @@ pruefe(e["zustand"] == "fenster", "ein offener unter mehreren genuegt")
 
 e = fensterlage([], {})
 pruefe(e["zustand"] == "fenster", "ohne Kontakte greift weiterhin der Sturz")
+
+# Ein Wechsel des Raumfuehlers darf keinen Fensteralarm ausloesen: Zwei Fuehler
+# in einem Raum zeigen selten dasselbe, und der Sprung saehe aus wie ein Sturz.
+r_fuehler = store.validate_raum({**wohnzimmer, "raumtemp": "sensor.neu"})
+idx_neu = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "attributes": {"current_temperature": 20.9,
+                                        "temperature": 23.0, "min_temp": 5,
+                                        "max_temp": 30,
+                                        "hvac_modes": ["off", "heat"]}},
+           "sensor.neu": {"entity_id": "sensor.neu", "state": "20.9",
+                          "attributes": {}}}
+rz_alt = {"temperaturquelle": "thermostate",
+          "verlauf": [[montag.replace(hour=13, minute=55).isoformat(
+              timespec="seconds"), 24.5]]}
+e = regelung.entscheide(r_fuehler, rz_alt,
+                        umgebung(montag.replace(hour=14), states_index=idx_neu))
+pruefe(e["zustand"] != "fenster",
+       f"Fuehlerwechsel loest keinen Fensteralarm aus ({e['zustand']})")
+pruefe(rz_alt["verlauf"] and len(rz_alt["verlauf"]) == 1,
+       "das alte Gedaechtnis wurde verworfen")
+pruefe(rz_alt["temperaturquelle"] == "sensor.neu", "die neue Quelle ist vermerkt")
 
 print("\n=== Erkennung von Fensterkontakten ===")
 import ha_api

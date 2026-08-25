@@ -155,8 +155,19 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     return False, "", hinweis
 
 
-def _verlauf_fortschreiben(rz: dict, ist: float | None, jetzt: datetime) -> None:
-    """Kurzes Temperaturgedächtnis je Raum, eine Stunde tief."""
+def _verlauf_fortschreiben(rz: dict, ist: float | None, jetzt: datetime,
+                           quelle: str) -> None:
+    """Kurzes Temperaturgedächtnis je Raum, eine Stunde tief.
+
+    Wechselt die Quelle – ein anderer Raumfühler, oder gar keiner mehr –, wird
+    das Gedächtnis verworfen. Zwei Fühler in einem Raum zeigen selten dasselbe;
+    der Sprung beim Umschalten sähe sonst aus wie ein Temperatursturz und
+    löste einen Fensteralarm aus.
+    """
+    if rz.get("temperaturquelle") != quelle:
+        rz["temperaturquelle"] = quelle
+        rz["verlauf"] = []
+        rz["fenster_bis"] = None
     if ist is None:
         return
     verlauf = rz.get("verlauf") or []
@@ -180,7 +191,8 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     frostschutz = float(einst["frostschutz"])
 
     ist = raumtemperatur(raum, states_index)
-    _verlauf_fortschreiben(rz, ist, jetzt)
+    _verlauf_fortschreiben(rz, ist, jetzt,
+                           raum.get("raumtemp") or "thermostate")
     nur_absenken = raum.get("betriebsart") == "nur_absenken"
 
     def ergebnis(zustand: str, ziel: float, begruendung: str, **extra) -> dict:

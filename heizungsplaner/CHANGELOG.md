@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.5.5
+
+- **Ein Wechsel des Raumfühlers löst keinen Fensteralarm mehr aus.** Zwei
+  Fühler in einem Raum zeigen selten dasselbe; der Sprung beim Umschalten sah
+  aus wie ein Temperatursturz und schickte den Raum auf Frostschutz. Beim
+  Quellenwechsel wird das Temperaturgedächtnis nun verworfen.
+
 ## 1.5.4
 
 - Wird ein Raum umbenannt oder gelöscht, verschwindet jetzt auch seine Entität
