@@ -750,7 +750,8 @@ async function gesundheitLaden() {
       const zeichen = h.art === 'fehler' ? '✕' : h.art === 'warnung' ? '!' : 'i';
       const knopf = h.raum_id
         ? `<button class="ghost" data-hinweis-raum="${h.raum_id}"
-                   data-hinweis-entity="${h.entity_id || ''}">Zuordnen</button>` : '';
+                   data-hinweis-entity="${h.entity_id || ''}"
+                   data-hinweis-feld="${h.feld || 'fenster'}">Zuordnen</button>` : '';
       return `<div class="hinweis ${h.art}"><span class="zeichen">${zeichen}</span>
               <span style="flex:1">${h.text}</span>${knopf}</div>`;
     }).join('');
@@ -762,8 +763,9 @@ async function gesundheitLaden() {
         if (!raum) return;
         raumOeffnen(raum);
         const entity = knopf.dataset.hinweisEntity;
+        const ziel = knopf.dataset.hinweisFeld === 'praesenz' ? 'r-praesenz' : 'r-fenster';
         if (entity) {
-          for (const option of $('r-fenster').options) {
+          for (const option of $(ziel).options) {
             if (option.value === entity) { option.selected = true; option.scrollIntoView(); }
           }
         }

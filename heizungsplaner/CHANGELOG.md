@@ -1,5 +1,10 @@
 # Änderungen
 
+## 1.3.2
+
+- Nicht nur nachgerüstete Fensterkontakte, auch neue **Präsenz- und
+  Bewegungsmelder** im Bereich eines Raumes werden zur Zuordnung angeboten.
+
 ## 1.3.1
 
 - **Ein Präsenzmelder, der nichts meldet, gilt nicht als „niemand da“.** Bei

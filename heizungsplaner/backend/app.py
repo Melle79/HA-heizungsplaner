@@ -319,6 +319,7 @@ def api_gesundheit():
 
     zustand_je_id = {s.get("entity_id"): s.get("state") for s in states}
     zugeordnete_kontakte = {e for raum in config["raeume"] for e in raum["fenster"]}
+    zugeordnete_melder = {e for raum in config["raeume"] for e in raum["praesenz"]}
 
     belegt: dict[str, str] = {}
     for raum in config["raeume"]:
@@ -371,17 +372,26 @@ def api_gesundheit():
             else:
                 belegt[entity_id] = raum["name"]
 
-    # Neu nachgerüstete Fensterkontakte anbieten: Was im Bereich eines Raumes
-    # liegt und noch keinem zugeordnet ist, wäre sonst leicht zu übersehen.
+    # Neu nachgerüstete Melder anbieten: Was im Bereich eines Raumes liegt und
+    # noch keinem zugeordnet ist, wäre sonst leicht zu übersehen.
     raum_je_name = {raum["name"]: raum for raum in config["raeume"]}
     bereiche = ha_api.bereiche_je_entitaet(("binary_sensor",))
     for s in states:
         eid = s.get("entity_id", "")
-        if not eid.startswith("binary_sensor.") or eid in zugeordnete_kontakte:
+        if not eid.startswith("binary_sensor."):
             continue
         attrs = s.get("attributes") or {}
         name = attrs.get("friendly_name", eid)
-        if not ha_api.ist_fensterkontakt(eid, name, attrs.get("device_class")):
+        klasse = attrs.get("device_class")
+        if klasse in ("motion", "occupancy", "presence"):
+            art, feld = "praesenz", "Präsenz-/Bewegungsmelder"
+            if eid in zugeordnete_melder:
+                continue
+        elif ha_api.ist_fensterkontakt(eid, name, klasse):
+            art, feld = "fenster", "Fensterkontakte"
+            if eid in zugeordnete_kontakte:
+                continue
+        else:
             continue
         bereich = bereiche.get(eid)
         raum = raum_je_name.get(bereich) if bereich else None
@@ -390,8 +400,8 @@ def api_gesundheit():
                 "art": "info",
                 "text": f"„{name}“ liegt im Bereich „{bereich}“ und ist noch keinem "
                         f"Raum zugeordnet. Im Raum „{raum['name']}“ unter "
-                        f"„Fensterkontakte“ eintragen, damit der Planer ihn nutzt.",
-                "raum_id": raum["id"], "entity_id": eid})
+                        f"„{feld}“ eintragen, damit der Planer ihn nutzt.",
+                "raum_id": raum["id"], "entity_id": eid, "feld": art})
 
     return jsonify({"hinweise": hinweise, "mqtt": _publisher is not None
                     and _publisher.connected.is_set()})
