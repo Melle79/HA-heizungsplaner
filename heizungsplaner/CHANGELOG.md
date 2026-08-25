@@ -1,5 +1,16 @@
 # Änderungen
 
+## 1.8.11
+
+- **Behoben: Ein Raum zeigte die Personen des zuvor geöffneten Raumes.** Die
+  Personenliste wurde beim Öffnen nicht zurückgesetzt und übernahm ihren Stand
+  aus der Anzeige statt aus dem Raum. Wer nacheinander zwei Räume öffnete, fand
+  im zweiten die Zuordnung des ersten – und hätte sie beim Speichern dorthin
+  übernommen. Betroffen war nur die Fassung 1.8.9/1.8.10 vom 25.08.2026.
+- Grundsätzlich behoben statt nur für die Personen: Eine Auswahlliste
+  übernimmt den Stand aus der Anzeige jetzt ausschließlich beim Filtern.
+  Befüllt sie jemand von außen, gilt der übergebene Wert.
+
 ## 1.8.10
 
 - **„Mittelwert der Thermostate“ sagt jetzt, welcher.** Gemeint waren immer

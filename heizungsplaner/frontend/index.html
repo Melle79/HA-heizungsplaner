@@ -904,8 +904,14 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
   const istMehrfach = haken || ziel.multiple;
 
   // Beim Neuaufbau nach einer Filteränderung zählt, was gerade angehakt ist –
-  // nicht der Stand beim Öffnen des Dialogs.
-  const gewaehltJetzt = new Set(ziel._gefuellt
+  // beim Befüllen von außen dagegen **immer** der übergebene Wert.
+  //
+  // Diese Unterscheidung ist der Kern: Ohne sie schleppt eine Liste die
+  // Auswahl des zuvor geöffneten Raumes mit. Genau so standen am 25.08.2026
+  // in Neles Zimmer Finns Personen – und wären beim Speichern dort gelandet.
+  const ausFilter = !!ziel._ausFilter;
+  ziel._ausFilter = false;
+  const gewaehltJetzt = new Set(ausFilter
     ? (istMehrfach ? gewaehlt(ziel) : [ziel.value].filter(Boolean))
     : werte);
 
@@ -1060,10 +1066,9 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
       ziel.appendChild(leer);
     }
   } else if (istMehrfach) {
-    const auswahl = ziel._gefuellt ? gewaehltJetzt : new Set(werte);
-    for (const option of ziel.options) option.selected = auswahl.has(option.value);
+    for (const option of ziel.options) option.selected = gewaehltJetzt.has(option.value);
   } else {
-    ziel.value = (ziel._gefuellt ? [...gewaehltJetzt][0] : werte[0]) || '';
+    ziel.value = [...gewaehltJetzt][0] || '';
   }
 
   if (opt.filter !== false) {
@@ -1082,8 +1087,12 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
       + (istMehrfach && angehakt ? ' · ' + angehakt + ' gewählt' : '')
       + (versteckt ? ' · ' + versteckt + ' weitere – zum Suchen tippen' : '');
   }
-  ziel._neuFuellen = () => auswahlFuellen(ziel, quelle, wert, opt);
-  ziel._gefuellt = true;
+  // Nur dieser Weg – der Filter über der Liste – darf den Stand aus der
+  // Liste selbst übernehmen.
+  ziel._neuFuellen = () => {
+    ziel._ausFilter = true;
+    auswahlFuellen(ziel, quelle, wert, opt);
+  };
 }
 
 // Woran ein Gerät als „gehört zu diesem Raum“ erkannt wird.
@@ -1152,10 +1161,6 @@ function raumtempNotiz() {
 // das Häkchen gesetzt, sofern der Raum überhaupt eigene Kandidaten hat.
 function filterZuruecksetzen(ids, an) {
   for (const id of ids) filterStand[id] = {such:'', nurRaum: an};
-  for (const id of ids) {
-    const select = $(id);
-    if (select) select._gefuellt = false;
-  }
 }
 
 // Die Auswahl eines Feldes – gleich ob Mehrfachauswahl oder Häkchenliste.
