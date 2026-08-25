@@ -74,6 +74,28 @@ Vier Temperaturen je Raum:
 Dazu **Nie unter** / **Nie über** als harte Grenzen des Raumes. Sie deckeln
 auch die Heizkurve.
 
+### Rezept: ein Raum soll nur vor dem Auskühlen geschützt werden
+
+Für Räume, in denen man nicht heizen, aber auch nicht frieren will – ein
+Schlafzimmer etwa:
+
+* **ein einziger Schaltpunkt**, etwa `00:00 → Eco`,
+* **Eco** auf die gewünschte Untergrenze, etwa 18 °C,
+* **Heizkurve aus** – sie würde den Sollwert bei Kälte anheben und damit genau
+  das tun, was hier nicht gewollt ist,
+* **Anwesenheitsabsenkung aus** – die Untergrenze gilt unabhängig davon, ob
+  jemand im Haus ist.
+
+Der Sollwert steht dann rund um die Uhr auf 18 °C. Das Thermostat regelt
+selbst: Es heizt erst, wenn der Raum darunter fällt, und sonst nie.
+
+Eine Handeinstellung bleibt dabei möglich und hält **bis zum nächsten
+Schaltpunkt** – bei einem einzigen Punkt also bis Mitternacht. Wer abends auf
+21 °C dreht, findet am nächsten Morgen wieder die 18 °C vor.
+
+Im Sommerbetrieb ist auch dieser Raum zu; die Untergrenze greift erst wieder,
+wenn die gedämpfte Außentemperatur unter die Sommergrenze fällt.
+
 ## Heizkurve
 
 ```

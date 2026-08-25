@@ -553,6 +553,90 @@ aktionen = regelung.anwenden(wohnzimmer, entscheidung, zustand, umg, protokoll)
 pruefe(len(aktionen) == 1 and aktionen[0]["trocken"],
        "abweichender Sollwert -> im Trockenlauf nur gemeldet")
 
+print("\n=== Raum mit blosser Mindesttemperatur ===")
+# Muster fuer das Schlafzimmer: ein einziger Schaltpunkt haelt den Sollwert
+# dauerhaft. Das Thermostat heizt dann nur, wenn der Raum darunter faellt.
+schlaf = store.validate_raum({
+    "name": "Schlafzimmer", "thermostate": ["climate.sz"], "personen": [],
+    "komfort": 20.0, "eco": 18.0, "nacht": 18.0, "abwesend": 18.0,
+    "min": 5.0, "max": 22.0, "heizkurve": False, "anwesenheit": False,
+    "zeitplan": [{"start": "00:00", "modus": "eco", "gilt": "immer",
+                  "tage": ["mon","tue","wed","thu","fri","sat","sun"]}],
+})
+
+def sz_umgebung(stunde, soll=18.0, ist=19.0):
+    idx = {"climate.sz": {"entity_id": "climate.sz", "state": "heat",
+                          "attributes": {"friendly_name": "Schlafzimmer",
+                                         "temperature": soll,
+                                         "current_temperature": ist,
+                                         "min_temp": 5, "max_temp": 30,
+                                         "hvac_modes": ["off","heat"]}}}
+    u = umgebung(montag.replace(hour=stunde), states_index=idx)
+    treffer = zp.naechster_wechsel(schlaf["zeitplan"], montag.replace(hour=stunde), None)
+    u["raum_wechsel"] = {schlaf["id"]: treffer[0]}
+    return u
+
+for stunde in (3, 11, 20):
+    e = regelung.entscheide(schlaf, {"temperaturquelle": "thermostate"},
+                            sz_umgebung(stunde))
+    pruefe(e["ziel"] == 18.0,
+           f"{stunde:02d} Uhr: Sollwert bleibt 18 °C ({e['ziel']}, {e['begruendung'][:40]})")
+
+# Auch bei Kaelte draussen keine Anhebung - die Heizkurve ist fuer den Raum aus
+e = regelung.entscheide(schlaf, {"temperaturquelle": "thermostate"},
+                        {**sz_umgebung(20), "aussen": -12.0})
+pruefe(e["ziel"] == 18.0, f"auch bei -12 °C draussen bleibt es 18 °C ({e['ziel']})")
+
+# Und wenn niemand zu Hause ist, wird nicht zusaetzlich abgesenkt
+e = regelung.entscheide(schlaf, {"temperaturquelle": "thermostate",
+                                 "leer_seit": montag.replace(hour=2).isoformat(
+                                     timespec="seconds")},
+                        {**sz_umgebung(20), "personen": leer_personen})
+pruefe(e["ziel"] == 18.0, f"leeres Haus senkt nicht weiter ab ({e['ziel']})")
+
+print("\n--- Handeingriff haelt bis zum naechsten Schaltpunkt ---")
+zustand_sz = {"thermostate": {"climate.sz": {
+    "soll": 18.0,
+    "gesetzt_am": montag.replace(hour=10).isoformat(timespec="seconds")}},
+    "raeume": {}}
+protokoll_sz = []
+def merke(raum, was, warum, entity_id=""):
+    protokoll_sz.append((was, warum))
+
+einst["trockenlauf"] = False
+import ha_api
+geschrieben = []
+ha_api.set_temperature = lambda e, t: (geschrieben.append((e, t)), True)[1]
+ha_api.set_hvac_mode = lambda e, m: True
+
+# Jemand dreht von 18 auf 22 hoch
+umg = sz_umgebung(20, soll=22.0)
+regelung.anwenden(schlaf, {"zustand": "eco", "ziel": 18.0, "begruendung": "Zeitplan"},
+                  zustand_sz, umg, merke)
+pruefe(not geschrieben, f"der Planer stellt nicht zurueck ({geschrieben})")
+pruefe(zustand_sz["thermostate"]["climate.sz"].get("manuell_bis") is not None,
+       "die Handeinstellung ist vermerkt")
+pruefe(any("Von Hand" in warum for _, warum in protokoll_sz),
+       f"und steht im Protokoll ({protokoll_sz[0][1][:50] if protokoll_sz else '-'})")
+
+# Solange der Vermerk gilt, bleibt es dabei
+geschrieben.clear()
+regelung.anwenden(schlaf, {"zustand": "eco", "ziel": 18.0, "begruendung": "Zeitplan"},
+                  zustand_sz, sz_umgebung(22, soll=22.0), merke)
+pruefe(not geschrieben, "auch zwei Stunden spaeter kein Eingriff")
+
+# Nach Mitternacht - der Schaltpunkt ist vorbei - fuehrt wieder der Plan
+zustand_sz["thermostate"]["climate.sz"]["manuell_bis"] = \
+    montag.replace(hour=23, minute=59).isoformat(timespec="seconds")
+geschrieben.clear()
+umg_neu = sz_umgebung(20, soll=22.0)
+umg_neu["jetzt"] = montag.replace(day=25, hour=0, minute=5)
+regelung.anwenden(schlaf, {"zustand": "eco", "ziel": 18.0, "begruendung": "Zeitplan"},
+                  zustand_sz, umg_neu, merke)
+pruefe(geschrieben == [("climate.sz", 18.0)],
+       f"nach dem Schaltpunkt stellt der Planer zurueck ({geschrieben})")
+einst["trockenlauf"] = True
+
 print("\n=== Thermostat, das sich nicht abschalten laesst ===")
 # Beobachtet an einem SwitchBot-Thermostat: Es nimmt das \"aus\" an und steht
 # eine Minute spaeter wieder auf \"heat\". Ohne Gegenmassnahme schickt der

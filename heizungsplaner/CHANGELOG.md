@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.6.1
+
+- Anleitung um das Rezept „ein Raum soll nur vor dem Auskühlen geschützt
+  werden“ ergänzt, samt Prüffällen: ein Schaltpunkt als Untergrenze, keine
+  Heizkurve, keine Anwesenheitsabsenkung – und eine Handeinstellung, die bis
+  zum nächsten Schaltpunkt hält.
+
 ## 1.6.0
 
 - Jeder Raum meldet jetzt nicht nur, **wann** der nächste Umschaltpunkt fällig
