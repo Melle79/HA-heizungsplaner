@@ -69,9 +69,19 @@ def praesenz_aktiv(raum: dict, states_index: dict) -> bool:
 
 
 def raum_besetzt(raum: dict, states_index: dict, personen: dict) -> tuple[bool, str]:
-    """Ist gerade jemand für diesen Raum da? Mit Begründung für das Protokoll."""
+    """Ist gerade jemand für diesen Raum da? Mit Begründung für das Protokoll.
+
+    Mit ``nur_praesenz`` zählt allein der Melder im Raum. Das ist für Räume
+    gedacht, die nur zeitweise benutzt werden – ein Büro etwa. Ohne diese
+    Einstellung wäre ein Raum ohne Personenzuordnung immer belegt, sobald
+    irgendwer im Haus ist, und der Melder bliebe wirkungslos.
+    """
     if praesenz_aktiv(raum, states_index):
         return True, "Präsenzmelder meldet Bewegung"
+    if raum.get("nur_praesenz"):
+        if not (raum.get("praesenz") or []):
+            return True, "kein Präsenzmelder hinterlegt"
+        return False, "Präsenzmelder meldet niemanden"
     for entity_id in zustaendige(raum, personen):
         if personen[entity_id]["zuhause"]:
             return True, f"{personen[entity_id]['name']} ist zu Hause"

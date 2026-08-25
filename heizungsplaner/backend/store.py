@@ -100,6 +100,9 @@ STANDARD_RAUM = {
     "max": 26.0,
     "heizkurve": True,
     "anwesenheit": True,
+    "nur_praesenz": False,
+    "karenz_min": None,        # None = die globale Karenzzeit gilt
+    "freigabe_entity": "",     # leer = der Raum ist immer freigegeben
     "sturz_auch_mit_kontakten": False,
     "zeitplan": [],
 }
@@ -226,6 +229,12 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
     if betriebsart not in BETRIEBSARTEN:
         raise ValidationError(f"Unbekannte Betriebsart {betriebsart!r}")
 
+    karenz = raum.get("karenz_min")
+    if karenz in (None, "", "null"):
+        karenz = None
+    else:
+        karenz = int(_zahl(karenz, "Karenzzeit des Raumes", 0, 480))
+
     return {
         "id": vorhandene_id or uuid.uuid4().hex[:8],
         "name": name,
@@ -240,6 +249,9 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         "max": maximum,
         "heizkurve": bool(raum.get("heizkurve", True)),
         "anwesenheit": bool(raum.get("anwesenheit", True)),
+        "nur_praesenz": bool(raum.get("nur_praesenz", False)),
+        "karenz_min": karenz,
+        "freigabe_entity": str(raum.get("freigabe_entity") or "").strip(),
         "sturz_auch_mit_kontakten": bool(raum.get("sturz_auch_mit_kontakten", False)),
         "zeitplan": validate_zeitplan(raum.get("zeitplan") or []),
         **temperaturen,

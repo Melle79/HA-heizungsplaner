@@ -194,10 +194,29 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
         return {"zustand": zustand, "ziel": ziel, "begruendung": begruendung,
                 "ist": ist, **extra}
 
-    # 1 — Raum abgeschaltet
+    # 1 — Raum abgeschaltet oder nicht freigegeben
     if not raum.get("aktiv", True):
         return ergebnis("aus", frostschutz, "Raum ist im Planer abgeschaltet",
                         ventil_zu=True)
+
+    # Ein Raum, der nur zeitweise gebraucht wird – ein Gästezimmer etwa –
+    # hängt an einem Schalter in Home Assistant. Steht der auf aus, bleibt der
+    # Raum kalt, ganz gleich was Zeitplan und Anwesenheit sagen.
+    freigabe = raum.get("freigabe_entity")
+    if freigabe:
+        zustand_freigabe = _bool_state(states_index, freigabe)
+        if zustand_freigabe is False:
+            name = (states_index.get(freigabe, {}).get("attributes") or {}).get(
+                "friendly_name", freigabe)
+            return ergebnis("gesperrt", frostschutz,
+                            f"\u201e{name}\u201c ist aus \u2013 der Raum wird "
+                            f"nicht geheizt", ventil_zu=True)
+        if zustand_freigabe is None:
+            # Der Schalter fehlt oder meldet nichts. Den Raum deswegen kalt zu
+            # lassen wäre die unangenehmere Überraschung, also wird geheizt und
+            # der Hinweisbalken meldet den fehlenden Schalter.
+            _LOGGER.warning("Freigabe %s für Raum %s meldet nichts – der Raum "
+                            "wird normal geregelt", freigabe, raum["name"])
 
     # 2 — Fenster
     sperre_bis = _aus_iso(rz.get("fenster_bis"))
@@ -264,13 +283,20 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
             if leer_seit is None:
                 leer_seit = jetzt
                 rz["leer_seit"] = _iso(leer_seit)
-            karenz = int(einst["anwesenheit"]["karenz_min"])
+            karenz = raum.get("karenz_min")
+            if karenz is None:
+                karenz = einst["anwesenheit"]["karenz_min"]
+            karenz = int(karenz)
             leer_minuten = (jetzt - leer_seit).total_seconds() / 60.0
             if leer_minuten >= karenz:
+                # Zählt allein der Melder, darf die Entfernung einer Person
+                # nichts bewirken: Sonst liefe die Heizung an, sobald jemand
+                # nach Hause fährt – auch wenn niemand den Raum betritt.
+                schwelle = 0.0
+                if einst["vorheizen"].get("aktiv") and not raum.get("nur_praesenz"):
+                    schwelle = float(einst["vorheizen"].get("heimkehr_km", 0))
                 heimweg, heimweg_grund = anwesenheit.kommt_heim(
-                    raum, umgebung["personen"],
-                    float(einst["vorheizen"].get("heimkehr_km", 0))
-                    if einst["vorheizen"].get("aktiv") else 0.0)
+                    raum, umgebung["personen"], schwelle)
                 if heimweg:
                     begruendung = f"Heimkehr erwartet – {heimweg_grund}"
                     zustand = "heimkehr"

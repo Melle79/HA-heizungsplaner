@@ -101,14 +101,39 @@ Ohne Glättung würde ein sonniger Februarnachmittag die Heizung abstellen.
 Thermostate, die `off` können, werden abgeschaltet – das spart Batterie und
 schließt das Ventil vollständig. Alle anderen bekommen den Frostschutzwert.
 
+## Freigabe: Räume, die nur zeitweise gebraucht werden
+
+Ein Raum kann an einen Schalter in Home Assistant gehängt werden (*Freigabe*).
+Steht der auf aus, bleibt der Raum kalt – ganz gleich, was Zeitplan und
+Anwesenheit sagen. Gedacht für ein Gästezimmer, das nur geheizt werden soll,
+wenn tatsächlich Gäste da sind: Schalter an, und der hinterlegte Zeitplan
+greift wie bei jedem anderen Raum.
+
+Fehlt der Schalter in Home Assistant oder meldet er nichts, wird der Raum
+**normal geregelt** und der Hinweisbalken meldet es. Einen Raum wegen eines
+kaputten Schalters kalt zu lassen wäre die unangenehmere Überraschung.
+
 ## Anwesenheit
 
 Jedem Raum lassen sich zuständige Personen zuordnen. Ohne Zuordnung zählt die
 ganze Familie. Zusätzlich kann ein Präsenz- oder Bewegungsmelder den Raum als
 besetzt melden.
 
+**Nur der Präsenzmelder zählt** – für Räume, die man betritt und wieder
+verlässt, statt sich dort aufzuhalten: ein Büro, eine Werkstatt. Dann bleiben
+Personen außer Betracht, und allein der Melder im Raum entscheidet. Ohne diese
+Einstellung wäre ein Raum ohne Personenzuordnung immer belegt, sobald irgendwer
+im Haus ist, und der Melder bliebe wirkungslos.
+
+In dieser Betriebsart ist auch das Vorheizen bei Heimkehr abgeschaltet: Sonst
+liefe die Heizung an, sobald jemand nach Hause fährt, obwohl niemand den Raum
+betritt.
+
 Ist niemand Zuständiges da, wartet der Planer die **Karenzzeit** ab (Vorgabe:
 45 Minuten), bevor er absenkt. Ein kurzer Gang zum Bäcker kostet damit nichts.
+Jeder Raum kann eine eigene Karenzzeit bekommen – ein Büro, dessen
+Bewegungsmelder nach zwei Minuten abfällt, braucht eine kürzere als ein
+Wohnzimmer.
 
 Die **Heimkehr** wird vorhergesehen: Ist eine zuständige Person näher als die
 eingestellte Entfernung zur Heimzone, gilt der Raum wieder als belegt und wird

@@ -27,6 +27,8 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   Urlaubstemperatur.
 * **Handbetrieb je Raum** – wer einen Raum selbst stellen will, lässt den
   Planer nur zu festen Zeiten absenken. Dazwischen rührt er ihn nicht an.
+* **Freigabe je Raum** – ein Gästezimmer wird nur geheizt, wenn ein Schalter
+  in Home Assistant es freigibt.
 
 ## Installation
 

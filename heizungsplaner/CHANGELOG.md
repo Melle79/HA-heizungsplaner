@@ -1,5 +1,18 @@
 # Änderungen
 
+## 1.3.0
+
+- **Freigabe je Raum:** Ein Raum kann an einen Schalter in Home Assistant
+  gehängt werden und bleibt kalt, solange der aus ist – für ein Gästezimmer,
+  das nur bei Gästen geheizt werden soll. Fehlt der Schalter, wird der Raum
+  normal geregelt und der Hinweisbalken meldet es.
+- **Nur der Präsenzmelder zählt:** neue Raumoption für Räume wie ein Büro.
+  Personen im Haus bleiben dann außer Betracht; auch das Vorheizen bei
+  Heimkehr entfällt, sonst liefe die Heizung an, sobald jemand nach Hause
+  fährt, ohne den Raum zu betreten.
+- **Eigene Karenzzeit je Raum** – ein Bewegungsmelder, der nach zwei Minuten
+  abfällt, braucht eine kürzere Nachlaufzeit als ein Wohnzimmer.
+
 ## 1.2.1
 
 - Räume im Handbetrieb zeigen auf der Kachel den von Hand eingestellten Wert

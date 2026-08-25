@@ -331,6 +331,19 @@ def api_gesundheit():
                     "text": f"Fensterkontakt {entity_id} (Raum „{raum['name']}“) "
                             f"meldet nichts – der Raum fällt auf die "
                             f"Temperatursturz-Erkennung zurück."})
+        freigabe = raum.get("freigabe_entity")
+        if freigabe and freigabe not in vorhanden:
+            hinweise.append({
+                "art": "fehler",
+                "text": f"Der Freigabeschalter {freigabe} (Raum „{raum['name']}“) "
+                        f"gibt es in Home Assistant nicht – der Raum wird "
+                        f"deshalb normal geregelt."})
+        if raum.get("nur_praesenz") and not raum["praesenz"]:
+            hinweise.append({
+                "art": "warnung",
+                "text": f"Raum „{raum['name']}“ soll allein dem Präsenzmelder "
+                        f"folgen, hat aber keinen hinterlegt – er gilt darum "
+                        f"immer als belegt."})
         if not raum["thermostate"]:
             hinweise.append({"art": "warnung",
                              "text": f"Raum „{raum['name']}“ hat kein Thermostat."})

@@ -115,7 +115,8 @@
   .pille.absenkung{background:rgba(143,127,214,.18); color:var(--nacht)}
   .pille.urlaub{background:rgba(76,195,138,.15); color:var(--ok)}
   .pille.fenster{background:rgba(227,109,109,.15); color:var(--danger)}
-  .pille.sommer,.pille.aus{background:rgba(90,100,114,.2); color:var(--kalt)}
+  .pille.sommer,.pille.aus,.pille.gesperrt{background:rgba(90,100,114,.2);
+    color:var(--kalt)}
   .temperaturen{display:flex; align-items:baseline; gap:12px; margin-bottom:8px}
   .ziel{font-size:1.9rem; font-weight:600; line-height:1; color:var(--warm)}
   .ziel .einheit{font-size:.9rem; font-weight:500; color:var(--muted)}
@@ -448,11 +449,32 @@
     <div class="hint" id="zeitplan-hinweis">Jeder Punkt gilt, bis der nächste
       kommt. Der letzte Punkt des Tages reicht über Mitternacht.</div>
 
+    <h3>Freigabe</h3>
+    <div class="zeile">
+      <div class="field"><label>Nur heizen, wenn dieser Schalter an ist</label>
+        <select id="r-freigabe"></select>
+        <div class="hint">Für Räume, die nur zeitweise gebraucht werden – ein
+          Gästezimmer etwa. Steht der Schalter auf aus, bleibt der Raum kalt,
+          ganz gleich was Zeitplan und Anwesenheit sagen.</div></div>
+    </div>
+
     <h3>Anwesenheit</h3>
     <label class="schalter">
       <input type="checkbox" id="r-anwesenheit">
       <span>Absenken, wenn niemand Zuständiges da ist</span>
     </label>
+    <label class="schalter">
+      <input type="checkbox" id="r-nur-praesenz">
+      <span>Nur der Präsenzmelder zählt – Personen im Haus bleiben außer Betracht</span>
+    </label>
+    <div class="zeile" style="margin-top:8px">
+      <div class="field" style="max-width:240px">
+        <label>Eigene Karenzzeit (Minuten)</label>
+        <input type="number" id="r-karenz" min="0" max="480" step="5"
+               placeholder="global">
+        <div class="hint">Leer lassen, dann gilt die Karenzzeit aus den
+          Einstellungen.</div></div>
+    </div>
     <div class="zeile" style="margin-top:8px">
       <div class="field"><label>Zuständige Personen</label>
         <select id="r-personen" multiple size="5"></select>
@@ -687,7 +709,7 @@ function zeichneStatus(bericht) {
         <span class="pille ${raum.zustand}">${raum.zustand}</span>
       </div>
       <div class="temperaturen">
-        ${['sommer', 'aus'].includes(raum.zustand)
+        ${['sommer', 'aus', 'gesperrt'].includes(raum.zustand)
           ? `<span class="ziel zu">Aus<span class="einheit"> · Ventil zu</span></span>`
           : raum.zustand === 'manuell'
             ? (raum.handwert === null || raum.handwert === undefined
@@ -945,10 +967,11 @@ function betriebsartAnzeigen() {
       + 'Verpasst der Planer einen (etwa weil er stand), holt er ihn nicht nach.'
     : 'Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des Tages '
       + 'reicht über Mitternacht.';
-  for (const id of ['r-anwesenheit', 'r-heizkurve', 'r-sturz']) {
-    $(id).disabled = handbetrieb && id !== 'r-sturz';
-    $(id).parentElement.style.opacity = $(id).disabled ? .45 : 1;
+  for (const id of ['r-anwesenheit', 'r-heizkurve', 'r-nur-praesenz']) {
+    $(id).disabled = handbetrieb;
+    $(id).parentElement.style.opacity = handbetrieb ? .45 : 1;
   }
+  $('r-karenz').disabled = handbetrieb;
   $('btn-slot-neu').textContent = handbetrieb
     ? 'Absenkzeitpunkt hinzufügen' : 'Umschaltpunkt hinzufügen';
 }
@@ -972,6 +995,7 @@ function raumOeffnen(raum) {
     name: '', aktiv: true, thermostate: [], personen: [], praesenz: [], fenster: [],
     raumtemp: '', komfort: 21, eco: 19, nacht: 18, abwesend: 17, min: 5, max: 26,
     heizkurve: true, anwesenheit: true, sturz_auch_mit_kontakten: false,
+    nur_praesenz: false, karenz_min: null, freigabe_entity: '',
     betriebsart: 'plan', zeitplan: [],
   };
   $('dialog-titel').textContent = neu ? 'Neuer Raum' : daten.name;
@@ -987,6 +1011,11 @@ function raumOeffnen(raum) {
   $('r-heizkurve').checked = daten.heizkurve;
   $('r-anwesenheit').checked = daten.anwesenheit;
   $('r-sturz').checked = daten.sturz_auch_mit_kontakten;
+  $('r-nur-praesenz').checked = daten.nur_praesenz;
+  $('r-karenz').value = daten.karenz_min === null || daten.karenz_min === undefined
+    ? '' : daten.karenz_min;
+  fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], daten.freigabe_entity,
+                'immer freigegeben');
   $('btn-raum-loeschen').style.display = neu ? 'none' : 'inline-block';
 
   const einzelthermostate = entitaeten.thermostate.filter(
@@ -1026,6 +1055,9 @@ $('btn-raum-speichern').onclick = async () => {
     heizkurve: $('r-heizkurve').checked,
     anwesenheit: $('r-anwesenheit').checked,
     sturz_auch_mit_kontakten: $('r-sturz').checked,
+    nur_praesenz: $('r-nur-praesenz').checked,
+    karenz_min: $('r-karenz').value === '' ? null : parseInt($('r-karenz').value, 10),
+    freigabe_entity: $('r-freigabe').value,
     zeitplan: zeitplanEntwurf,
   };
   try {
