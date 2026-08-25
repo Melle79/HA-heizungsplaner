@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.3.1
+
+- **Ein Präsenzmelder, der nichts meldet, gilt nicht als „niemand da“.** Bei
+  einem ausgefallenen oder falsch eingetragenen Melder stünde ein Raum mit
+  „nur der Präsenzmelder zählt“ sonst dauerhaft auf der Abwesenheitstemperatur,
+  ohne dass es auffällt. Jetzt gilt er als belegt, und der Hinweisbalken meldet
+  den stummen Melder.
+
 ## 1.3.0
 
 - **Freigabe je Raum:** Ein Raum kann an einen Schalter in Home Assistant

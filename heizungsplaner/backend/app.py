@@ -338,11 +338,18 @@ def api_gesundheit():
                 "text": f"Der Freigabeschalter {freigabe} (Raum „{raum['name']}“) "
                         f"gibt es in Home Assistant nicht – der Raum wird "
                         f"deshalb normal geregelt."})
-        if raum.get("nur_praesenz") and not raum["praesenz"]:
+        stumme_melder = [e for e in raum["praesenz"]
+                         if zustand_je_id.get(e) not in ("on", "off")]
+        for entity_id in stumme_melder:
+            hinweise.append({
+                "art": "warnung",
+                "text": f"Präsenzmelder {entity_id} (Raum „{raum['name']}“) "
+                        f"meldet nichts."})
+        if raum.get("nur_praesenz") and len(stumme_melder) == len(raum["praesenz"]):
             hinweise.append({
                 "art": "warnung",
                 "text": f"Raum „{raum['name']}“ soll allein dem Präsenzmelder "
-                        f"folgen, hat aber keinen hinterlegt – er gilt darum "
+                        f"folgen, aber keiner meldet sich – er gilt darum "
                         f"immer als belegt."})
         if not raum["thermostate"]:
             hinweise.append({"art": "warnung",

@@ -129,6 +129,11 @@ In dieser Betriebsart ist auch das Vorheizen bei Heimkehr abgeschaltet: Sonst
 liefe die Heizung an, sobald jemand nach Hause fährt, obwohl niemand den Raum
 betritt.
 
+**Ein Melder, der nichts meldet, gilt nicht als „niemand da“.** Bei einem
+ausgefallenen oder falsch eingetragenen Melder stünde der Raum sonst dauerhaft
+auf der Abwesenheitstemperatur, ohne dass es auffällt. Antwortet kein einziger
+Melder des Raumes, gilt er als belegt und der Hinweisbalken meldet es.
+
 Ist niemand Zuständiges da, wartet der Planer die **Karenzzeit** ab (Vorgabe:
 45 Minuten), bevor er absenkt. Ein kurzer Gang zum Bäcker kostet damit nichts.
 Jeder Raum kann eine eigene Karenzzeit bekommen – ein Büro, dessen

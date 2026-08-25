@@ -60,12 +60,27 @@ def zustaendige(raum: dict, alle_personen: dict) -> list[str]:
     return personen or list(alle_personen.keys())
 
 
-def praesenz_aktiv(raum: dict, states_index: dict) -> bool:
+def praesenz_lage(raum: dict, states_index: dict) -> tuple[bool, int]:
+    """Meldet einer der Melder Bewegung, und wie viele antworten überhaupt?
+
+    Die Zahl der antwortenden Melder wird gebraucht, um einen Raum nicht
+    stillschweigend für immer als leer zu führen, wenn sein einziger Melder
+    fehlt oder ausgefallen ist.
+    """
+    verlaesslich = 0
     for entity_id in raum.get("praesenz") or []:
         eintrag = states_index.get(entity_id)
-        if eintrag and eintrag.get("state") == "on":
-            return True
-    return False
+        zustand = eintrag.get("state") if eintrag else None
+        if zustand not in ("on", "off"):
+            continue
+        verlaesslich += 1
+        if zustand == "on":
+            return True, verlaesslich
+    return False, verlaesslich
+
+
+def praesenz_aktiv(raum: dict, states_index: dict) -> bool:
+    return praesenz_lage(raum, states_index)[0]
 
 
 def raum_besetzt(raum: dict, states_index: dict, personen: dict) -> tuple[bool, str]:
@@ -76,11 +91,15 @@ def raum_besetzt(raum: dict, states_index: dict, personen: dict) -> tuple[bool, 
     Einstellung wäre ein Raum ohne Personenzuordnung immer belegt, sobald
     irgendwer im Haus ist, und der Melder bliebe wirkungslos.
     """
-    if praesenz_aktiv(raum, states_index):
+    bewegung, verlaesslich = praesenz_lage(raum, states_index)
+    if bewegung:
         return True, "Präsenzmelder meldet Bewegung"
     if raum.get("nur_praesenz"):
-        if not (raum.get("praesenz") or []):
-            return True, "kein Präsenzmelder hinterlegt"
+        # Kein antwortender Melder heißt nicht „niemand da“. Sonst stünde der
+        # Raum nach einem ausgefallenen oder falsch eingetragenen Melder
+        # dauerhaft auf der Abwesenheitstemperatur, ohne dass es auffällt.
+        if verlaesslich == 0:
+            return True, "kein Präsenzmelder meldet sich"
         return False, "Präsenzmelder meldet niemanden"
     for entity_id in zustaendige(raum, personen):
         if personen[entity_id]["zuhause"]:
