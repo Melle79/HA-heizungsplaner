@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.2.1
+
+- Räume im Handbetrieb zeigen auf der Kachel den von Hand eingestellten Wert
+  mit dem Zusatz „von Hand“. Meldet das Thermostat gar keinen Sollwert – die
+  FRITZ-Geräte tun das in der Sommerpause nicht –, steht dort „Von Hand“ statt
+  einer Zahl, die keine Zielvorgabe ist.
+
 ## 1.2.0
 
 Neue Betriebsart je Raum: **von Hand, nur zu festen Zeiten absenken**.

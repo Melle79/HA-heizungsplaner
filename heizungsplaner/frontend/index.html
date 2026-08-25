@@ -120,6 +120,7 @@
   .ziel{font-size:1.9rem; font-weight:600; line-height:1; color:var(--warm)}
   .ziel .einheit{font-size:.9rem; font-weight:500; color:var(--muted)}
   .ziel.zu{color:var(--kalt)}
+  .ziel.hand{color:var(--text)}
   .ist{font-size:.88rem; color:var(--muted)}
   .begruendung{font-size:.83rem; color:var(--muted); min-height:2.4em}
   .karte .fuss{
@@ -688,7 +689,12 @@ function zeichneStatus(bericht) {
       <div class="temperaturen">
         ${['sommer', 'aus'].includes(raum.zustand)
           ? `<span class="ziel zu">Aus<span class="einheit"> · Ventil zu</span></span>`
-          : `<span class="ziel">${zahl(raum.ziel)}<span class="einheit"> °C</span></span>`}
+          : raum.zustand === 'manuell'
+            ? (raum.handwert === null || raum.handwert === undefined
+                ? `<span class="ziel zu">Von Hand</span>`
+                : `<span class="ziel hand">${zahl(raum.handwert)}<span class="einheit">
+                     °C · von Hand</span></span>`)
+            : `<span class="ziel">${zahl(raum.ziel)}<span class="einheit"> °C</span></span>`}
         <span class="ist">${raum.ist === null || raum.ist === undefined
           ? 'keine Ist-Temperatur' : 'ist ' + zahl(raum.ist) + ' °C'}</span>
       </div>

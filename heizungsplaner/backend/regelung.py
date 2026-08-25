@@ -336,10 +336,14 @@ def _nur_absenken(raum: dict, rz: dict, umgebung: dict, plan: list[dict],
     eingestellt = _eingestellter_sollwert(raum, umgebung["states_index"])
 
     def ruhen(begruendung: str) -> dict:
+        # Angezeigt wird, was von Hand eingestellt ist. Meldet das Thermostat
+        # keinen Sollwert – FRITZ-Geräte tun das in der Sommerpause nicht –,
+        # bleibt das Feld leer, statt ersatzweise die Ist-Temperatur als Ziel
+        # auszugeben. Eine Zahl, die kein Sollwert ist, liest sich wie einer.
         anzeige = eingestellt if eingestellt is not None else (ist or frostschutz)
         if fenster_hinweis:
             begruendung += f" · {fenster_hinweis}"
-        return ergebnis("manuell", anzeige, begruendung,
+        return ergebnis("manuell", anzeige, begruendung, handwert=eingestellt,
                         nicht_schreiben=True, wiederherstellen=True)
 
     treffer = zp.letzter_zeitpunkt(plan, jetzt, umgebung.get("schulfrei"))
@@ -590,6 +594,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             "id": raum["id"], "name": raum["name"],
             "zustand": entscheidung["zustand"], "ziel": entscheidung["ziel"],
             "ist": entscheidung.get("ist"), "begruendung": entscheidung["begruendung"],
+            "handwert": entscheidung.get("handwert"),
             "seit": rz.get("seit"), "aktionen": aktionen,
             "naechster_wechsel": _iso(naechster),
             "thermostate": [
