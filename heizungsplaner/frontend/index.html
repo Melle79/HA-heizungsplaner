@@ -92,6 +92,27 @@
                            border-color:transparent}
   select[multiple]{min-height:132px; padding:var(--l1)}
   select[multiple] option{padding:3px 6px; border-radius:5px}
+  /* Häkchenliste statt Mehrfachauswahl: Was angehakt ist, sieht man sofort –
+     bei einer Mehrfachauswahl muss man erst scrollen und die Markierung
+     deuten. */
+  .hakenliste{background:var(--flaeche2); border:1px solid var(--linie);
+    border-radius:var(--rund); padding:var(--l1); max-height:190px;
+    overflow-y:auto}
+  .hakenliste.kurz{max-height:150px}
+  .hakenliste label{display:flex; align-items:baseline; gap:var(--l2);
+    padding:4px 6px; border-radius:5px; font-size:.86rem; cursor:pointer}
+  /* Eine Zeile je Gerät: Name und ID laufen zusammen und werden am Ende
+     gekürzt. Umbrechende Namen machten die Liste unruhig. */
+  .hakenliste .h-text{flex:1 1 auto; min-width:0; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis}
+  .hakenliste label:hover{background:var(--flaeche3)}
+  .hakenliste label.an{background:var(--flaeche3)}
+  .hakenliste input{width:auto; flex:none; accent-color:var(--warm); margin:0}
+  .hakenliste .h-eid{color:var(--grau); font-size:.78rem}
+  .hakenliste .h-gruppe{font-size:.72rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--grau); padding:8px 6px 3px}
+  .hakenliste .h-gruppe:first-child{padding-top:2px}
+  .hakenliste .h-leer{padding:10px 6px; color:var(--grau); font-size:.82rem}
   optgroup{color:var(--leise); font-style:normal; font-size:.78rem;
            text-transform:uppercase; letter-spacing:.06em}
   optgroup option{color:var(--text); text-transform:none; letter-spacing:0;
@@ -529,7 +550,7 @@
     </div>
     <div class="feld" style="margin-top:var(--l3)">
       <label>Meldewege</label>
-      <select id="e-wh-melden" multiple size="6"></select>
+      <div id="e-wh-melden" class="hakenliste"></div>
       <div class="notiz">Mehrfachauswahl mit ⌘ bzw. Strg. Gemeldet wird einmal beim
         Ausfall und einmal bei der Behebung – eine Warnung, die stündlich erneut
         kommt, wird bald weggewischt.</div>
@@ -617,7 +638,7 @@
 
       <div class="abschnitt">
         <h3>Thermostate</h3>
-        <select id="r-thermostate" multiple></select>
+        <div id="r-thermostate" class="hakenliste"></div>
         <div class="notiz" style="margin-top:var(--l2)">Mehrfachauswahl mit ⌘ bzw.
           Strg. Gruppen-Helfer gehören nicht hierher – der Planer stellt jeden
           Heizkörper einzeln.</div>
@@ -694,7 +715,7 @@
             Betracht</span></label>
         <div class="raster-felder" style="margin-top:var(--l3)">
           <div class="feld"><label>Zuständige Personen</label>
-            <select id="r-personen" multiple size="5"></select>
+            <div id="r-personen" class="hakenliste kurz"></div>
             <div class="notiz">Nichts ausgewählt = die ganze Familie zählt.</div></div>
           <div class="feld"><label>Eigene Karenzzeit (Minuten)</label>
             <input type="number" id="r-karenz" min="0" max="480" step="5"
@@ -716,11 +737,11 @@
       </div>
       <div class="abschnitt">
         <h3>Präsenz- und Bewegungsmelder</h3>
-        <select id="r-praesenz" multiple size="5"></select>
+        <div id="r-praesenz" class="hakenliste kurz"></div>
       </div>
       <div class="abschnitt">
         <h3>Fensterkontakte</h3>
-        <select id="r-fenster" multiple size="6"></select>
+        <div id="r-fenster" class="hakenliste"></div>
         <div class="notiz" style="margin-top:var(--l2)">Sobald hier ein Kontakt steht,
           entscheidet er allein – die Temperatursturz-Erkennung tritt zurück. Meldet
           ein Kontakt nichts, springt sie wieder ein.</div>
@@ -871,24 +892,29 @@ function filterZeileBauen(select) {
   return select._filterzeile;
 }
 
-function auswahlFuellen(select, quelle, wert, opt) {
+// Füllt eine Auswahl – entweder ein <select> (Einzelauswahl) oder eine
+// Häkchenliste (Mehrfachauswahl). Bei der Häkchenliste sieht man auf einen
+// Blick, was zugeordnet ist; eine Mehrfachauswahl verlangt dafür Scrollen und
+// das Deuten einer Markierung.
+function auswahlFuellen(ziel, quelle, wert, opt) {
   opt = opt || {};
-  const stand = filterStand[select.id] || (filterStand[select.id] = {such:'', nurRaum:false});
+  const stand = filterStand[ziel.id] || (filterStand[ziel.id] = {such:'', nurRaum:false});
   const werte = Array.isArray(wert) ? wert.filter(Boolean)
                                     : (wert ? [wert] : []);
-  const istMehrfach = select.multiple;
+  const haken = ziel.tagName !== 'SELECT';
+  const istMehrfach = haken || ziel.multiple;
 
   // Beim Neuaufbau nach einer Filteränderung zählt, was gerade angehakt ist –
   // nicht der Stand beim Öffnen des Dialogs.
-  const gewaehltJetzt = new Set(select._gefuellt
-    ? (istMehrfach ? gewaehlt(select) : [select.value].filter(Boolean))
+  const gewaehltJetzt = new Set(ziel._gefuellt
+    ? (istMehrfach ? gewaehlt(ziel) : [ziel.value].filter(Boolean))
     : werte);
 
   const alle = [...(quelle || []),
                 ...((opt.anhang && opt.anhang.liste) || [])];
   const raum = opt.raum;
-  // Das Häkchen erscheint nur, wenn es überhaupt etwas zu filtern gibt –
-  // sonst stünde dort ein Schalter, der die Liste leer macht.
+  // Das Häkchen „nur dieser Raum“ erscheint nur, wenn es überhaupt etwas zu
+  // filtern gibt – sonst stünde dort ein Schalter, der die Liste leer macht.
   const mitRaum = !!raum && !raum.leer && alle.some(e => gehoertZumRaum(e, raum));
   const such = stand.such.trim().toLowerCase();
 
@@ -899,36 +925,75 @@ function auswahlFuellen(select, quelle, wert, opt) {
     return (eintrag.name + ' ' + eintrag.entity_id).toLowerCase().includes(such);
   };
 
-  select.innerHTML = '';
-  if (opt.leerText !== undefined) {
+  ziel.innerHTML = '';
+  if (!haken && opt.leerText !== undefined) {
     const leer = document.createElement('option');
     leer.value = ''; leer.textContent = opt.leerText;
-    select.appendChild(leer);
+    ziel.appendChild(leer);
   }
 
   const vorhanden = new Set();
   let gezeigt = 0;
-  const anhaengen = (ziel, eintrag) => {
-    const option = document.createElement('option');
-    option.value = eintrag.entity_id;
+
+  const zeile = (eintrag, angehakt) => {
     const stumm = eintrag.zustand && !['on','off'].includes(eintrag.zustand)
       ? '  ⚠ meldet nichts' : '';
-    option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
-    ziel.appendChild(option);
+    if (!haken) {
+      const option = document.createElement('option');
+      option.value = eintrag.entity_id;
+      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
+      return option;
+    }
+    const label = document.createElement('label');
+    const kasten = document.createElement('input');
+    kasten.type = 'checkbox';
+    kasten.value = eintrag.entity_id;
+    kasten.checked = angehakt;
+    const text = document.createElement('span');
+    text.className = 'h-text';
+    text.textContent = eintrag.name + stumm;
+    // Die Entitäts-ID nur, wo sie etwas hinzufügt: Die Meldewege heißen wie
+    // ihre ID, dort stünde sonst alles doppelt.
+    if (eintrag.entity_id && eintrag.entity_id !== eintrag.name) {
+      const eid = document.createElement('span');
+      eid.className = 'h-eid';
+      eid.textContent = '  ·  ' + eintrag.entity_id;
+      text.append(eid);
+    }
+    label.title = text.textContent;
+    label.append(kasten, text);
+    label.classList.toggle('an', angehakt);
+    // Der Filter baut die Liste neu auf und liest dabei den aktuellen Stand –
+    // deshalb muss das Häkchen sofort im Element vermerkt sein.
+    kasten.onchange = () => label.classList.toggle('an', kasten.checked);
+    return label;
+  };
+
+  const anhaengen = (behaelter, eintrag) => {
+    behaelter.appendChild(zeile(eintrag, gewaehltJetzt.has(eintrag.entity_id)));
     vorhanden.add(eintrag.entity_id);
     gezeigt++;
   };
+
   const gruppeAnhaengen = (titel, eintraege) => {
     const treffer = eintraege.filter(sichtbar);
     if (!treffer.length) return;
     if (!opt.gruppiert) {
-      for (const eintrag of treffer) anhaengen(select, eintrag);
+      for (const eintrag of treffer) anhaengen(ziel, eintrag);
+      return;
+    }
+    if (haken) {
+      const kopf = document.createElement('div');
+      kopf.className = 'h-gruppe';
+      kopf.textContent = titel;
+      ziel.appendChild(kopf);
+      for (const eintrag of treffer) anhaengen(ziel, eintrag);
       return;
     }
     const gruppe = document.createElement('optgroup');
     gruppe.label = titel;
     for (const eintrag of treffer) anhaengen(gruppe, eintrag);
-    select.appendChild(gruppe);
+    ziel.appendChild(gruppe);
   };
 
   if (opt.gruppiert) {
@@ -949,6 +1014,7 @@ function auswahlFuellen(select, quelle, wert, opt) {
   } else {
     gruppeAnhaengen('', quelle || []);
   }
+
   // Die Anhang-Gruppe – alles Binäre, das kein Kontakt ist – umfasst in
   // diesem Haus über 200 Einträge. Sie ungefragt unter die fünf echten
   // Fensterkontakte zu hängen macht die Auswahl unbrauchbar. Sie erscheint
@@ -975,21 +1041,34 @@ function auswahlFuellen(select, quelle, wert, opt) {
   // „zurzeit nicht in Home Assistant“ vorgesetzt, obwohl er nur weggefiltert
   // ist.
   for (const fehlend of [...gewaehltJetzt].filter(w => w && !vorhanden.has(w))) {
-    const option = document.createElement('option');
-    option.value = fehlend;
-    option.textContent = fehlend + '  (zurzeit nicht in Home Assistant)';
-    select.appendChild(option);
+    const eintrag = {entity_id: fehlend,
+                     name: fehlend + '  (zurzeit nicht in Home Assistant)'};
+    if (haken) {
+      ziel.appendChild(zeile(eintrag, true));
+    } else {
+      const option = document.createElement('option');
+      option.value = fehlend;
+      option.textContent = eintrag.name;
+      ziel.appendChild(option);
+    }
   }
 
-  if (istMehrfach) {
-    const auswahl = select._gefuellt ? gewaehltJetzt : new Set(werte);
-    for (const option of select.options) option.selected = auswahl.has(option.value);
+  if (haken) {
+    if (!ziel.children.length) {
+      const leer = document.createElement('div');
+      leer.className = 'h-leer';
+      leer.textContent = such ? 'Nichts gefunden.' : 'Nichts zur Auswahl.';
+      ziel.appendChild(leer);
+    }
+  } else if (istMehrfach) {
+    const auswahl = ziel._gefuellt ? gewaehltJetzt : new Set(werte);
+    for (const option of ziel.options) option.selected = auswahl.has(option.value);
   } else {
-    select.value = (select._gefuellt ? [...gewaehltJetzt][0] : werte[0]) || '';
+    ziel.value = (ziel._gefuellt ? [...gewaehltJetzt][0] : werte[0]) || '';
   }
 
   if (opt.filter !== false) {
-    const teile = select._filterzeile || filterZeileBauen(select);
+    const teile = ziel._filterzeile || filterZeileBauen(ziel);
     teile.suche.value = stand.such;
     teile.kasten.checked = stand.nurRaum && mitRaum;
     teile.beschriftung.textContent = 'nur ' + (opt.raumName || 'dieser Raum');
@@ -997,13 +1076,15 @@ function auswahlFuellen(select, quelle, wert, opt) {
     // Solange der Anhang zurückgehalten wird, zählt nur die eigentliche
     // Liste – „1 von 227“ wäre irreführend, gemeint ist einer von fünf.
     const grundmenge = versteckt ? (quelle || []).length : alle.length;
+    const angehakt = gewaehltJetzt.size;
     teile.zahl.textContent =
       (gezeigt >= grundmenge ? grundmenge + ' zur Auswahl'
                              : gezeigt + ' von ' + grundmenge)
-      + (versteckt ? ' · ' + versteckt + ' weitere Melder – zum Suchen tippen' : '');
+      + (istMehrfach && angehakt ? ' · ' + angehakt + ' gewählt' : '')
+      + (versteckt ? ' · ' + versteckt + ' weitere – zum Suchen tippen' : '');
   }
-  select._neuFuellen = () => auswahlFuellen(select, quelle, wert, opt);
-  select._gefuellt = true;
+  ziel._neuFuellen = () => auswahlFuellen(ziel, quelle, wert, opt);
+  ziel._gefuellt = true;
 }
 
 // Woran ein Gerät als „gehört zu diesem Raum“ erkannt wird.
@@ -1063,8 +1144,11 @@ function filterZuruecksetzen(ids, an) {
   }
 }
 
-const gewaehlt = (select) =>
-  Array.from(select.selectedOptions).map(o => o.value).filter(Boolean);
+// Die Auswahl eines Feldes – gleich ob Mehrfachauswahl oder Häkchenliste.
+const gewaehlt = (feld) => feld.tagName === 'SELECT'
+  ? Array.from(feld.selectedOptions).map(o => o.value).filter(Boolean)
+  : Array.from(feld.querySelectorAll('input[type=checkbox]:checked'))
+         .map(k => k.value).filter(Boolean);
 
 // ────────────────────────────────────────────────── Reiter ──
 function reiterSetzen(leiste, blattRaum) {
@@ -1283,8 +1367,12 @@ async function gesundheitLaden() {
         const entity = knopf.dataset.entity;
         const ziel = knopf.dataset.feld === 'praesenz' ? 'r-praesenz' : 'r-fenster';
         if (entity) {
-          for (const option of $(ziel).options) {
-            if (option.value === entity) { option.selected = true; option.scrollIntoView(); }
+          const kasten = $(ziel).querySelector(
+            `input[type=checkbox][value="${entity}"]`);
+          if (kasten) {
+            kasten.checked = true;
+            kasten.dispatchEvent(new Event('change'));
+            kasten.closest('label').scrollIntoView({block:'center'});
           }
         }
       };
@@ -1620,7 +1708,7 @@ function raumOeffnen(raum, startblatt) {
 
   auswahlFuellen($('r-thermostate'), einzeln, d.thermostate,
                  {gruppiert:true, raum: raumbezug, raumName});
-  fuelleAuswahl($('r-personen'), entitaeten.personen, d.personen);
+  auswahlFuellen($('r-personen'), entitaeten.personen, d.personen, {filter:false});
   auswahlFuellen($('r-raumtemp'), entitaeten.raumtemp, d.raumtemp,
                  {leerText:'Mittelwert der Thermostate'});
   fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], d.freigabe_entity,
@@ -1754,7 +1842,8 @@ function einstellungenZeichnen() {
   $('e-wh-aktiv').checked = wacht.aktiv;
   $('e-wh-stumm').value = wacht.stumm_stunden;
   $('e-wh-batterie').value = wacht.batterie_prozent;
-  fuelleAuswahl($('e-wh-melden'), entitaeten.meldewege || [], wacht.melden_an || []);
+  auswahlFuellen($('e-wh-melden'), entitaeten.meldewege || [],
+                 wacht.melden_an || [], {filter:false});
 
   $('e-fe-aktiv').checked = e.fenster.aktiv;
   $('e-fe-sturz').value = e.fenster.sturz_k;

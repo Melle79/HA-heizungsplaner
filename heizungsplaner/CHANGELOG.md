@@ -1,5 +1,17 @@
 # Änderungen
 
+## 1.8.9
+
+- **Geräte werden angehakt statt markiert.** Thermostate, Präsenzmelder,
+  Fensterkontakte, Personen und Meldewege stehen jetzt in Häkchenlisten. In
+  einer Mehrfachauswahl musste man scrollen und eine Markierung deuten, um zu
+  sehen, was zugeordnet ist.
+- Eine Zeile je Gerät: Name und Entitäts-ID laufen zusammen und werden am Ende
+  gekürzt, der volle Text steht im Tooltip. Die ID entfällt, wo sie dem Namen
+  entspricht – bei den Meldewegen stand sonst alles doppelt.
+- Der Knopf *Zuordnen* aus dem Hinweisbalken setzt das Häkchen und scrollt die
+  Zeile in die Mitte.
+
 ## 1.8.8
 
 - **Die Auswahllisten im Raum lassen sich filtern.** Über jeder Liste steht

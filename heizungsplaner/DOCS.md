@@ -55,9 +55,10 @@ Fensterkontakte:
 
 ![Fühler und Melder mit Filterzeile über jeder Auswahlliste](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-melder.png)
 
-Über jeder Auswahlliste sitzt eine Filterzeile. Sie ist nötig, weil ein
-Haushalt schnell mehrere hundert binäre Melder hat – ohne sie stünde im
-Wohnzimmer auch der Briefkastenkontakt zur Auswahl:
+Geräte werden **angehakt**; was zugeordnet ist, sieht man auf einen Blick.
+Über jeder Liste sitzt eine Filterzeile – nötig, weil ein Haushalt schnell
+mehrere hundert binäre Melder hat. Ohne sie stünde im Wohnzimmer auch der
+Briefkastenkontakt zur Auswahl:
 
 * **Häkchen „nur <Raum>“** – zeigt nur, was zu diesem Raum gehört. Das ist
   der Bereich in Home Assistant, aber auch der Name: In dieser Installation
@@ -66,8 +67,10 @@ Wohnzimmer auch der Briefkastenkontakt zur Auswahl:
   es für den Raum überhaupt etwas zu finden gibt.
 * **Suchfeld** – durchsucht Namen und Entitäts-ID. Sobald etwas darin steht,
   werden auch die *sonstigen Melder* durchsucht.
-* Was **zugeordnet ist, bleibt immer sichtbar**, gleich wie gefiltert wird.
+* Was **angehakt ist, bleibt immer sichtbar**, gleich wie gefiltert wird.
   Eine ausgeblendete Zuordnung würde beim Speichern verlorengehen.
+* Rechts steht, wie viele Geräte die Liste gerade zeigt und wie viele davon
+  angehakt sind.
 
 Die Gruppe **Sonstige Melder** – alles Binäre, das kein Kontakt ist – bleibt
 zunächst zugeklappt und erscheint erst beim Suchen. Die Zeile rechts sagt,
