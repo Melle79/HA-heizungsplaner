@@ -798,7 +798,7 @@ def takt(config: dict, state: dict, protokoll) -> dict:
     # das gerade eben erst als fehlend aufgefallen ist.
     try:
         stoerungen = wachhund.pruefen(config, states_index, jetzt, einst,
-                                      _batterien_holen(jetzt, state),
+                                      _batterien_holen(jetzt, state, states_index),
                                       state.get("thermostate") or {})
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("Überwachung fehlgeschlagen: %s", err)
@@ -829,15 +829,27 @@ def takt(config: dict, state: dict, protokoll) -> dict:
 _BATTERIEN: dict = {"stand": None, "geholt": None}
 
 
-def _batterien_holen(jetzt: datetime, state: dict) -> dict:
+def _batterien_holen(jetzt: datetime, state: dict, states_index: dict) -> dict:
     """Die Zuordnung Thermostat → Batterieanzeige, einmal je Stunde erneuert.
 
     Sie ändert sich nur, wenn Geräte dazukommen – eine Template-Abfrage in
     jedem Takt wäre Verschwendung.
+
+    **Sofort erneuert wird sie, wenn eine gemerkte Batterieanzeige verschwunden
+    ist.** Sonst hielte der Planer bis zu einer Stunde an einer Entität fest,
+    die es nicht mehr gibt – und meldete währenddessen eine schwache Batterie
+    als behoben. Genau das geschah am 25.08.2026, als die Entitäten zweier
+    umgezogener Thermostate ihren alten Einbauort im Namen verloren.
     """
     letzte = _BATTERIEN["geholt"]
-    if _BATTERIEN["stand"] is None or letzte is None or \
+    bekannt = _BATTERIEN["stand"]
+    verschwunden = bool(bekannt) and any(
+        batterie not in states_index for batterie in bekannt.values())
+    if bekannt is None or letzte is None or verschwunden or \
             (jetzt - letzte) > timedelta(hours=1):
+        if verschwunden:
+            _LOGGER.info("Eine Batterieanzeige ist verschwunden – "
+                         "die Zuordnung wird neu geholt")
         _BATTERIEN["stand"] = wachhund.batterien_je_thermostat()
         _BATTERIEN["geholt"] = jetzt
     return _BATTERIEN["stand"]

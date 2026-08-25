@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.9.1
+
+- **Eine verschwundene Batterieanzeige wird sofort neu gesucht.** Die
+  Zuordnung Thermostat → Batterie wurde nur stündlich erneuert. Wird eine
+  Entität umbenannt, hielt der Planer bis zu einer Stunde an der toten ID fest
+  – und meldete eine schwache Batterie in der Zwischenzeit als behoben.
+
 ## 1.9.0
 
 - **Die geräteeigene Fenstererkennung eines Thermostats gilt nicht mehr als

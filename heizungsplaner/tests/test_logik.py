@@ -1012,6 +1012,29 @@ titel, text = wachhund.meldung_bauen(lage(a_zustand="unavailable"), [])
 pruefe("ausgefallen" in titel and "Thermostat A" in text,
        f"Meldung nennt Ross und Reiter ({titel})")
 
+print("\n=== Batteriezuordnung ===")
+
+# Verschwindet eine gemerkte Batterieanzeige - etwa weil die Entitaet
+# umbenannt wurde -, muss die Zuordnung sofort neu geholt werden. Sonst haelt
+# der Planer bis zu einer Stunde an einer toten ID fest und meldet eine
+# schwache Batterie faelschlich als behoben.
+regelung._BATTERIEN["stand"] = {"climate.a": "sensor.alt_batterie"}
+regelung._BATTERIEN["geholt"] = montag
+gerufen = []
+echt = regelung.wachhund.batterien_je_thermostat
+regelung.wachhund.batterien_je_thermostat = lambda: (
+    gerufen.append(1) or {"climate.a": "sensor.neu_batterie"})
+
+regelung._batterien_holen(montag, {}, {"sensor.alt_batterie": {"state": "50"}})
+pruefe(not gerufen, "solange die Anzeige da ist, bleibt die Zuordnung stehen")
+
+regelung._batterien_holen(montag, {}, {"sensor.neu_batterie": {"state": "10"}})
+pruefe(gerufen and regelung._BATTERIEN["stand"]["climate.a"] == "sensor.neu_batterie",
+       "verschwundene Anzeige loest ein Neuholen aus")
+regelung.wachhund.batterien_je_thermostat = echt
+regelung._BATTERIEN["stand"] = None
+
+
 print("\n=== Validierung ===")
 try:
     store.validate_raum({"name": "", "thermostate": []})
