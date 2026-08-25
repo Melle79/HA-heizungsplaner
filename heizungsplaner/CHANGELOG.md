@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.12.0
+
+- **Zeitfenster je Übersteuerungsregel.** Ohne eines liefe eine
+  Homeoffice-Regel auch nachts um drei weiter – ihre Bedingungen treffen ja
+  weiterhin zu. Neue Regeln bekommen 08:00–18:00 vorgeschlagen; leere Zeiten
+  heißen rund um die Uhr, und ein Fenster darf über Mitternacht reichen.
+- Die Regel zeigt „ruht – außerhalb der Zeit“, wenn allein das Fenster sie
+  gerade zurückhält.
+
 ## 1.11.2
 
 - **Man sieht jetzt, ob eine Übersteuerungsregel greift.** Die Regel zeigt

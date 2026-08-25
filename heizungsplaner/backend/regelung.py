@@ -182,7 +182,22 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     return False, "", hinweis
 
 
-def _uebersteuerung(raum: dict, states_index: dict) -> dict | None:
+def _im_fenster(von: str | None, bis: str | None, jetzt: datetime) -> bool:
+    """Liegt ``jetzt`` im Zeitfenster? Ohne Fenster gilt: immer.
+
+    Ein Fenster darf über Mitternacht reichen (22:00–06:00) – dieselbe Regel
+    wie beim Zeitplan, wo der letzte Punkt des Tages in den nächsten reicht.
+    """
+    if not von or not bis:
+        return True
+    jetzt_hm = jetzt.strftime("%H:%M")
+    if von <= bis:
+        return von <= jetzt_hm < bis
+    return jetzt_hm >= von or jetzt_hm < bis
+
+
+def _uebersteuerung(raum: dict, states_index: dict,
+                    jetzt: datetime) -> dict | None:
     """Die erste zutreffende Übersteuerungsregel des Raumes.
 
     Eine Regel trifft zu, wenn **alle** ihre Bedingungen erfüllt sind – so
@@ -195,6 +210,8 @@ def _uebersteuerung(raum: dict, states_index: dict) -> dict | None:
     nichts Schlimmes passieren: Ohne Übersteuerung gilt schlicht der Zeitplan.
     """
     for eintrag in raum.get("uebersteuerung") or []:
+        if not _im_fenster(eintrag.get("von"), eintrag.get("bis"), jetzt):
+            continue
         namen = []
         for bedingung in eintrag.get("wenn") or []:
             entity_id = bedingung.get("entity")
@@ -209,8 +226,10 @@ def _uebersteuerung(raum: dict, states_index: dict) -> dict | None:
             if namen:
                 # Hat die Regel einen Namen, steht der im Protokoll – „Homeoffice“
                 # sagt mehr als die Aufzählung ihrer drei Bedingungen.
+                fenster = (f" (bis {eintrag['bis']} Uhr)"
+                           if eintrag.get("von") and eintrag.get("bis") else "")
                 return {"modus": eintrag.get("modus", "komfort"),
-                        "name": eintrag.get("name") or " · ".join(namen)}
+                        "name": (eintrag.get("name") or " · ".join(namen)) + fenster}
     return None
 
 
@@ -350,7 +369,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     # ersetzt den Modus des Plans; Anwesenheit und Heizkurve gelten weiter.
     # Das ist Absicht: Wer den Schalter anlässt und wegfährt, heizt kein
     # leeres Haus, und die Absenkung eines Fensters bleibt stärker.
-    uebersteuerung = _uebersteuerung(raum, states_index)
+    uebersteuerung = _uebersteuerung(raum, states_index, jetzt)
     if uebersteuerung:
         modus = uebersteuerung["modus"]
         basis = zp.modus_temperatur(raum, modus, frostschutz)

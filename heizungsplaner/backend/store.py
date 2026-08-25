@@ -284,10 +284,24 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
             if zustand not in ZUSTAENDE:
                 raise ValidationError(f"Unbekannte Bedingung {zustand!r}")
             bedingungen.append({"entity": entity, "zustand": zustand})
+        # Zeitfenster: leer heißt „rund um die Uhr“. Ohne Fenster hielte eine
+        # Homeoffice-Regel den Raum auch nachts um drei auf Komfort – die
+        # Bedingungen treffen ja weiter zu.
+        von = str(eintrag.get("von") or "").strip()
+        bis = str(eintrag.get("bis") or "").strip()
+        for wert in (von, bis):
+            if wert and not _TIME_RE.match(wert):
+                raise ValidationError(
+                    f"Übersteuerung: ungültige Uhrzeit {wert!r} (erwartet HH:MM)")
+        if bool(von) != bool(bis):
+            raise ValidationError("Übersteuerung: Zeitfenster braucht Anfang und Ende")
+        if von and von == bis:
+            raise ValidationError("Übersteuerung: Anfang und Ende sind gleich")
+
         if bedingungen:
             uebersteuerung.append({
                 "name": str(eintrag.get("name") or "").strip()[:40],
-                "modus": modus, "wenn": bedingungen})
+                "modus": modus, "von": von, "bis": bis, "wenn": bedingungen})
 
     karenz = raum.get("karenz_min")
     if karenz in (None, "", "null"):

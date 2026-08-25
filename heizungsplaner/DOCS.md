@@ -220,6 +220,8 @@ jemand zu Hause, soll es warm bleiben – ohne Schalter, ohne Zeitplanumbau:
 | keine Ferien | `calendar.ferien_feiertage_bayern` | ist aus |
 | Isabel ist da | `person.isabel` | ist an |
 
+dazu das Zeitfenster **08:00–18:00**.
+
 Ergebnis: **Komfort** statt Eco. Trifft eine der drei nicht zu, führt wieder
 der Zeitplan.
 
@@ -227,6 +229,12 @@ Als Bedingung taugt alles, was an oder aus sein kann: Schalter und Helfer,
 Melder, Kalender (`on`, solange ein Termin läuft) und Personen. **Eine Person
 zählt als „an", solange sie zu Hause ist** – wer in einer anderen Zone steht,
 etwa im Büro, zählt als fort.
+
+Das **Zeitfenster** grenzt ein, wann die Regel überhaupt greifen darf. Ohne
+es liefe die Homeoffice-Regel auch nachts um drei weiter – Werktag, keine
+Ferien und Isabel zu Hause treffen ja weiterhin zu, und das Wohnzimmer stünde
+statt auf Nacht auf Komfort. Leere Zeiten heißen: rund um die Uhr. Ein Fenster
+darf über Mitternacht reichen (22:00–06:00), wie ein Zeitplanpunkt auch.
 
 Die **Bezeichnung** der Regel ist frei. Sie steht später in der Begründung und
 im Protokoll: „Homeoffice – komfort statt Zeitplan" ist dort lesbarer als die

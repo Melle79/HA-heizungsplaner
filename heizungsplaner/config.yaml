@@ -1,5 +1,5 @@
 name: "Heizungsplaner"
-version: "1.11.2"
+version: "1.12.0"
 slug: "heizungsplaner"
 description: "Vorausschauende Heizungssteuerung: Zeitplan je Raum, Heizkurve nach Außentemperatur, personenbezogene Anwesenheitsabsenkung und Vorheizen"
 url: "https://github.com/Melle79/HA-heizungsplaner"

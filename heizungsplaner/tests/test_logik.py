@@ -316,6 +316,39 @@ def lage_homeoffice(werktag=True, ferien=False, isabel="home"):
     return regelung.entscheide(r, {"temperaturquelle": "thermostate"},
                                umgebung(montag.replace(hour=9), states_index=idx))
 
+# Ohne Zeitfenster liefe eine Homeoffice-Regel auch nachts um drei weiter -
+# die Bedingungen treffen ja weiter zu.
+def lage_fenster(stunde, von="08:00", bis="18:00"):
+    r = store.validate_raum({**wohnzimmer, "uebersteuerung": [{
+        "name": "Homeoffice", "modus": "komfort", "von": von, "bis": bis,
+        "wenn": [{"entity": "person.isabel", "zustand": "an"}]}],
+        "zeitplan": [{"start": "21:00", "modus": "nacht", "gilt": "immer",
+                      "tage": ["mon","tue","wed","thu","fri","sat","sun"]}]})
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "attributes": {"current_temperature": 20.0, "temperature": 19.0,
+                                        "min_temp": 5, "max_temp": 30,
+                                        "hvac_modes": ["off", "heat"]}},
+           "person.isabel": {"entity_id": "person.isabel", "state": "home",
+                             "attributes": {"friendly_name": "Isabel"}}}
+    return regelung.entscheide(r, {"temperaturquelle": "thermostate"},
+                               umgebung(montag.replace(hour=stunde), states_index=idx))
+
+pruefe(lage_fenster(10)["zustand"] == "komfort",
+       "im Fenster greift die Regel")
+pruefe(lage_fenster(3)["zustand"] == "nacht",
+       f"nachts greift sie nicht ({lage_fenster(3)['zustand']})")
+pruefe(lage_fenster(20)["zustand"] == "nacht",
+       f"nach Feierabend greift sie nicht ({lage_fenster(20)['zustand']})")
+pruefe("bis 18:00 Uhr" in lage_fenster(10)["begruendung"],
+       f"die Begruendung nennt das Ende ({lage_fenster(10)['begruendung']})")
+# Ein Fenster ueber Mitternacht - fuer ein Schlafzimmer etwa
+pruefe(lage_fenster(23, von="22:00", bis="06:00")["zustand"] == "komfort",
+       "ein Fenster ueber Mitternacht greift abends")
+pruefe(lage_fenster(3, von="22:00", bis="06:00")["zustand"] == "komfort",
+       "und noch am naechsten Morgen")
+pruefe(lage_fenster(12, von="22:00", bis="06:00")["zustand"] != "komfort",
+       "tagsueber aber nicht")
+
 e = lage_homeoffice()
 pruefe(e["zustand"] == "komfort" and "Isabel" in e["begruendung"],
        f"Werktag + keine Ferien + Isabel daheim -> komfort ({e['begruendung']})")

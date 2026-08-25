@@ -128,6 +128,8 @@
   .regel-zeile select:first-of-type{flex:1 1 auto; min-width:0; width:auto}
   .regel-zeile select + select{flex:none; width:auto}
   .regel-zeile button{flex:none}
+  .regel-zeit{display:inline-flex; align-items:center; gap:4px}
+  .regel-zeit input[type=time]{width:auto; padding:5px 6px; font-size:.82rem}
   .regel-lage{font-size:.76rem; padding:2px 8px; border-radius:999px;
     white-space:nowrap}
   .regel-lage.greift{background:rgba(90,190,120,.16); color:#7fd39b}
@@ -725,8 +727,11 @@
           einer Regel zu, gilt ihr Modus statt des Zeitplans. So entsteht eine
           Homeoffice-Regelung ohne Schalter: <em>Werktag ist an</em>, <em>Ferien
           sind aus</em>, <em>Isabel ist zu Hause</em> → Komfort. Personen zählen
-          als „an“, solange sie zu Hause sind. Offene Fenster, Sommerbetrieb,
-          Urlaub und die Anwesenheitsabsenkung bleiben stärker.</div>
+          als „an“, solange sie zu Hause sind. Das Zeitfenster grenzt ein, wann
+          die Regel überhaupt greifen darf – ohne es liefe sie auch nachts um
+          drei weiter. Leere Zeiten heißen: rund um die Uhr. Offene Fenster,
+          Sommerbetrieb, Urlaub und die Anwesenheitsabsenkung bleiben
+          stärker.</div>
       </div>
     </div>
 
@@ -1660,6 +1665,23 @@ function uebersteuerungZeichnen() {
     modus.value = regel.modus || 'komfort';
     modus.onchange = () => { regel.modus = modus.value; };
 
+    // Zeitfenster: leer heißt rund um die Uhr. Ohne das liefe eine
+    // Homeoffice-Regel auch nachts weiter – die Bedingungen treffen ja zu.
+    const zeitraum = document.createElement('span');
+    zeitraum.className = 'regel-zeit';
+    const von = document.createElement('input');
+    von.type = 'time'; von.value = regel.von || '';
+    von.title = 'ab wann die Regel greift – leer: rund um die Uhr';
+    const bis = document.createElement('input');
+    bis.type = 'time'; bis.value = regel.bis || '';
+    bis.title = 'bis wann die Regel greift';
+    von.onchange = () => { regel.von = von.value; uebersteuerungZeichnen(); };
+    bis.onchange = () => { regel.bis = bis.value; uebersteuerungZeichnen(); };
+    const strich = document.createElement('span');
+    strich.className = 'notiz';
+    strich.textContent = '–';
+    zeitraum.append(von, strich, bis);
+
     const weg = document.createElement('button');
     weg.className = 'leise';
     weg.textContent = '✕';
@@ -1670,10 +1692,17 @@ function uebersteuerungZeichnen() {
     const lage = document.createElement('span');
     lage.className = 'regel-lage';
     const stand = (regel.wenn || []).map(erfuellt);
-    const greift = stand.length && stand.every(x => x === true);
+    const jetztHM = new Date().toTimeString().slice(0, 5);
+    const imFenster = !regel.von || !regel.bis
+      || (regel.von <= regel.bis
+          ? (regel.von <= jetztHM && jetztHM < regel.bis)
+          : (jetztHM >= regel.von || jetztHM < regel.bis));
+    const greift = stand.length && stand.every(x => x === true) && imFenster;
     lage.classList.add(greift ? 'greift' : 'ruht');
-    lage.textContent = greift ? 'greift gerade' : 'ruht';
-    kopf.append(bezeichnung, modus, lage, weg);
+    lage.textContent = greift ? 'greift gerade'
+      : (!imFenster && stand.every(x => x === true) ? 'ruht – außerhalb der Zeit'
+                                                    : 'ruht');
+    kopf.append(bezeichnung, modus, zeitraum, lage, weg);
     karte.appendChild(kopf);
 
     const wenn = document.createElement('div');
@@ -1951,6 +1980,7 @@ $('btn-neuer-raum').onclick = () => raumOeffnen(null);
 $('btn-uebersteuerung-neu').onclick = () => {
   const erster = (entitaeten.schalter || [])[0];
   uebersteuerungEntwurf.push({name: '', modus: 'komfort',
+                              von: '08:00', bis: '18:00',
                               wenn: [{entity: erster ? erster.entity_id : '',
                                       zustand: 'an'}]});
   uebersteuerungZeichnen();
