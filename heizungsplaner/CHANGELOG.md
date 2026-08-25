@@ -1,5 +1,13 @@
 # Änderungen
 
+## 1.1.1
+
+- Die Erkennung von Fensterkontakten trennt jetzt zwei Fallgruben ab: Die
+  Öffnungszeiten von Tankstellen kommen als `device_class: opening` und sind
+  keine Kontakte; die Diagnosemelder eines Rolladens („Obstacle Detection“,
+  „Blocking Detection“, „Sun Program Active“) führen das Fenster nur im Namen,
+  an dem sie hängen.
+
 ## 1.1.0
 
 Fensterkontakte lassen sich jetzt schrittweise nachrüsten.

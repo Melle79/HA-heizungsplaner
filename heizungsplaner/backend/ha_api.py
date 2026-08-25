@@ -175,7 +175,15 @@ TEMPLATE_API = f"{API_BASE}/template"
 
 # Wörter, an denen ein Fensterkontakt auch ohne Geräteklasse zu erkennen ist.
 FENSTER_WORTE = ("fenster", "window", "kipp", "balkontür", "balkontuer",
-                 "terrassentür", "terrassentuer")
+                 "terrassentür", "terrassentuer", "tür", "tuer", "door")
+
+# Was trotz passender Geräteklasse oder passendem Namen keiner ist. Zwei
+# Fallgruben aus der Praxis: Die Öffnungszeiten von Tankstellen kommen als
+# `device_class: opening`, und die Diagnosemelder eines Rollladens tragen das
+# Fenster im Namen, an dem sie hängen.
+KEIN_KONTAKT_WORTE = ("status", "blocking", "obstacle", "sun program",
+                      "sonnenprogramm", "aufnahme", "update", "verfügbar",
+                      "battery", "batterie", "signal")
 
 
 def template(vorlage: str) -> str:
@@ -235,12 +243,20 @@ def bereiche_je_entitaet(domains: tuple[str, ...] = ("binary_sensor",),
 def ist_fensterkontakt(entity_id: str, name: str, klasse: str | None) -> bool:
     """Fensterkontakt an Geräteklasse oder Bezeichnung erkennen.
 
-    Die Fenster-offen-Meldung mancher Thermostate kommt ohne Geräteklasse –
-    sie trägt den Zweck nur im Namen.
+    ``window`` und ``door`` sind eindeutig. ``opening`` ist es nicht – diese
+    Klasse tragen auch Öffnungszeiten von Geschäften –, deshalb muss dort der
+    Name mitspielen. Ohne Geräteklasse zählt allein der Name; so werden auch
+    die „Offenes Fenster erkannt“-Meldungen mancher Thermostate gefunden.
+
+    Ausgeschlossen bleibt, was nach Diagnose klingt: Ein Rolladen bringt
+    Melder wie „Rollo Fenster Luna Obstacle Detection“ mit, die das Fenster
+    nur im Namen führen, an dem sie hängen.
     """
-    if klasse in ("window", "door", "opening"):
+    if klasse in ("window", "door"):
         return True
     text = f"{entity_id} {name}".lower()
+    if any(wort in text for wort in KEIN_KONTAKT_WORTE):
+        return False
     return any(wort in text for wort in FENSTER_WORTE)
 
 
