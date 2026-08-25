@@ -1,5 +1,19 @@
 # Änderungen
 
+## 1.0.1
+
+- Die Bereichszuordnung des Einrichtungsassistenten läuft jetzt über eine
+  Template-Abfrage statt über die Websocket-API. Diese steht einem Add-on
+  nicht offen, weshalb zuvor alle Thermostate in einem Sammelraum „Ohne
+  Bereich“ landeten.
+- Thermostate ohne Bereich werden als abgeschalteter Raum vorgeschlagen,
+  statt stillschweigend zu verschwinden.
+- In der Oberfläche bleiben eingestellte Entitäten in den Auswahllisten
+  erhalten, auch wenn Home Assistant sie gerade nicht meldet. Vorher konnte
+  ein Speichern die Zuordnung löschen.
+- Die Heizkurve wirkt nur noch auf Komfort-, Eco- und Nachttemperatur, nicht
+  mehr auf Abwesenheits- und Haltewerte.
+
 ## 1.0.0
 
 Erste Fassung.
