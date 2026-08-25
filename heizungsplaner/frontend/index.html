@@ -113,6 +113,21 @@
     text-transform:uppercase; color:var(--grau); padding:8px 6px 3px}
   .hakenliste .h-gruppe:first-child{padding-top:2px}
   .hakenliste .h-leer{padding:10px 6px; color:var(--grau); font-size:.82rem}
+  .regel{background:var(--flaeche2); border:1px solid var(--linie);
+    border-radius:var(--rund); padding:var(--l3); margin-bottom:var(--l2)}
+  .regel-kopf{display:flex; align-items:center; gap:var(--l2); flex-wrap:wrap}
+  .regel-kopf input[type=text]{flex:1 1 160px; width:auto}
+  .regel-kopf select{width:auto}
+  .regel-wenn{margin-top:var(--l2); padding-left:var(--l3);
+    border-left:2px solid var(--linie)}
+  .regel-zeile{display:flex; align-items:center; gap:var(--l2); margin-bottom:4px}
+  /* Erst kommt das Wort „wenn“, dann die Entität, dann der Zustand – die
+     Entität nimmt den Rest und schrumpft mit (`min-width:0`), sonst sprengen
+     lange Entitäts-IDs die Zeile. */
+  .regel-zeile > span{flex:none; width:32px; text-align:right}
+  .regel-zeile select:first-of-type{flex:1 1 auto; min-width:0; width:auto}
+  .regel-zeile select + select{flex:none; width:auto}
+  .regel-zeile button{flex:none}
   optgroup{color:var(--leise); font-style:normal; font-size:.78rem;
            text-transform:uppercase; letter-spacing:.06em}
   optgroup option{color:var(--text); text-transform:none; letter-spacing:0;
@@ -697,13 +712,14 @@
         <h3>Übersteuerung</h3>
         <div id="r-uebersteuerung"></div>
         <div class="zeile-aktionen">
-          <button class="leise" id="btn-uebersteuerung-neu">Schalter hinzufügen</button>
+          <button class="leise" id="btn-uebersteuerung-neu">Regel hinzufügen</button>
         </div>
-        <div class="notiz" style="margin-top:var(--l2)">Solange der Schalter an ist,
-          gilt dieser Modus statt des Zeitplans – ein Homeoffice-Schalter hält das
-          Büro so auf Komfort, statt es vormittags abzusenken. Anwesenheit,
-          offene Fenster und der Sommerbetrieb bleiben stärker: Wer den Schalter
-          anlässt und wegfährt, heizt kein leeres Haus.</div>
+        <div class="notiz" style="margin-top:var(--l2)">Treffen alle Bedingungen
+          einer Regel zu, gilt ihr Modus statt des Zeitplans. So entsteht eine
+          Homeoffice-Regelung ohne Schalter: <em>Werktag ist an</em>, <em>Ferien
+          sind aus</em>, <em>Isabel ist zu Hause</em> → Komfort. Personen zählen
+          als „an“, solange sie zu Hause sind. Offene Fenster, Sommerbetrieb,
+          Urlaub und die Anwesenheitsabsenkung bleiben stärker.</div>
       </div>
     </div>
 
@@ -790,7 +806,8 @@ const ZUSTAND_NAME = {
 const RUHT = ['sommer', 'aus', 'gesperrt'];
 
 let entitaeten = {thermostate:[], personen:[], aussen:[], fenster:[],
-                  sonstige_melder:[], praesenz:[], raumtemp:[], schalter:[]};
+                  sonstige_melder:[], praesenz:[], raumtemp:[], schalter:[],
+                  kalender:[]};
 let einstellungen = {};
 let raeume = [];
 let offenerRaum = null;
@@ -801,7 +818,10 @@ let uebersteuerungEntwurf = [];
 const $ = (id) => document.getElementById(id);
 
 async function hole(pfad, optionen) {
-  const antwort = await fetch(API + pfad, optionen);
+  // Ohne `no-store` beantwortet der Browser eine Abfrage schon mal aus dem
+  // Cache – die Oberfläche zeigte dann einen Stand von vor der letzten
+  // Änderung, ohne dass irgendetwas darauf hindeutet.
+  const antwort = await fetch(API + pfad, {cache: 'no-store', ...(optionen || {})});
   const text = await antwort.text();
   const daten = text ? JSON.parse(text) : null;
   if (!antwort.ok) throw new Error((daten && daten.fehler) || 'Fehler ' + antwort.status);
@@ -1587,34 +1607,33 @@ function uebersteuerungZeichnen() {
   const ziel = $('r-uebersteuerung');
   ziel.innerHTML = '';
   if (!uebersteuerungEntwurf.length) {
-    ziel.innerHTML = '<div class="leer">Kein Schalter – es gilt immer der '
+    ziel.innerHTML = '<div class="leer">Keine Regel – es gilt immer der '
       + 'Zeitplan.</div>';
     return;
   }
-  const schalter = entitaeten.schalter || [];
-  uebersteuerungEntwurf.forEach((regel, nummer) => {
-    const zeile = document.createElement('div');
-    zeile.className = 'schaltpunkt';
+  // Die Auswahl umfasst Schalter, Melder und Personen: „Werktag“ ist ein
+  // binary_sensor, „Ferien“ ein Kalender, „Isabel“ eine Person.
+  const quellen = [...(entitaeten.schalter || []), ...(entitaeten.personen || []),
+                   ...(entitaeten.kalender || [])];
+  const gesehen = new Set();
+  const auswahl = quellen.filter(e => !gesehen.has(e.entity_id)
+                                      && gesehen.add(e.entity_id));
 
-    const wahl = document.createElement('select');
-    wahl.style.flex = '1 1 260px';
-    for (const eintrag of schalter) {
-      const option = document.createElement('option');
-      option.value = eintrag.entity_id;
-      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id;
-      wahl.appendChild(option);
-    }
-    if (regel.entity && !schalter.some(e => e.entity_id === regel.entity)) {
-      const fehlend = document.createElement('option');
-      fehlend.value = regel.entity;
-      fehlend.textContent = regel.entity + '  (zurzeit nicht in Home Assistant)';
-      wahl.appendChild(fehlend);
-    }
-    wahl.value = regel.entity || '';
-    wahl.onchange = () => { regel.entity = wahl.value; };
+  uebersteuerungEntwurf.forEach((regel, nummer) => {
+    const karte = document.createElement('div');
+    karte.className = 'regel';
+
+    const kopf = document.createElement('div');
+    kopf.className = 'regel-kopf';
+
+    const bezeichnung = document.createElement('input');
+    bezeichnung.type = 'text';
+    bezeichnung.maxLength = 40;
+    bezeichnung.placeholder = 'Bezeichnung, z. B. Homeoffice';
+    bezeichnung.value = regel.name || '';
+    bezeichnung.oninput = () => { regel.name = bezeichnung.value; };
 
     const modus = document.createElement('select');
-    modus.style.width = 'auto';
     for (const [wert, text] of [['komfort','Komfort'], ['eco','Eco'],
                                 ['nacht','Nacht'], ['aus','Aus – Ventil zu']]) {
       const option = document.createElement('option');
@@ -1627,19 +1646,77 @@ function uebersteuerungZeichnen() {
     const weg = document.createElement('button');
     weg.className = 'leise';
     weg.textContent = '✕';
-    weg.title = 'Diese Übersteuerung entfernen';
-    weg.onclick = () => {
-      uebersteuerungEntwurf.splice(nummer, 1);
+    weg.title = 'Diese Regel entfernen';
+    weg.onclick = () => { uebersteuerungEntwurf.splice(nummer, 1);
+                          uebersteuerungZeichnen(); };
+
+    kopf.append(bezeichnung, modus, weg);
+    karte.appendChild(kopf);
+
+    const wenn = document.createElement('div');
+    wenn.className = 'regel-wenn';
+    (regel.wenn || []).forEach((bedingung, stelle) => {
+      const zeile = document.createElement('div');
+      zeile.className = 'regel-zeile';
+
+      const beschriftung = document.createElement('span');
+      beschriftung.className = 'notiz';
+      beschriftung.textContent = stelle === 0 ? 'wenn' : 'und';
+
+      const wahl = document.createElement('select');
+      for (const eintrag of auswahl) {
+        const option = document.createElement('option');
+        option.value = eintrag.entity_id;
+        option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id;
+        wahl.appendChild(option);
+      }
+      if (bedingung.entity && !auswahl.some(e => e.entity_id === bedingung.entity)) {
+        const fehlend = document.createElement('option');
+        fehlend.value = bedingung.entity;
+        fehlend.textContent = bedingung.entity + '  (zurzeit nicht in Home Assistant)';
+        wahl.appendChild(fehlend);
+      }
+      wahl.value = bedingung.entity || '';
+      wahl.onchange = () => { bedingung.entity = wahl.value; };
+
+      const zustand = document.createElement('select');
+      for (const [wert, text] of [['an','ist an / zu Hause'], ['aus','ist aus / fort']]) {
+        const option = document.createElement('option');
+        option.value = wert; option.textContent = text;
+        zustand.appendChild(option);
+      }
+      zustand.value = bedingung.zustand || 'an';
+      zustand.onchange = () => { bedingung.zustand = zustand.value; };
+
+      const raus = document.createElement('button');
+      raus.className = 'leise';
+      raus.textContent = '✕';
+      raus.title = 'Diese Bedingung entfernen';
+      raus.onclick = () => { regel.wenn.splice(stelle, 1);
+                             if (!regel.wenn.length) regel.wenn.push({entity:'', zustand:'an'});
+                             uebersteuerungZeichnen(); };
+
+      zeile.append(beschriftung, wahl, zustand, raus);
+      wenn.appendChild(zeile);
+    });
+
+    const mehr = document.createElement('button');
+    mehr.className = 'leise';
+    mehr.textContent = 'Bedingung hinzufügen';
+    mehr.onclick = () => {
+      regel.wenn = regel.wenn || [];
+      regel.wenn.push({entity: auswahl[0] ? auswahl[0].entity_id : '', zustand: 'an'});
       uebersteuerungZeichnen();
     };
-
-    zeile.append(wahl, modus, weg);
-    ziel.appendChild(zeile);
+    wenn.appendChild(mehr);
+    karte.appendChild(wenn);
+    ziel.appendChild(karte);
   });
+
   if (uebersteuerungEntwurf.length > 1) {
     const hinweis = document.createElement('div');
     hinweis.className = 'notiz';
-    hinweis.textContent = 'Sind mehrere an, gewinnt der oberste.';
+    hinweis.textContent = 'Treffen mehrere zu, gewinnt die oberste.';
     ziel.appendChild(hinweis);
   }
 }
@@ -1843,8 +1920,9 @@ $('btn-neuer-raum').onclick = () => raumOeffnen(null);
 
 $('btn-uebersteuerung-neu').onclick = () => {
   const erster = (entitaeten.schalter || [])[0];
-  uebersteuerungEntwurf.push({entity: erster ? erster.entity_id : '',
-                              modus: 'komfort'});
+  uebersteuerungEntwurf.push({name: '', modus: 'komfort',
+                              wenn: [{entity: erster ? erster.entity_id : '',
+                                      zustand: 'an'}]});
   uebersteuerungZeichnen();
 };
 

@@ -315,6 +315,9 @@ def sensor_candidates(states: list[dict] | None = None,
     Trennung stünden in der Auswahl auch Dinge wie Tankstellen-Öffnungszeiten.
     """
     aussen, fenster, sonstige, praesenz, raumtemp, schalter = [], [], [], [], [], []
+    # Kalender taugen als Bedingung einer Übersteuerung: „Ferien & Feiertage“
+    # ist genau die Entität, die eine Homeoffice-Regel braucht.
+    kalender = []
     zustaende = states if states is not None else get_states()
     if bereiche is None:
         bereiche = bereiche_je_entitaet(("binary_sensor",)) if mit_bereichen else {}
@@ -346,10 +349,13 @@ def sensor_candidates(states: list[dict] | None = None,
             schalter.append(eintrag)
         elif domain in ("input_boolean", "switch"):
             schalter.append({"entity_id": eid, "name": name})
-    for liste in (aussen, fenster, sonstige, praesenz, raumtemp, schalter):
+        elif domain == "calendar":
+            kalender.append({"entity_id": eid, "name": name})
+    for liste in (aussen, fenster, sonstige, praesenz, raumtemp, schalter, kalender):
         liste.sort(key=lambda e: e["name"])
     return {"aussen": aussen, "fenster": fenster, "sonstige_melder": sonstige,
-            "praesenz": praesenz, "raumtemp": raumtemp, "schalter": schalter}
+            "praesenz": praesenz, "raumtemp": raumtemp, "schalter": schalter,
+            "kalender": kalender}
 
 
 def zone_home(states: list[dict] | None = None) -> tuple[float, float, float] | None:

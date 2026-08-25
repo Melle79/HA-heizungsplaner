@@ -1,5 +1,19 @@
 # Änderungen
 
+## 1.11.0
+
+- **Die Übersteuerung kennt jetzt Bedingungen statt eines Schalters.** Eine
+  Regel greift, solange alle ihre Bedingungen zutreffen – damit entsteht eine
+  Homeoffice-Regelung ganz ohne Schalter: *Werktag ist an*, *Ferien sind aus*,
+  *Isabel ist zu Hause* → Komfort.
+- Als Bedingung taugt alles, was an oder aus sein kann: Schalter, Melder,
+  Kalender und Personen. Eine Person zählt als „an“, solange sie zu Hause ist;
+  eine andere Zone zählt als fort.
+- Jede Regel kann eine Bezeichnung tragen. Sie steht in der Begründung und im
+  Protokoll – „Homeoffice“ statt einer Aufzählung von Entitäten.
+- Abrufe der Oberfläche laufen mit `no-store`. Sonst beantwortet der Browser
+  eine Abfrage schon mal aus dem Cache und zeigt einen Stand von vorgestern.
+
 ## 1.10.0
 
 - **Übersteuerung je Raum.** Im Reiter *Zeitplan* lassen sich Schalter aus

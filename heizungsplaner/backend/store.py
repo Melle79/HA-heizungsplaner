@@ -33,6 +33,10 @@ GELTUNG = ["immer", "schultag", "schulfrei"]
 #                  den Zeitpunkten des Plans ein und lässt ihn sonst in Ruhe.
 BETRIEBSARTEN = ["plan", "nur_absenken"]
 
+# Bedingungen einer Übersteuerung. „an“ deckt on/home/true ab – eine Person
+# zählt also als an, solange sie zu Hause ist.
+ZUSTAENDE = ["an", "aus"]
+
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
@@ -124,9 +128,11 @@ STANDARD_RAUM = {
     "karenz_min": None,        # None = die globale Karenzzeit gilt
     "freigabe_entity": "",     # leer = der Raum ist immer freigegeben
     "sturz_auch_mit_kontakten": False,
-    # Schalter, die den Zeitplan übersteuern – etwa ein Homeoffice-Schalter,
-    # der das Büro auf Komfort hält, statt es vormittags abzusenken.
-    "uebersteuerung": [],      # [{"entity": "input_boolean.x", "modus": "komfort"}]
+    # Regeln, die den Zeitplan übersteuern, solange ihre Bedingungen alle
+    # zutreffen – etwa „Werktag, keine Ferien, Isabel zu Hause“ für ein
+    # Wohnzimmer, das sonst vormittags absinken würde.
+    # [{"modus": "komfort", "wenn": [{"entity": "…", "zustand": "an"}, …]}]
+    "uebersteuerung": [],
     "zeitplan": [],
 }
 
@@ -252,18 +258,36 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
     if betriebsart not in BETRIEBSARTEN:
         raise ValidationError(f"Unbekannte Betriebsart {betriebsart!r}")
 
-    # Übersteuerungen: Reihenfolge = Rangfolge, die erste eingeschaltete gewinnt.
+    # Übersteuerungen: Reihenfolge = Rangfolge, die erste zutreffende gewinnt.
+    # Innerhalb einer Regel müssen **alle** Bedingungen zutreffen.
     uebersteuerung = []
     for eintrag in (raum.get("uebersteuerung") or []):
         if not isinstance(eintrag, dict):
             raise ValidationError("Übersteuerung: Objekt erwartet")
-        entity = str(eintrag.get("entity") or "").strip()
-        if not entity:
-            continue
         modus = str(eintrag.get("modus") or "komfort").strip()
         if modus not in MODI:
             raise ValidationError(f"Unbekannter Modus {modus!r} in der Übersteuerung")
-        uebersteuerung.append({"entity": entity, "modus": modus})
+
+        # Die frühere Form kannte nur einen Schalter je Regel.
+        rohe = eintrag.get("wenn")
+        if rohe is None and eintrag.get("entity"):
+            rohe = [{"entity": eintrag["entity"], "zustand": "an"}]
+
+        bedingungen = []
+        for bedingung in (rohe or []):
+            if not isinstance(bedingung, dict):
+                raise ValidationError("Bedingung: Objekt erwartet")
+            entity = str(bedingung.get("entity") or "").strip()
+            if not entity:
+                continue
+            zustand = str(bedingung.get("zustand") or "an").strip()
+            if zustand not in ZUSTAENDE:
+                raise ValidationError(f"Unbekannte Bedingung {zustand!r}")
+            bedingungen.append({"entity": entity, "zustand": zustand})
+        if bedingungen:
+            uebersteuerung.append({
+                "name": str(eintrag.get("name") or "").strip()[:40],
+                "modus": modus, "wenn": bedingungen})
 
     karenz = raum.get("karenz_min")
     if karenz in (None, "", "null"):

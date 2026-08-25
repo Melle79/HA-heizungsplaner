@@ -83,6 +83,12 @@ def _bool_state(states_index: dict, entity_id: str) -> bool | None:
     zustand = eintrag.get("state")
     if zustand in ("on", "off"):
         return zustand == "on"
+    # Personen und Gerätetracker sprechen ihre eigene Sprache. „home“ heißt an,
+    # jede andere Zone heißt aus: Wer im Büro sitzt, ist nicht zu Hause.
+    if entity_id.split(".", 1)[0] in ("person", "device_tracker"):
+        if zustand in (None, "", "unknown", "unavailable"):
+            return None
+        return zustand == "home"
     return None
 
 
@@ -177,21 +183,34 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
 
 
 def _uebersteuerung(raum: dict, states_index: dict) -> dict | None:
-    """Der erste eingeschaltete Übersteuerungs-Schalter des Raumes.
+    """Die erste zutreffende Übersteuerungsregel des Raumes.
 
-    Die Reihenfolge in der Konfiguration ist die Rangfolge. Ein Schalter, der
-    nichts meldet, zählt als aus – anders als beim Freigabeschalter, wo ein
-    kaputter Schalter den Raum kalt ließe, kann hier nichts Schlimmes
-    passieren: Ohne Übersteuerung gilt schlicht der Zeitplan.
+    Eine Regel trifft zu, wenn **alle** ihre Bedingungen erfüllt sind – so
+    entsteht aus „Werktag“, „keine Ferien“ und „Isabel ist zu Hause“ eine
+    Homeoffice-Regelung, ohne dass jemand einen Schalter umlegen muss.
+
+    Die Reihenfolge in der Konfiguration ist die Rangfolge. Eine Entität, die
+    nichts meldet, lässt ihre Bedingung durchfallen – anders als beim
+    Freigabeschalter, wo ein kaputter Schalter den Raum kalt ließe, kann hier
+    nichts Schlimmes passieren: Ohne Übersteuerung gilt schlicht der Zeitplan.
     """
     for eintrag in raum.get("uebersteuerung") or []:
-        entity_id = eintrag.get("entity")
-        if not entity_id or _bool_state(states_index, entity_id) is not True:
-            continue
-        name = ((states_index.get(entity_id) or {}).get("attributes") or {}).get(
-            "friendly_name", entity_id)
-        return {"entity": entity_id, "modus": eintrag.get("modus", "komfort"),
-                "name": name}
+        namen = []
+        for bedingung in eintrag.get("wenn") or []:
+            entity_id = bedingung.get("entity")
+            ist = _bool_state(states_index, entity_id) if entity_id else None
+            if ist is None or ist != (bedingung.get("zustand", "an") == "an"):
+                break
+            name = ((states_index.get(entity_id) or {}).get("attributes") or {}).get(
+                "friendly_name", entity_id)
+            namen.append(name if bedingung.get("zustand", "an") == "an"
+                         else f"ohne {name}")
+        else:
+            if namen:
+                # Hat die Regel einen Namen, steht der im Protokoll – „Homeoffice“
+                # sagt mehr als die Aufzählung ihrer drei Bedingungen.
+                return {"modus": eintrag.get("modus", "komfort"),
+                        "name": eintrag.get("name") or " · ".join(namen)}
     return None
 
 
@@ -335,8 +354,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     if uebersteuerung:
         modus = uebersteuerung["modus"]
         basis = zp.modus_temperatur(raum, modus, frostschutz)
-        begruendung = (f"„{uebersteuerung['name']}“ ist an – {modus} "
-                       f"statt Zeitplan")
+        begruendung = f"{uebersteuerung['name']} – {modus} statt Zeitplan"
         if uebersteuerung["modus"] == "aus":
             return ergebnis("uebersteuert", frostschutz, begruendung,
                             ventil_zu=True)

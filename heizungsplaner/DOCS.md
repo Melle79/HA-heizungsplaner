@@ -202,33 +202,45 @@ Schaltpunkt** – bei einem einzigen Punkt also bis Mitternacht. Wer abends auf
 Im Sommerbetrieb ist auch dieser Raum zu; die Untergrenze greift erst wieder,
 wenn die gedämpfte Außentemperatur unter die Sommergrenze fällt.
 
-## Übersteuerung: ein Schalter statt des Zeitplans
+## Übersteuerung: eine Regel statt des Zeitplans
 
-Ein Raum kann Schalter aus Home Assistant hinterlegt bekommen, die den
-Zeitplan übersteuern. Solange ein solcher Schalter an ist, gilt sein Modus –
-unabhängig davon, was der Plan gerade sagt.
+Ein Raum kann Regeln bekommen, die den Zeitplan außer Kraft setzen. Eine Regel
+besteht aus einem Modus und beliebig vielen Bedingungen; sie greift, solange
+**alle** Bedingungen zutreffen.
 
-![Übersteuerung im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
+![Homeoffice-Regel im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
 
-Der Anlass ist das Homeoffice: Das Büro läuft nach einem Plan, der es
-vormittags auf Eco stellt, weil dort sonst niemand ist. An Homeoffice-Tagen
-soll es warm bleiben, ohne dass man den Zeitplan umbaut. Ein
-`input_boolean.homeoffice` mit dem Modus *Komfort* erledigt das.
+Der Anlass ist das Homeoffice. Das Wohnzimmer läuft nach einem Plan, der es
+vormittags auf Eco stellt, weil dann üblicherweise niemand da ist. Arbeitet
+jemand zu Hause, soll es warm bleiben – ohne Schalter, ohne Zeitplanumbau:
 
-Weitere Beispiele: ein Basteltag im Hobbyraum, ein Krankheitstag im
-Schlafzimmer, ein Schalter, der den Wintergarten für einen Abend freigibt.
+| Bedingung | Entität | Zustand |
+|---|---|---|
+| Werktag | `binary_sensor.workday_sensor` | ist an |
+| keine Ferien | `calendar.ferien_feiertage_bayern` | ist aus |
+| Isabel ist da | `person.isabel` | ist an |
+
+Ergebnis: **Komfort** statt Eco. Trifft eine der drei nicht zu, führt wieder
+der Zeitplan.
+
+Als Bedingung taugt alles, was an oder aus sein kann: Schalter und Helfer,
+Melder, Kalender (`on`, solange ein Termin läuft) und Personen. **Eine Person
+zählt als „an", solange sie zu Hause ist** – wer in einer anderen Zone steht,
+etwa im Büro, zählt als fort.
+
+Die **Bezeichnung** der Regel ist frei. Sie steht später in der Begründung und
+im Protokoll: „Homeoffice – komfort statt Zeitplan" ist dort lesbarer als die
+Aufzählung dreier Entitäten. Ohne Bezeichnung werden die Bedingungen genannt.
+
+Sind mehrere Regeln hinterlegt, gewinnt die oberste. Eine Entität, die nichts
+meldet, lässt ihre Bedingung durchfallen – dann gilt schlicht der Zeitplan.
 
 **Was die Übersteuerung nicht aushebelt:** ein offenes Fenster, den
 Sommerbetrieb, den Urlaubsschalter und die Anwesenheitsabsenkung. Das ist
-Absicht – wer den Schalter anlässt und wegfährt, heizt sonst tagelang ein
-leeres Haus. Im Büro, das ohnehin am Präsenzmelder hängt, genügt der Schalter
-damit, um den Vormittag auf Komfort zu heben, solange dort jemand sitzt.
+Absicht: Eine Regel, die sich verhakt, heizt so kein leeres Haus.
 
-Sind mehrere Schalter hinterlegt, gewinnt der oberste. Ein Schalter, der
-nichts meldet, zählt als aus: Dann gilt schlicht der Zeitplan.
-
-Der Modus *Aus* schließt das Ventil – für einen Schalter, der einen Raum
-zeitweise ganz stilllegt. Zum dauerhaften Sperren eines Raumes gibt es die
+Der Modus *Aus* schließt das Ventil – für eine Regel, die einen Raum zeitweise
+ganz stilllegt. Zum dauerhaften Sperren gibt es die
 [Freigabe](#freigabe-räume-die-nur-zeitweise-gebraucht-werden); sie steht in
 der Rangfolge weit oben und gilt auch gegen die Partytaste.
 

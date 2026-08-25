@@ -291,6 +291,44 @@ sommer = lage_uebersteuert(True, sommer=True)
 pruefe(sommer["zustand"] == "sommer",
        f"im Sommerbetrieb bleibt der Schalter wirkungslos ({sommer['zustand']})")
 
+# Die eigentliche Homeoffice-Regelung braucht keinen Schalter: Werktag, keine
+# Ferien und Isabel zu Hause - alle drei Bedingungen zusammen.
+def lage_homeoffice(werktag=True, ferien=False, isabel="home"):
+    r = store.validate_raum({**wohnzimmer, "uebersteuerung": [{
+        "modus": "komfort",
+        "wenn": [{"entity": "binary_sensor.workday", "zustand": "an"},
+                 {"entity": "calendar.ferien", "zustand": "aus"},
+                 {"entity": "person.isabel", "zustand": "an"}]}],
+        "zeitplan": [{"start": "07:30", "modus": "eco", "gilt": "immer",
+                      "tage": ["mon","tue","wed","thu","fri","sat","sun"]}]})
+    idx = {"climate.a": {"entity_id": "climate.a", "state": "heat",
+                         "attributes": {"current_temperature": 20.0, "temperature": 19.0,
+                                        "min_temp": 5, "max_temp": 30,
+                                        "hvac_modes": ["off", "heat"]}},
+           "binary_sensor.workday": {"entity_id": "binary_sensor.workday",
+                                     "state": "on" if werktag else "off",
+                                     "attributes": {"friendly_name": "Werktag"}},
+           "calendar.ferien": {"entity_id": "calendar.ferien",
+                               "state": "on" if ferien else "off",
+                               "attributes": {"friendly_name": "Ferien"}},
+           "person.isabel": {"entity_id": "person.isabel", "state": isabel,
+                             "attributes": {"friendly_name": "Isabel"}}}
+    return regelung.entscheide(r, {"temperaturquelle": "thermostate"},
+                               umgebung(montag.replace(hour=9), states_index=idx))
+
+e = lage_homeoffice()
+pruefe(e["zustand"] == "komfort" and "Isabel" in e["begruendung"],
+       f"Werktag + keine Ferien + Isabel daheim -> komfort ({e['begruendung']})")
+e = lage_homeoffice(ferien=True)
+pruefe(e["zustand"] == "eco", f"in den Ferien greift die Regel nicht ({e['zustand']})")
+e = lage_homeoffice(werktag=False)
+pruefe(e["zustand"] == "eco", f"am Wochenende greift die Regel nicht ({e['zustand']})")
+e = lage_homeoffice(isabel="not_home")
+pruefe(e["zustand"] == "eco", f"ohne Isabel greift die Regel nicht ({e['zustand']})")
+e = lage_homeoffice(isabel="Arbeit")
+pruefe(e["zustand"] == "eco",
+       f"in einer anderen Zone zaehlt Isabel nicht als daheim ({e['zustand']})")
+
 print("\n=== Fensterkontakte ===")
 
 def fensterlage(kontakte, zustaende, verlauf_sturz=True, zusatz=False):
