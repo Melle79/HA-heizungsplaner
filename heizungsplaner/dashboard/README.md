@@ -21,6 +21,23 @@ Abschnitts. Nach einer Änderung die YAML-Fassung neu erzeugen:
 python3 heizungsplaner/dashboard/erzeuge_yaml.py
 ```
 
+## Eine Übersteuerungsregel im Blick behalten
+
+`regelkarten("sensor.heizungsplaner_raum_wohnzimmer")` liefert eine Karte für
+einen Raum mit Übersteuerungsregel:
+
+* **greift die Regel**, steht dort ihr Name, der Zielwert und die gemessene
+  Temperatur, mit grünem Akzent;
+* **greift sie nicht**, steht dort der Grund – „greift heute nicht – Ferien &
+  Feiertage läuft" –, damit man nicht vor einer leeren Stelle steht und rätselt.
+
+Bewusst **keine** `conditional`-Karte: In einer Sections-Ansicht meldet die in
+HA 2026.8 „Konfigurationsfehler". Eine schlichte Karte mit if/else im Template
+tut dasselbe.
+
+Diese Karten gehören nicht in den Planer-Abschnitt, sondern dorthin, wo man
+den Raum ohnehin ansieht – beim Wohnzimmer also in dessen Klima-Abschnitt.
+
 ## Was die Karten voraussetzen
 
 * Das Add-on läuft und ist über MQTT mit Home Assistant verbunden – daher

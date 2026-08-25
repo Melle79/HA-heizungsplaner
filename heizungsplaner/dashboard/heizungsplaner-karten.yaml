@@ -84,6 +84,18 @@ cards:
       🎉 **Party bis {{ state_attr('switch.heizungsplaner_party','bis_uhrzeit') }} Uhr** – noch {{ state_attr('switch.heizungsplaner_party','restminuten') }} Minuten
 
       {% endif -%}
+      {%- set betrieb = [] -%}
+      {%- if is_state('binary_sensor.heizungsplaner_trockenlauf','on') -%}
+      {%- set betrieb = betrieb + ['🧪 **Trockenlauf** – es wird nichts gestellt'] -%}
+      {%- endif -%}
+      {%- if is_state('binary_sensor.heizungsplaner_sommerbetrieb','on') -%}
+      {%- set betrieb = betrieb + ['☀️ **Sommerbetrieb** – die Ventile bleiben zu'] -%}
+      {%- endif -%}
+      {%- if is_state('input_boolean.urlaub','on') -%}
+      {%- set betrieb = betrieb + ['🏖️ **Urlaub**'] -%}
+      {%- endif -%}
+      {{ betrieb | join(' · ') if betrieb else '🔥 **Regelbetrieb**' }}
+
       Draußen **{{ roh | round(1) if roh is not none else '?' }} °C** · gedämpft {{ states('sensor.heizungsplaner_aussentemperatur_gedaempft') }} °C · {{ aktiv | count }} von {{ raeume | count }} Räumen geregelt
 
       | | Raum | Ziel | Ist | Danach |
@@ -105,7 +117,7 @@ cards:
       {%- endif %}
       {%- if raeume | selectattr('attributes.zustand','in',ruht) | list | count > 0 %}
 
-      *„zu“ = Ventil geschlossen; die Schaltpunkte laufen weiter, wirken aber erst wieder außerhalb des Sommerbetriebs.*
+      *„zu“ = Ventil geschlossen. Die Schaltpunkte laufen weiter und greifen, sobald wieder geregelt wird.*
       {%- endif %}
     card_mod:
       style:
