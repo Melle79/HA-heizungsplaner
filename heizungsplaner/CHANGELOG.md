@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.0.5
+
+- Räume mit geschlossenem Ventil zeigen „Aus · Ventil zu“ statt der
+  Frostschutztemperatur als große Zahl – die Zahl las sich wie ein Heizziel.
+- Deutsches Dezimalkomma in der ganzen Oberfläche.
+
 ## 1.0.4
 
 - Knopf „Dämpfung neu anlaufen lassen“ in den Einstellungen: verwirft die

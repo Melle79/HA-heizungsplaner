@@ -117,6 +117,7 @@
   .temperaturen{display:flex; align-items:baseline; gap:12px; margin-bottom:8px}
   .ziel{font-size:1.9rem; font-weight:600; line-height:1; color:var(--warm)}
   .ziel .einheit{font-size:.9rem; font-weight:500; color:var(--muted)}
+  .ziel.zu{color:var(--kalt)}
   .ist{font-size:.88rem; color:var(--muted)}
   .begruendung{font-size:.83rem; color:var(--muted); min-height:2.4em}
   .karte .fuss{
@@ -499,6 +500,12 @@ const sendeJSON = (pfad, methode, koerper) => hole(pfad, {
   body: JSON.stringify(koerper),
 });
 
+function zahl(wert, stellen = 1) {
+  if (wert === null || wert === undefined) return null;
+  return wert.toLocaleString('de-DE', {minimumFractionDigits: stellen,
+                                       maximumFractionDigits: stellen});
+}
+
 function zeit(iso) {
   if (!iso) return '–';
   const d = new Date(iso);
@@ -581,9 +588,9 @@ function zeichneStatus(bericht) {
 
   const aussen = bericht.aussen === null || bericht.aussen === undefined ? null : bericht.aussen;
   $('kopf-aussen').textContent = aussen === null ? ''
-    : `außen ${aussen.toFixed(1)} °C` +
+    : `außen ${zahl(aussen)} °C` +
       (bericht.aussen_gedaempft !== null && bericht.aussen_gedaempft !== undefined
-        ? ` (gedämpft ${bericht.aussen_gedaempft.toFixed(1)})` : '');
+        ? ` (gedämpft ${zahl(bericht.aussen_gedaempft)})` : '');
 
   const karten = $('raumkarten');
   karten.innerHTML = '';
@@ -604,8 +611,8 @@ function zeichneStatus(bericht) {
       const klassen = ['thermo'];
       if (!t.vorhanden) klassen.push('fehlt');
       if (t.manuell_bis) klassen.push('manuell');
-      const wert = t.soll === null || t.soll === undefined ? '–' : t.soll.toFixed(1) + ' °C';
-      const ist = t.ist === null || t.ist === undefined ? '' : ' · ist ' + t.ist.toFixed(1);
+      const wert = t.soll === null || t.soll === undefined ? '–' : zahl(t.soll) + ' °C';
+      const ist = t.ist === null || t.ist === undefined ? '' : ' · ist ' + zahl(t.ist);
       const betrieb = t.betriebsart === 'off' ? ' · aus' : '';
       return `<div class="${klassen.join(' ')}">
         <span class="tname">${t.name}</span>
@@ -618,9 +625,11 @@ function zeichneStatus(bericht) {
         <span class="pille ${raum.zustand}">${raum.zustand}</span>
       </div>
       <div class="temperaturen">
-        <span class="ziel">${raum.ziel.toFixed(1)}<span class="einheit"> °C</span></span>
+        ${['sommer', 'aus'].includes(raum.zustand)
+          ? `<span class="ziel zu">Aus<span class="einheit"> · Ventil zu</span></span>`
+          : `<span class="ziel">${zahl(raum.ziel)}<span class="einheit"> °C</span></span>`}
         <span class="ist">${raum.ist === null || raum.ist === undefined
-          ? 'keine Ist-Temperatur' : 'ist ' + raum.ist.toFixed(1) + ' °C'}</span>
+          ? 'keine Ist-Temperatur' : 'ist ' + zahl(raum.ist) + ' °C'}</span>
       </div>
       <div class="begruendung">${raum.begruendung}</div>
       <div class="fuss">
@@ -635,7 +644,7 @@ function zeichneStatus(bericht) {
   const zeilen = Object.entries(personen).map(([id, p]) => {
     const wo = p.zuhause ? 'zu Hause'
       : (p.entfernung_km !== null && p.entfernung_km !== undefined
-          ? `${p.entfernung_km.toFixed(1)} km entfernt` : p.zustand);
+          ? `${zahl(p.entfernung_km)} km entfernt` : p.zustand);
     return `<tr><td>${p.name}</td><td>${wo}</td><td><code>${id}</code></td></tr>`;
   }).join('');
   $('personen-liste').innerHTML = zeilen
@@ -986,7 +995,7 @@ function beispieleAktualisieren() {
   if ([basis, steil, grenze].every(Number.isFinite)) {
     const beispiel = (aussen) => {
       const wert = Math.max(-grenze, Math.min(grenze, steil * (basis - aussen)));
-      return (wert >= 0 ? '+' : '') + wert.toFixed(1);
+      return (wert >= 0 ? '+' : '') + zahl(wert);
     };
     $('hk-beispiel').textContent =
       `Bei −10 °C außen ${beispiel(-10)} K, bei 0 °C ${beispiel(0)} K, `
@@ -1014,7 +1023,7 @@ $('btn-anlauf').onclick = async () => {
     const wert = bericht.aussen_gedaempft;
     meldung('anlauf-meldung', wert === null || wert === undefined
       ? 'Zurückgesetzt – noch kein Wert'
-      : `Neu angesetzt auf ${wert.toFixed(1)} °C`, true);
+      : `Neu angesetzt auf ${zahl(wert)} °C`, true);
     zeichneStatus(bericht);
   } catch (err) { meldung('anlauf-meldung', err.message); }
   finally { $('btn-anlauf').disabled = false; }
