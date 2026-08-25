@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.8.10
+
+- **„Mittelwert der Thermostate“ sagt jetzt, welcher.** Gemeint waren immer
+  die Thermostate des Raumes – die im Reiter *Grundlagen* angehakten –, aber
+  das stand nirgends. Der Hinweis nennt sie beim Namen und zählt sie mit; er
+  folgt der Auswahl, während man sie ändert.
+
 ## 1.8.9
 
 - **Geräte werden angehakt statt markiert.** Thermostate, Präsenzmelder,

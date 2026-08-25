@@ -732,8 +732,7 @@
         <h3>Raumfühler</h3>
         <div class="feld">
           <select id="r-raumtemp"></select>
-          <div class="notiz">Ohne eigenen Fühler mittelt der Planer die
-            Ist-Temperaturen der Thermostate.</div></div>
+          <div class="notiz" id="r-raumtemp-notiz"></div></div>
       </div>
       <div class="abschnitt">
         <h3>Präsenz- und Bewegungsmelder</h3>
@@ -1132,6 +1131,21 @@ function gehoertZumRaum(eintrag, raum) {
   if (raum.bereiche.has((eintrag.bereich || '').toLowerCase())) return true;
   const text = ohneZierrat(eintrag.name + ' ' + eintrag.entity_id);
   return raum.worte.some(wort => text.includes(wort));
+}
+
+// Welche Thermostate gemittelt werden, wenn kein eigener Fühler eingetragen
+// ist: die des Raumes, angehakt im Reiter Grundlagen. Die Zahl steht mit
+// dabei, damit die Frage gar nicht erst aufkommt.
+function raumtempNotiz() {
+  const feld = $('r-raumtemp-notiz');
+  if (!feld) return;
+  const anzahl = gewaehlt($('r-thermostate')).length;
+  const wieviele = anzahl === 0 ? 'der Thermostate dieses Raumes – zurzeit ist '
+                                  + 'im Reiter Grundlagen keines angehakt'
+    : anzahl === 1 ? 'des Thermostats, das im Reiter Grundlagen angehakt ist'
+    : 'der ' + anzahl + ' Thermostate, die im Reiter Grundlagen angehakt sind';
+  feld.textContent = 'Ohne eigenen Fühler mittelt der Planer die '
+    + 'Ist-Temperaturen ' + wieviele + '.';
 }
 
 // Beim Öffnen eines Raumes fängt jede Liste von vorn an: kein Suchtext, und
@@ -1710,7 +1724,8 @@ function raumOeffnen(raum, startblatt) {
                  {gruppiert:true, raum: raumbezug, raumName});
   auswahlFuellen($('r-personen'), entitaeten.personen, d.personen, {filter:false});
   auswahlFuellen($('r-raumtemp'), entitaeten.raumtemp, d.raumtemp,
-                 {leerText:'Mittelwert der Thermostate'});
+                 {leerText:'Mittelwert der Thermostate dieses Raumes'});
+  raumtempNotiz();
   fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], d.freigabe_entity,
                 'immer freigegeben');
   auswahlFuellen($('r-praesenz'), entitaeten.praesenz, d.praesenz,
@@ -1737,6 +1752,11 @@ function raumOeffnen(raum, startblatt) {
 }
 
 $('btn-neuer-raum').onclick = () => raumOeffnen(null);
+
+// Wer im Reiter Grundlagen ein Thermostat dazunimmt, soll die Notiz beim
+// Raumfühler gleich angepasst vorfinden. Der Zuhörer sitzt am Behälter – die
+// Häkchen selbst werden bei jedem Filterwechsel neu gebaut.
+$('r-thermostate').addEventListener('change', raumtempNotiz);
 
 $('btn-raum-speichern').onclick = async () => {
   const koerper = {
