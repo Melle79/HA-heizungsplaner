@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.7.2
+
+- Die Partytaste liefert das Ende zusätzlich als fertige Uhrzeit
+  (`bis_uhrzeit`). In Lovelace-Templates gibt es kein `strftime`; die
+  Zeitrechnerei dort war eine Fehlerquelle, die im Zweifel eine ganze Karte
+  lahmlegt.
+
 ## 1.7.1
 
 - **Thermostate, die Sollwerte ablehnen, werden gemeldet.** Im Betrieb

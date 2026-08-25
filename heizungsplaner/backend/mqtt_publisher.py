@@ -254,16 +254,21 @@ class Publisher:
                        "meldungen": [s["text"] for s in stoerungen]})
 
         bis = bericht.get("party_bis")
-        rest = 0
+        rest, uhrzeit = 0, None
         if bis:
             from datetime import datetime
             try:
-                rest = max(0, int((datetime.fromisoformat(bis)
-                                   - datetime.now()).total_seconds() // 60))
+                ende = datetime.fromisoformat(bis)
+                rest = max(0, int((ende - datetime.now()).total_seconds() // 60))
+                # Die Uhrzeit fertig mitliefern: In Lovelace-Templates gibt es
+                # kein `strftime`, und die Zeitrechnerei dort ist eine
+                # Fehlerquelle, die im Zweifel die ganze Karte lahmlegt.
+                uhrzeit = ende.strftime("%H:%M")
             except ValueError:
-                rest = 0
+                pass
         self._zustand("party", "ON" if bis else "OFF",
-                      {"laeuft_bis": bis, "restminuten": rest,
+                      {"laeuft_bis": bis, "bis_uhrzeit": uhrzeit,
+                       "restminuten": rest,
                        "raeume": [r["name"] for r in raeume
                                   if r["zustand"] == "party"]})
 
