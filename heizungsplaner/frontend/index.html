@@ -128,6 +128,13 @@
   .regel-zeile select:first-of-type{flex:1 1 auto; min-width:0; width:auto}
   .regel-zeile select + select{flex:none; width:auto}
   .regel-zeile button{flex:none}
+  .regel-lage{font-size:.76rem; padding:2px 8px; border-radius:999px;
+    white-space:nowrap}
+  .regel-lage.greift{background:rgba(90,190,120,.16); color:#7fd39b}
+  .regel-lage.ruht{background:var(--flaeche3); color:var(--grau)}
+  .regel-zeile .zeichen{flex:none; width:16px; text-align:center; font-size:.9rem}
+  .regel-zeile .zeichen.ja{color:#7fd39b}
+  .regel-zeile .zeichen.nein{color:var(--grau)}
   optgroup{color:var(--leise); font-style:normal; font-size:.78rem;
            text-transform:uppercase; letter-spacing:.06em}
   optgroup option{color:var(--text); text-transform:none; letter-spacing:0;
@@ -1618,6 +1625,16 @@ function uebersteuerungZeichnen() {
   const gesehen = new Set();
   const auswahl = quellen.filter(e => !gesehen.has(e.entity_id)
                                       && gesehen.add(e.entity_id));
+  // Woran man sieht, ob eine Regel gerade greift – und wenn nicht, an welcher
+  // Bedingung es liegt. Ohne das bleibt nur Raten, warum das Wohnzimmer im
+  // Zeitplan steht statt auf Komfort.
+  const jetzt = new Map(auswahl.map(e => [e.entity_id, e.zustand]));
+  const erfuellt = (bedingung) => {
+    const zustand = jetzt.get(bedingung.entity);
+    if (zustand === undefined || zustand === null) return null;
+    const an = zustand === 'on' || zustand === 'home';
+    return an === ((bedingung.zustand || 'an') === 'an');
+  };
 
   uebersteuerungEntwurf.forEach((regel, nummer) => {
     const karte = document.createElement('div');
@@ -1650,7 +1667,13 @@ function uebersteuerungZeichnen() {
     weg.onclick = () => { uebersteuerungEntwurf.splice(nummer, 1);
                           uebersteuerungZeichnen(); };
 
-    kopf.append(bezeichnung, modus, weg);
+    const lage = document.createElement('span');
+    lage.className = 'regel-lage';
+    const stand = (regel.wenn || []).map(erfuellt);
+    const greift = stand.length && stand.every(x => x === true);
+    lage.classList.add(greift ? 'greift' : 'ruht');
+    lage.textContent = greift ? 'greift gerade' : 'ruht';
+    kopf.append(bezeichnung, modus, lage, weg);
     karte.appendChild(kopf);
 
     const wenn = document.createElement('div');
@@ -1662,6 +1685,13 @@ function uebersteuerungZeichnen() {
       const beschriftung = document.createElement('span');
       beschriftung.className = 'notiz';
       beschriftung.textContent = stelle === 0 ? 'wenn' : 'und';
+
+      const zeichen = document.createElement('span');
+      const ist = erfuellt(bedingung);
+      zeichen.className = 'zeichen ' + (ist ? 'ja' : 'nein');
+      zeichen.textContent = ist === null ? '?' : (ist ? '✓' : '✕');
+      zeichen.title = ist === null ? 'meldet nichts'
+        : (ist ? 'trifft gerade zu' : 'trifft gerade nicht zu');
 
       const wahl = document.createElement('select');
       for (const eintrag of auswahl) {
@@ -1696,7 +1726,7 @@ function uebersteuerungZeichnen() {
                              if (!regel.wenn.length) regel.wenn.push({entity:'', zustand:'an'});
                              uebersteuerungZeichnen(); };
 
-      zeile.append(beschriftung, wahl, zustand, raus);
+      zeile.append(beschriftung, zeichen, wahl, zustand, raus);
       wenn.appendChild(zeile);
     });
 

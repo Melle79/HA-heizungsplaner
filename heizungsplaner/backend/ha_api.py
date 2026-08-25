@@ -192,6 +192,8 @@ def person_entities(states: list[dict] | None = None) -> list[dict]:
             "entity_id": eid,
             "name": attrs.get("friendly_name", eid),
             "state": s.get("state"),
+            # Für die Bedingungen einer Übersteuerung: „an“ heißt zu Hause.
+            "zustand": "on" if s.get("state") == "home" else "off",
         })
     out.sort(key=lambda e: e["name"])
     return out
@@ -348,9 +350,11 @@ def sensor_candidates(states: list[dict] | None = None,
                 sonstige.append(eintrag)
             schalter.append(eintrag)
         elif domain in ("input_boolean", "switch"):
-            schalter.append({"entity_id": eid, "name": name})
+            schalter.append({"entity_id": eid, "name": name,
+                             "zustand": s.get("state")})
         elif domain == "calendar":
-            kalender.append({"entity_id": eid, "name": name})
+            kalender.append({"entity_id": eid, "name": name,
+                             "zustand": s.get("state")})
     for liste in (aussen, fenster, sonstige, praesenz, raumtemp, schalter, kalender):
         liste.sort(key=lambda e: e["name"])
     return {"aussen": aussen, "fenster": fenster, "sonstige_melder": sonstige,

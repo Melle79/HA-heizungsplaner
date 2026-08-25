@@ -232,8 +232,16 @@ Die **Bezeichnung** der Regel ist frei. Sie steht später in der Begründung und
 im Protokoll: „Homeoffice – komfort statt Zeitplan" ist dort lesbarer als die
 Aufzählung dreier Entitäten. Ohne Bezeichnung werden die Bedingungen genannt.
 
+**Woran man sieht, ob eine Regel läuft:** Die Regel selbst sagt es. Oben
+steht *greift gerade* oder *ruht*, und vor jeder Bedingung ein Häkchen oder
+ein Kreuz – im Bild oben scheitert die Homeoffice-Regel an den Ferien, obwohl
+Werktag und Isabel zutreffen. Greift eine Regel, steht ihre Bezeichnung
+außerdem in der Begründung auf der Raumkachel und im Protokoll:
+„Homeoffice – komfort statt Zeitplan".
+
 Sind mehrere Regeln hinterlegt, gewinnt die oberste. Eine Entität, die nichts
-meldet, lässt ihre Bedingung durchfallen – dann gilt schlicht der Zeitplan.
+meldet, lässt ihre Bedingung durchfallen (Zeichen `?`) – dann gilt schlicht
+der Zeitplan.
 
 **Was die Übersteuerung nicht aushebelt:** ein offenes Fenster, den
 Sommerbetrieb, den Urlaubsschalter und die Anwesenheitsabsenkung. Das ist

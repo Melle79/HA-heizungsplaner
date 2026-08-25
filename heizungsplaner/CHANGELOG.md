@@ -1,5 +1,12 @@
 # Änderungen
 
+## 1.11.2
+
+- **Man sieht jetzt, ob eine Übersteuerungsregel greift.** Die Regel zeigt
+  *greift gerade* oder *ruht*, und vor jeder Bedingung steht ein Häkchen oder
+  ein Kreuz mit ihrem aktuellen Stand. Bisher blieb nur Raten, warum ein Raum
+  im Zeitplan steht statt auf Komfort.
+
 ## 1.11.1
 
 - **Behoben: Ausfallmeldungen für Geräte, denen nichts fehlt.** Die
