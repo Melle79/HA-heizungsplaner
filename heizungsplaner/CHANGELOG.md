@@ -1,5 +1,24 @@
 # Änderungen
 
+## 1.4.0
+
+Die Oberfläche ist neu aufgebaut. Sie war über die vorangegangenen
+Erweiterungen gewachsen, ohne dass die Anordnung mitgewachsen wäre.
+
+- **Übersicht:** Eine Lage-Leiste über den Raumkacheln beantwortet die vier
+  Fragen, die man zuerst stellt – Betriebszustand, Außentemperatur, wie viele
+  Räume geregelt werden, wann der nächste Wechsel kommt. Die Kacheln zeigen
+  Zielwert und Begründung; die Thermostate liegen darunter in einem
+  aufklappbaren Fach statt immer sichtbar.
+- **Raum-Dialog:** statt einer Scrollstrecke aus sieben Abschnitten nun fünf
+  Reiter – Grundlagen, Temperaturen, Zeitplan, Belegung, Fühler und Melder.
+- **Raumliste:** feste Spalten statt Fließtext, damit sich Räume vergleichen
+  lassen.
+- **Einstellungen:** in benannte Tafeln mit Unterabschnitten gegliedert.
+- Zustände heißen auf Deutsch („Fenster offen“ statt „fenster“), Personen
+  stehen als Kennzeichen statt in einer Tabelle, und das Ganze ist auf
+  Handybreite brauchbar.
+
 ## 1.3.4
 
 - Zuordnungsvorschläge sind kürzer gefasst und liegen ab dreien in einem

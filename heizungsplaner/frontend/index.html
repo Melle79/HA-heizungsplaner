@@ -6,515 +6,654 @@
 <title>Heizungsplaner</title>
 <style>
   :root{
-    --bg:#0f1216; --surface:#181d24; --surface2:#1f2630; --line:#2a313b;
-    --text:#e8ecf1; --muted:#8a94a3;
+    --bg:#10141a; --flaeche:#181d25; --flaeche2:#1e2530; --linie:#2b323d;
+    --text:#e9edf2; --leise:#8b95a4; --sehr-leise:#5f6875;
     --warm:#e8a23d; --komfort:#ef8354; --eco:#7aa2ff; --nacht:#8f7fd6;
-    --kalt:#5a6472; --ok:#4cc38a; --danger:#e36d6d;
-    --radius:12px;
+    --kalt:#5a6472; --ok:#4cc38a; --achtung:#e36d6d;
+
+    --l1:4px; --l2:8px; --l3:12px; --l4:16px; --l5:24px; --l6:36px;
+    --rund:10px; --rund-gross:14px;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
+  *{box-sizing:border-box; margin:0; padding:0}
   body{
     background:var(--bg); color:var(--text);
     font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
-    font-size:15px; line-height:1.5; min-height:100vh;
+    font-size:15px; line-height:1.55; min-height:100vh;
+    -webkit-font-smoothing:antialiased;
   }
-  header{
-    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    padding:16px 22px; border-bottom:1px solid var(--line);
+
+  /* ═══ Kopf ═══ */
+  .kopf{
+    display:flex; align-items:center; gap:var(--l4); flex-wrap:wrap;
+    padding:var(--l3) var(--l5); border-bottom:1px solid var(--linie);
+    background:var(--flaeche);
   }
-  header h1{font-size:1.15rem; font-weight:600; letter-spacing:.02em}
-  header .sub{color:var(--muted); font-size:.85rem}
-  .status{margin-left:auto; display:flex; align-items:center; gap:14px;
-          font-size:.85rem; color:var(--muted)}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
-  .dot.ok{background:var(--ok)}
-  nav{display:flex; gap:4px; padding:0 22px; border-bottom:1px solid var(--line);
-      overflow-x:auto}
+  .kopf .marke{display:flex; align-items:baseline; gap:var(--l2); flex:1; min-width:180px}
+  .kopf h1{font-size:1.05rem; font-weight:600; letter-spacing:.01em}
+  .kopf .fassung{font-size:.72rem; color:var(--sehr-leise)}
+  .kopf-rechts{display:flex; align-items:center; gap:var(--l3); flex-wrap:wrap}
+  .punkt{width:8px; height:8px; border-radius:50%; background:var(--achtung); flex:none}
+  .punkt.ok{background:var(--ok)}
+  .kopf .zustand{display:flex; align-items:center; gap:var(--l1);
+                 font-size:.8rem; color:var(--leise)}
+
+  /* ═══ Reiter ═══ */
+  nav{display:flex; gap:var(--l1); padding:0 var(--l5); border-bottom:1px solid var(--linie);
+      overflow-x:auto; background:var(--flaeche)}
   nav button{
     background:none; border:none; border-bottom:2px solid transparent;
-    color:var(--muted); padding:12px 14px; font-size:.92rem; font-weight:500;
-    cursor:pointer; white-space:nowrap;
+    color:var(--leise); padding:var(--l3) var(--l4); font-size:.9rem; font-weight:500;
+    cursor:pointer; white-space:nowrap; font-family:inherit;
   }
-  nav button.aktiv{color:var(--text); border-bottom-color:var(--warm)}
+  nav button:hover{color:var(--text)}
+  nav button.an{color:var(--text); border-bottom-color:var(--warm)}
   nav button:focus{outline:none}
   nav button:focus-visible{outline:2px solid var(--warm); outline-offset:-2px}
-  main{width:100%; max-width:1000px; margin:0 auto; padding:20px 22px 60px}
-  section{display:none}
-  section.aktiv{display:block}
 
-  .panel{
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
-    padding:16px 18px; margin-bottom:20px;
+  main{width:100%; max-width:1120px; margin:0 auto; padding:var(--l5) var(--l5) var(--l6)}
+  section{display:none}
+  section.an{display:block}
+
+  /* ═══ Bausteine ═══ */
+  .tafel{
+    background:var(--flaeche); border:1px solid var(--linie);
+    border-radius:var(--rund-gross); padding:var(--l4) var(--l5);
   }
-  .panel h2{font-size:.78rem; text-transform:uppercase; letter-spacing:.12em;
-            color:var(--muted); margin-bottom:14px}
-  .panel h3{font-size:.9rem; font-weight:600; margin:18px 0 10px}
-  .panel h3:first-child{margin-top:0}
+  .tafel + .tafel{margin-top:var(--l4)}
+  .tafel > h2{
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.13em;
+    color:var(--leise); font-weight:600; margin-bottom:var(--l4);
+  }
+  .abschnitt{margin-bottom:var(--l5)}
+  .abschnitt:last-child{margin-bottom:0}
+  .abschnitt > h3{
+    font-size:.86rem; font-weight:600; margin-bottom:var(--l3);
+    padding-bottom:var(--l2); border-bottom:1px solid var(--linie);
+  }
 
   button{
-    border:none; border-radius:8px; padding:9px 16px; font-size:.9rem; font-weight:600;
-    cursor:pointer; background:var(--warm); color:#1a1408;
+    border:none; border-radius:var(--rund); padding:var(--l2) var(--l4);
+    font-size:.88rem; font-weight:600; cursor:pointer;
+    background:var(--warm); color:#171105; font-family:inherit;
   }
   button:hover{filter:brightness(1.08)}
-  button:disabled{opacity:.45; cursor:default}
-  button.ghost{background:transparent; color:var(--muted); border:1px solid var(--line);
-               font-weight:500; padding:7px 12px}
-  button.ghost:hover{color:var(--text); border-color:var(--muted); filter:none}
-  button.ghost.danger:hover{color:var(--danger); border-color:var(--danger)}
-  button.ghost.an{color:var(--text); border-color:var(--warm); background:rgba(232,162,61,.12)}
+  button:disabled{opacity:.4; cursor:default; filter:none}
+  button.leise{background:transparent; color:var(--leise); border:1px solid var(--linie);
+               font-weight:500; padding:6px var(--l3)}
+  button.leise:hover{color:var(--text); border-color:var(--leise); filter:none}
+  button.leise.gefahr:hover{color:var(--achtung); border-color:var(--achtung)}
 
-  input[type=text],input[type=number],input[type=time],select,textarea{
-    background:var(--surface2); border:1px solid var(--line); border-radius:8px;
-    color:var(--text); padding:8px 10px; font-size:.9rem; width:100%; color-scheme:dark;
-    font-family:inherit;
+  input[type=text],input[type=number],input[type=time],select{
+    background:var(--flaeche2); border:1px solid var(--linie); border-radius:var(--rund);
+    color:var(--text); padding:7px var(--l3); font-size:.88rem; width:100%;
+    color-scheme:dark; font-family:inherit;
   }
   input:focus,select:focus{outline:2px solid var(--warm); outline-offset:1px;
                            border-color:transparent}
-  select[multiple]{min-height:150px; padding:4px}
-  select[multiple] option{padding:4px 6px; border-radius:4px}
-  .field{display:flex; flex-direction:column; gap:5px; min-width:130px; flex:1}
-  .field label{font-size:.76rem; color:var(--muted)}
-  .zeile{display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:12px}
-  .schalter{display:flex; align-items:center; gap:8px; font-size:.88rem; cursor:pointer;
-            padding:6px 0}
-  .schalter input{width:auto; accent-color:var(--warm)}
-  .hint{font-size:.8rem; color:var(--muted); margin-top:4px}
-  code{font-family:ui-monospace,"SF Mono",Consolas,monospace; font-size:.9em;
-       color:var(--muted)}
+  select[multiple]{min-height:132px; padding:var(--l1)}
+  select[multiple] option{padding:3px 6px; border-radius:5px}
+  optgroup{color:var(--leise); font-style:normal; font-size:.78rem;
+           text-transform:uppercase; letter-spacing:.06em}
+  optgroup option{color:var(--text); text-transform:none; letter-spacing:0;
+                  font-size:.88rem}
 
-  /* --- Hinweise --- */
+  .feld{display:flex; flex-direction:column; gap:var(--l1); min-width:0}
+  .feld > label{font-size:.75rem; color:var(--leise); font-weight:500}
+  .raster-felder{display:grid; gap:var(--l3) var(--l4);
+                 grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .raster-felder.eng{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+  .haken{display:flex; align-items:flex-start; gap:var(--l2); font-size:.86rem;
+         cursor:pointer; padding:var(--l1) 0; line-height:1.45}
+  .haken input{width:auto; accent-color:var(--warm); margin-top:3px; flex:none}
+  .haken + .haken{margin-top:2px}
+  .notiz{font-size:.78rem; color:var(--sehr-leise); line-height:1.45}
+  .feld .notiz{margin-top:2px}
+  .zeile-aktionen{display:flex; gap:var(--l2); align-items:center;
+                  flex-wrap:wrap; margin-top:var(--l4)}
+  .meldung{font-size:.83rem; color:var(--achtung); min-height:1.2em}
+  .meldung.gut{color:var(--ok)}
+  .leer{color:var(--sehr-leise); font-size:.88rem; padding:var(--l3) 0}
+
+  /* ═══ Hinweise ═══ */
   .hinweis{
-    display:flex; gap:10px; align-items:flex-start; padding:10px 14px; border-radius:8px;
-    font-size:.87rem; margin-bottom:8px; border:1px solid var(--line);
+    display:flex; gap:var(--l3); align-items:center; padding:var(--l2) var(--l4);
+    border-radius:var(--rund); font-size:.85rem; border:1px solid var(--linie);
+    background:var(--flaeche);
   }
-  .hinweis.fehler{background:rgba(227,109,109,.1); border-color:rgba(227,109,109,.35)}
-  .hinweis.warnung{background:rgba(232,162,61,.1); border-color:rgba(232,162,61,.3)}
-  .hinweis.info{background:var(--surface2)}
-  .hinweis .zeichen{flex:none; font-weight:700}
-  details.vorschlaege{border:1px solid var(--line); border-radius:8px;
-    background:var(--surface2); margin-bottom:8px; padding:2px 4px}
-  details.vorschlaege summary{padding:8px 10px; font-size:.87rem; cursor:pointer;
-    color:var(--muted)}
-  details.vorschlaege summary:hover{color:var(--text)}
-  details.vorschlaege .hinweis{background:transparent; border:none;
-    margin-bottom:2px}
+  .hinweis + .hinweis, details.angebote{margin-top:var(--l2)}
+  .hinweis.fehler{background:rgba(227,109,109,.09); border-color:rgba(227,109,109,.3)}
+  .hinweis.warnung{background:rgba(232,162,61,.08); border-color:rgba(232,162,61,.26)}
+  .hinweis .zeichen{flex:none; font-weight:700; width:16px; text-align:center;
+                    color:var(--leise)}
+  .hinweis.fehler .zeichen{color:var(--achtung)}
+  .hinweis.warnung .zeichen{color:var(--warm)}
+  .hinweis .text{flex:1; min-width:120px}
+  #hinweise:not(:empty){margin-bottom:var(--l4)}
+  details.angebote{border:1px solid var(--linie); border-radius:var(--rund);
+                   background:var(--flaeche); overflow:hidden}
+  details.angebote > summary{padding:var(--l2) var(--l4); font-size:.85rem;
+    cursor:pointer; color:var(--leise); list-style:none; display:flex;
+    align-items:center; gap:var(--l2)}
+  details.angebote > summary::before{content:"▸"; font-size:.7rem}
+  details[open].angebote > summary::before{content:"▾"}
+  details.angebote > summary:hover{color:var(--text)}
+  details.angebote .hinweis{background:transparent; border:none; border-top:1px solid
+    var(--linie); border-radius:0; margin:0}
 
-  /* --- Raumkacheln --- */
-  .raster{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px}
+  /* ═══ Lage-Leiste ═══ */
+  .lage{
+    display:grid; gap:var(--l4); grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    background:var(--flaeche); border:1px solid var(--linie);
+    border-radius:var(--rund-gross); padding:var(--l4) var(--l5); margin-bottom:var(--l4);
+  }
+  .lage .posten{display:flex; flex-direction:column; gap:2px; min-width:0}
+  .lage .marke{font-size:.7rem; text-transform:uppercase; letter-spacing:.1em;
+               color:var(--sehr-leise); font-weight:600}
+  .lage .wert{font-size:1.15rem; font-weight:600; line-height:1.3}
+  .lage .wert.klein{font-size:.95rem; font-weight:500}
+  .lage .zusatz{font-size:.76rem; color:var(--leise)}
+
+  /* ═══ Raumkacheln ═══ */
+  .raster{display:grid; gap:var(--l3);
+          grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
   .karte{
-    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
-    padding:14px 16px;
+    background:var(--flaeche); border:1px solid var(--linie);
+    border-radius:var(--rund-gross); padding:var(--l4);
+    display:flex; flex-direction:column;
   }
-  .karte .kopf{display:flex; align-items:center; gap:10px; margin-bottom:10px}
-  .karte .name{font-weight:600; flex:1; min-width:0; overflow:hidden;
-               text-overflow:ellipsis; white-space:nowrap}
+  .karte > .kopfzeile{display:flex; align-items:center; gap:var(--l2);
+                      margin-bottom:var(--l3)}
+  .karte .name{font-weight:600; font-size:.95rem; flex:1; min-width:0;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .pille{
-    font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
-    padding:3px 9px; border-radius:999px; flex:none; background:var(--surface2);
-    color:var(--muted);
+    font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    padding:3px var(--l2); border-radius:99px; flex:none;
+    background:var(--flaeche2); color:var(--leise); white-space:nowrap;
   }
-  .pille.komfort{background:rgba(239,131,84,.16); color:var(--komfort)}
-  .pille.heimkehr{background:rgba(239,131,84,.16); color:var(--komfort)}
-  .pille.eco{background:rgba(122,162,255,.15); color:var(--eco)}
-  .pille.nacht{background:rgba(143,127,214,.18); color:var(--nacht)}
-  .pille.abwesend{background:rgba(90,100,114,.25); color:#a8b2c0}
-  .pille.manuell{background:rgba(232,162,61,.14); color:var(--warm)}
-  .pille.absenkung{background:rgba(143,127,214,.18); color:var(--nacht)}
-  .pille.urlaub{background:rgba(76,195,138,.15); color:var(--ok)}
-  .pille.fenster{background:rgba(227,109,109,.15); color:var(--danger)}
+  .pille.komfort,.pille.heimkehr{background:rgba(239,131,84,.15); color:var(--komfort)}
+  .pille.eco{background:rgba(122,162,255,.14); color:var(--eco)}
+  .pille.nacht,.pille.absenkung{background:rgba(143,127,214,.17); color:var(--nacht)}
+  .pille.abwesend{background:rgba(90,100,114,.24); color:#a3adba}
+  .pille.urlaub{background:rgba(76,195,138,.14); color:var(--ok)}
+  .pille.fenster{background:rgba(227,109,109,.14); color:var(--achtung)}
+  .pille.manuell{background:rgba(232,162,61,.13); color:var(--warm)}
   .pille.sommer,.pille.aus,.pille.gesperrt{background:rgba(90,100,114,.2);
-    color:var(--kalt)}
-  .temperaturen{display:flex; align-items:baseline; gap:12px; margin-bottom:8px}
-  .ziel{font-size:1.9rem; font-weight:600; line-height:1; color:var(--warm)}
-  .ziel .einheit{font-size:.9rem; font-weight:500; color:var(--muted)}
-  .ziel.zu{color:var(--kalt)}
-  .ziel.hand{color:var(--text)}
-  .ist{font-size:.88rem; color:var(--muted)}
-  .begruendung{font-size:.83rem; color:var(--muted); min-height:2.4em}
-  .karte .fuss{
-    margin-top:10px; padding-top:9px; border-top:1px solid var(--line);
-    font-size:.76rem; color:var(--muted); display:flex; flex-wrap:wrap; gap:8px;
+                                            color:var(--kalt)}
+
+  .werte{display:flex; align-items:baseline; gap:var(--l3); margin-bottom:var(--l2)}
+  .soll{font-size:2rem; font-weight:600; line-height:1; color:var(--warm);
+        letter-spacing:-.02em}
+  .soll .einheit{font-size:.85rem; font-weight:500; color:var(--leise);
+                 letter-spacing:0; margin-left:2px}
+  .soll.ruht{color:var(--kalt); font-size:1.5rem}
+  .soll.hand{color:var(--text)}
+  .ist{font-size:.83rem; color:var(--leise); margin-left:auto; text-align:right;
+       white-space:nowrap}
+  .grund{font-size:.82rem; color:var(--leise); flex:1;
+         display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+         overflow:hidden}
+  .karte .fusszeile{
+    margin-top:var(--l3); padding-top:var(--l2); border-top:1px solid var(--linie);
+    font-size:.75rem; color:var(--sehr-leise);
   }
-  .thermo{display:flex; justify-content:space-between; gap:8px; width:100%;
-          font-size:.78rem; padding:2px 0}
-  .thermo .tname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .karte .fusszeile .wechsel{display:flex; justify-content:space-between; gap:var(--l2)}
+  .karte details > summary{cursor:pointer; list-style:none; color:var(--sehr-leise);
+    display:flex; align-items:center; gap:var(--l1); padding:2px 0}
+  .karte details > summary::before{content:"▸"; font-size:.6rem}
+  .karte details[open] > summary::before{content:"▾"}
+  .karte details > summary:hover{color:var(--leise)}
+  .thermo{display:flex; justify-content:space-between; gap:var(--l2); padding:2px 0;
+          font-size:.75rem}
+  .thermo .tname{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+                 color:var(--leise)}
   .thermo .twert{flex:none; color:var(--text); font-variant-numeric:tabular-nums}
-  .thermo.fehlt .tname{color:var(--danger)}
-  .thermo.manuell .twert{color:var(--warm)}
+  .thermo.fehlt .tname{color:var(--achtung)}
+  .thermo.hand .twert{color:var(--warm)}
 
-  /* --- Listen und Tabellen --- */
-  table{width:100%; border-collapse:collapse; font-size:.85rem}
-  th{text-align:left; font-weight:500; color:var(--muted); font-size:.76rem;
-     text-transform:uppercase; letter-spacing:.08em; padding:6px 8px;
-     border-bottom:1px solid var(--line)}
-  td{padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top}
-  tr:last-child td{border-bottom:none}
-  .leer{color:var(--muted); font-size:.9rem; padding:14px 2px}
+  /* ═══ Personen ═══ */
+  .personen{display:flex; flex-wrap:wrap; gap:var(--l2)}
+  .person{display:flex; align-items:center; gap:var(--l2); background:var(--flaeche2);
+          border-radius:99px; padding:5px var(--l3); font-size:.83rem}
+  .person .zu-hause{width:7px; height:7px; border-radius:50%; background:var(--kalt)}
+  .person.daheim .zu-hause{background:var(--ok)}
+  .person .wo{color:var(--leise); font-size:.78rem}
 
-  /* --- Zeitplan-Editor --- */
-  .slot{display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px;
-        background:var(--surface2); border-radius:8px; margin-bottom:8px}
-  .slot input[type=time]{width:100px}
-  .slot select{width:auto; min-width:110px}
-  .tage{display:flex; gap:3px; flex:1}
+  /* ═══ Raumliste ═══ */
+  .raumliste{display:flex; flex-direction:column; gap:var(--l2)}
+  .raumzeile{
+    display:grid; grid-template-columns:minmax(140px,1.2fr) minmax(150px,2fr) auto;
+    gap:var(--l3); align-items:center; padding:var(--l3) var(--l4);
+    background:var(--flaeche); border:1px solid var(--linie); border-radius:var(--rund);
+  }
+  .raumzeile .rname{font-weight:600; font-size:.92rem; display:flex;
+                    align-items:center; gap:var(--l2); min-width:0}
+  .raumzeile .rname span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .raumzeile .rinfo{color:var(--leise); font-size:.8rem; display:flex;
+                    flex-wrap:wrap; gap:var(--l1) var(--l3)}
+  .merkmal{white-space:nowrap}
+  .merkmal::before{content:"· "; color:var(--sehr-leise)}
+  .merkmal:first-child::before{content:""}
+  @media (max-width:640px){
+    .raumzeile{grid-template-columns:1fr auto}
+    .raumzeile .rinfo{grid-column:1 / -1}
+    main{padding:var(--l4) var(--l3) var(--l6)}
+    .kopf,nav{padding-left:var(--l3); padding-right:var(--l3)}
+    .tafel{padding:var(--l4) var(--l3)}
+  }
+
+  /* ═══ Zeitplan ═══ */
+  .schaltpunkt{
+    display:flex; flex-wrap:wrap; gap:var(--l2); align-items:center;
+    padding:var(--l2); background:var(--flaeche2); border-radius:var(--rund);
+  }
+  .schaltpunkt + .schaltpunkt{margin-top:var(--l2)}
+  .schaltpunkt input[type=time]{width:118px; flex:none}
+  .schaltpunkt select{width:auto; min-width:104px; flex:none}
+  .tage{display:flex; gap:3px; flex:1; min-width:210px}
   .tag{
-    width:32px; height:30px; border-radius:6px; border:1px solid var(--line);
-    background:transparent; color:var(--muted); font-size:.74rem; font-weight:600;
+    width:30px; height:28px; border-radius:6px; border:1px solid var(--linie);
+    background:transparent; color:var(--sehr-leise); font-size:.72rem; font-weight:600;
     padding:0; cursor:pointer;
   }
-  .tag.an{background:rgba(232,162,61,.16); color:var(--warm); border-color:var(--warm)}
+  .tag.an{background:rgba(232,162,61,.15); color:var(--warm); border-color:var(--warm)}
 
-  .raumzeile{
-    display:flex; align-items:center; gap:12px; padding:11px 14px; background:var(--surface);
-    border:1px solid var(--line); border-radius:10px; margin-bottom:8px; flex-wrap:wrap;
-  }
-  .raumzeile .rname{font-weight:600; flex:1; min-width:140px}
-  .raumzeile .rinfo{color:var(--muted); font-size:.82rem; flex:2; min-width:180px}
-  .meldung{margin-top:10px; font-size:.86rem; color:var(--danger); min-height:1.2em}
-  .meldung.ok{color:var(--ok)}
+  /* ═══ Tabelle ═══ */
+  table{width:100%; border-collapse:collapse; font-size:.84rem}
+  th{text-align:left; font-weight:600; color:var(--sehr-leise); font-size:.7rem;
+     text-transform:uppercase; letter-spacing:.09em; padding:var(--l2);
+     border-bottom:1px solid var(--linie); white-space:nowrap}
+  td{padding:var(--l2); border-bottom:1px solid var(--linie); vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.zeit{color:var(--leise); white-space:nowrap; font-variant-numeric:tabular-nums}
+  td.was{white-space:nowrap; font-weight:500}
+
+  /* ═══ Dialog ═══ */
   dialog{
-    background:var(--surface); color:var(--text); border:1px solid var(--line);
-    border-radius:var(--radius); padding:0; max-width:760px; width:calc(100% - 32px);
-    max-height:88vh;
+    background:var(--flaeche); color:var(--text); border:1px solid var(--linie);
+    border-radius:var(--rund-gross); padding:0; width:min(720px, calc(100% - 24px));
+    max-height:min(84vh, 780px); overflow:hidden; margin:auto;
   }
-  dialog::backdrop{background:rgba(0,0,0,.6)}
-  .dialog-kopf{display:flex; align-items:center; gap:12px; padding:14px 18px;
-               border-bottom:1px solid var(--line)}
-  .dialog-kopf h2{flex:1; font-size:1rem; text-transform:none; letter-spacing:0;
-                  color:var(--text); margin:0}
-  .dialog-inhalt{padding:16px 18px; overflow-y:auto; max-height:calc(88vh - 130px)}
-  .dialog-fuss{display:flex; gap:8px; justify-content:flex-end; padding:12px 18px;
-               border-top:1px solid var(--line)}
+  dialog::backdrop{background:rgba(0,0,0,.65)}
+  .d-kopf{display:flex; align-items:center; gap:var(--l3);
+          padding:var(--l3) var(--l5); border-bottom:1px solid var(--linie)}
+  .d-kopf h2{flex:1; font-size:1rem; font-weight:600; min-width:0;
+             overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .d-reiter{display:flex; gap:var(--l1); padding:0 var(--l5); overflow-x:auto;
+            border-bottom:1px solid var(--linie); background:var(--flaeche2)}
+  .d-reiter button{background:none; border:none; border-bottom:2px solid transparent;
+    color:var(--leise); padding:var(--l2) var(--l3); font-size:.84rem; font-weight:500;
+    cursor:pointer; white-space:nowrap; font-family:inherit; border-radius:0}
+  .d-reiter button:hover{color:var(--text); filter:none}
+  .d-reiter button.an{color:var(--text); border-bottom-color:var(--warm)}
+  .d-blatt{padding:var(--l5); overflow-y:auto; max-height:calc(84vh - 168px)}
+  .d-blatt > div[data-blatt]{display:none}
+  .d-blatt > div[data-blatt].an{display:block}
+  .d-fuss{display:flex; gap:var(--l2); align-items:center;
+          padding:var(--l3) var(--l5); border-top:1px solid var(--linie)}
+  .d-fuss .platz{flex:1}
 </style>
 </head>
 <body>
-<header>
-  <h1>🔥 Heizungsplaner</h1>
-  <span class="sub" id="kopf-sub">wird geladen …</span>
-  <div class="status">
-    <span id="kopf-aussen"></span>
-    <span><span class="dot" id="kopf-punkt"></span> <span id="kopf-mqtt">MQTT</span></span>
-    <button class="ghost" id="btn-rechnen">Jetzt rechnen</button>
+
+<header class="kopf">
+  <div class="marke">
+    <h1>🔥 Heizungsplaner</h1>
+    <span class="fassung" id="k-fassung"></span>
+  </div>
+  <div class="kopf-rechts">
+    <span class="zustand" id="k-aussen"></span>
+    <span class="zustand"><span class="punkt" id="k-punkt"></span>
+      <span id="k-mqtt">MQTT</span></span>
+    <button class="leise" id="btn-rechnen">Jetzt rechnen</button>
   </div>
 </header>
 
 <nav>
-  <button data-reiter="uebersicht" class="aktiv">Übersicht</button>
-  <button data-reiter="raeume">Räume</button>
-  <button data-reiter="einstellungen">Einstellungen</button>
-  <button data-reiter="protokoll">Protokoll</button>
+  <button data-blatt="uebersicht" class="an">Übersicht</button>
+  <button data-blatt="raeume">Räume</button>
+  <button data-blatt="einstellungen">Einstellungen</button>
+  <button data-blatt="protokoll">Protokoll</button>
 </nav>
 
 <main>
-  <!-- ------------------------------------------------ Übersicht -->
-  <section id="uebersicht" class="aktiv">
-    <div id="hinweise"></div>
-    <div id="einrichtung" class="panel" style="display:none">
-      <h2>Ersteinrichtung</h2>
-      <p style="font-size:.9rem; margin-bottom:12px">
-        Der Planer kann die Räume aus Home Assistant übernehmen: je Bereich ein Raum,
-        die Thermostate dieses Bereichs, dazu ein üblicher Zeitplan und – wo der Name
-        es nahelegt – die zuständige Person.
-      </p>
-      <div id="vorschlag-liste"></div>
-      <div class="zeile" style="margin-top:12px">
-        <button id="btn-vorschlag">Vorschlag anzeigen</button>
-        <button class="ghost" id="btn-uebernehmen" style="display:none">
-          Ausgewählte Räume anlegen
-        </button>
-      </div>
-      <div class="meldung" id="einrichtung-meldung"></div>
-    </div>
-    <div class="raster" id="raumkarten"></div>
-    <div class="leer" id="uebersicht-leer" style="display:none">
-      Noch keine Räume eingerichtet.
-    </div>
-    <div class="panel" style="margin-top:20px">
-      <h2>Anwesenheit</h2>
-      <div id="personen-liste"></div>
-    </div>
-  </section>
+<!-- ══════════════════════════════════════════════ Übersicht ══ -->
+<section id="uebersicht" class="an">
+  <div id="hinweise"></div>
 
-  <!-- ---------------------------------------------------- Räume -->
-  <section id="raeume">
-    <div class="zeile">
-      <button id="btn-neuer-raum">Raum hinzufügen</button>
-      <button class="ghost" id="btn-vorschlag2">Räume aus Home Assistant übernehmen</button>
+  <div class="tafel" id="einrichtung" style="display:none">
+    <h2>Ersteinrichtung</h2>
+    <p style="font-size:.88rem; margin-bottom:var(--l3)">
+      Der Planer kann die Räume aus Home Assistant übernehmen: je Bereich ein Raum
+      mit seinen Thermostaten, einem üblichen Zeitplan und – wo der Name es
+      nahelegt – der zuständigen Person.
+    </p>
+    <div id="vorschlagsliste"></div>
+    <div class="zeile-aktionen">
+      <button id="btn-vorschlag">Vorschlag anzeigen</button>
+      <button class="leise" id="btn-uebernehmen" style="display:none">
+        Ausgewählte Räume anlegen</button>
+      <span class="meldung" id="m-einrichtung"></span>
     </div>
-    <div id="raumliste"></div>
-  </section>
+  </div>
 
-  <!-- --------------------------------------------- Einstellungen -->
-  <section id="einstellungen">
-    <div class="panel">
-      <h2>Betrieb</h2>
-      <label class="schalter">
-        <input type="checkbox" id="e-automatik">
-        <span>Automatik – der Planer stellt die Thermostate</span>
-      </label>
-      <label class="schalter">
-        <input type="checkbox" id="e-trockenlauf">
-        <span>Trockenlauf – nur rechnen und protokollieren, nichts stellen</span>
-      </label>
-      <label class="schalter">
-        <input type="checkbox" id="e-manuell">
-        <span>Handeingriffe achten – ein von Hand gedrehtes Thermostat bleibt bis
-              zum nächsten Zeitplanwechsel unangetastet</span>
-      </label>
-      <div class="zeile" style="margin-top:12px">
-        <div class="field"><label>Takt (Sekunden)</label>
-          <input type="number" id="e-takt" min="60" max="3600" step="30"></div>
-        <div class="field"><label>Frostschutz (°C)</label>
-          <input type="number" id="e-frostschutz" min="4" max="15" step="0.5"></div>
-        <div class="field"><label>Urlaubstemperatur (°C)</label>
-          <input type="number" id="e-urlaub-temp" min="5" max="25" step="0.5"></div>
-      </div>
+  <div class="lage" id="lage"></div>
+  <div class="raster" id="raumkarten"></div>
+  <div class="leer" id="uebersicht-leer" style="display:none"></div>
+
+  <div class="tafel" style="margin-top:var(--l4)">
+    <h2>Wer ist zu Hause</h2>
+    <div class="personen" id="personen"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ Räume ══ -->
+<section id="raeume">
+  <div class="raumliste" id="raumliste"></div>
+  <div class="zeile-aktionen">
+    <button id="btn-neuer-raum">Raum hinzufügen</button>
+    <button class="leise" id="btn-vorschlag2">Aus Home Assistant übernehmen</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ Einstellungen ══ -->
+<section id="einstellungen">
+  <div class="tafel">
+    <h2>Betrieb</h2>
+    <label class="haken"><input type="checkbox" id="e-automatik">
+      <span>Automatik – der Planer stellt die Thermostate</span></label>
+    <label class="haken"><input type="checkbox" id="e-trockenlauf">
+      <span>Trockenlauf – nur rechnen und protokollieren, nichts stellen</span></label>
+    <label class="haken"><input type="checkbox" id="e-manuell">
+      <span>Handeingriffe achten – ein von Hand gedrehtes Thermostat bleibt bis zum
+            nächsten Zeitplanwechsel unangetastet</span></label>
+    <div class="raster-felder eng" style="margin-top:var(--l3)">
+      <div class="feld"><label>Takt (Sekunden)</label>
+        <input type="number" id="e-takt" min="60" max="3600" step="30"></div>
+      <div class="feld"><label>Frostschutz (°C)</label>
+        <input type="number" id="e-frostschutz" min="4" max="15" step="0.5"></div>
+      <div class="feld"><label>Urlaubstemperatur (°C)</label>
+        <input type="number" id="e-urlaub-temp" min="5" max="25" step="0.5"></div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Quellen</h2>
-      <div class="zeile">
-        <div class="field"><label>Außentemperatur</label>
-          <select id="e-aussen"></select>
-          <div class="hint">Wetterdienst oder Außenfühler. Ein Fühler in der Sonne
-            taugt nicht – er meldet mittags zweistellig zu viel.</div></div>
-      </div>
-      <div class="zeile">
-        <div class="field"><label>Urlaubsschalter</label>
-          <select id="e-urlaub"></select></div>
-        <div class="field"><label>Schulfrei / Wochenende</label>
-          <select id="e-schulfrei"></select>
-          <div class="hint">Entscheidet, ob im Zeitplan die Schultag- oder die
-            Schulfrei-Einträge gelten.</div></div>
-      </div>
+  <div class="tafel">
+    <h2>Quellen aus Home Assistant</h2>
+    <div class="raster-felder">
+      <div class="feld"><label>Außentemperatur</label>
+        <select id="e-aussen"></select>
+        <div class="notiz">Wetterdienst oder Außenfühler. Ein Fühler in der Sonne
+          taugt nicht – er meldet mittags zweistellig zu viel.</div></div>
+      <div class="feld"><label>Urlaubsschalter</label>
+        <select id="e-urlaub"></select></div>
+      <div class="feld"><label>Schulfrei / Wochenende</label>
+        <select id="e-schulfrei"></select>
+        <div class="notiz">Entscheidet, ob im Zeitplan die Schultag- oder die
+          Schulfrei-Punkte gelten.</div></div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Heizkurve</h2>
-      <label class="schalter">
-        <input type="checkbox" id="e-hk-aktiv">
-        <span>Sollwert nach Außentemperatur nachführen</span>
-      </label>
-      <div class="zeile" style="margin-top:10px">
-        <div class="field"><label>Basis-Außentemperatur (°C)</label>
+  <div class="tafel">
+    <h2>Witterung</h2>
+    <div class="abschnitt">
+      <h3>Heizkurve</h3>
+      <label class="haken"><input type="checkbox" id="e-hk-aktiv">
+        <span>Sollwert nach Außentemperatur nachführen</span></label>
+      <div class="raster-felder eng" style="margin-top:var(--l3)">
+        <div class="feld"><label>Basis-Außentemperatur (°C)</label>
           <input type="number" id="e-hk-basis" min="-10" max="25" step="0.5"></div>
-        <div class="field"><label>Steilheit (K je K)</label>
+        <div class="feld"><label>Steilheit (K je K)</label>
           <input type="number" id="e-hk-steil" min="0" max="0.5" step="0.01"></div>
-        <div class="field"><label>Höchstens (K)</label>
+        <div class="feld"><label>Höchstens (K)</label>
           <input type="number" id="e-hk-max" min="0" max="6" step="0.1"></div>
       </div>
-      <div class="hint" id="hk-beispiel"></div>
+      <div class="notiz" id="hk-beispiel" style="margin-top:var(--l2)"></div>
     </div>
-
-    <div class="panel">
-      <h2>Sommerbetrieb</h2>
-      <label class="schalter">
-        <input type="checkbox" id="e-sommer-aktiv">
-        <span>Bei milder Witterung nicht heizen</span>
-      </label>
-      <div class="zeile" style="margin-top:10px">
-        <div class="field"><label>Grenze (°C, gedämpft)</label>
+    <div class="abschnitt">
+      <h3>Sommerbetrieb</h3>
+      <label class="haken"><input type="checkbox" id="e-sommer-aktiv">
+        <span>Bei milder Witterung nicht heizen</span></label>
+      <div class="raster-felder eng" style="margin-top:var(--l3)">
+        <div class="feld"><label>Grenze (°C, gedämpft)</label>
           <input type="number" id="e-sommer-grenze" min="5" max="30" step="0.5"></div>
-        <div class="field"><label>Hysterese (K)</label>
+        <div class="feld"><label>Hysterese (K)</label>
           <input type="number" id="e-sommer-hyst" min="0" max="5" step="0.1"></div>
-        <div class="field"><label>Dämpfung (Stunden)</label>
+        <div class="feld"><label>Dämpfung (Stunden)</label>
           <input type="number" id="e-daempfung" min="0" max="48" step="0.5"></div>
       </div>
-      <div class="hint">Die Dämpfung glättet die Außentemperatur, damit ein sonniger
-        Nachmittag im Februar nicht die Heizung abstellt. Beim ersten Lauf holt
-        sich der Planer den Anlauf aus der Historie von Home Assistant.</div>
-      <div class="zeile" style="margin-top:10px; margin-bottom:0">
-        <button class="ghost" id="btn-anlauf">Dämpfung neu anlaufen lassen</button>
-        <span class="meldung" id="anlauf-meldung"></span>
+      <div class="notiz" style="margin-top:var(--l2)">Die Dämpfung glättet die
+        Außentemperatur, damit ein sonniger Nachmittag im Februar nicht die Heizung
+        abstellt. Beim ersten Lauf holt sich der Planer den Anlauf aus der Historie.</div>
+      <div class="zeile-aktionen">
+        <button class="leise" id="btn-anlauf">Dämpfung neu anlaufen lassen</button>
+        <span class="meldung" id="m-anlauf"></span>
       </div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Anwesenheit und Vorheizen</h2>
-      <label class="schalter">
-        <input type="checkbox" id="e-anw-aktiv">
-        <span>Absenken, wenn niemand Zuständiges zu Hause ist</span>
-      </label>
-      <div class="zeile" style="margin-top:10px">
-        <div class="field"><label>Karenzzeit (Minuten)</label>
+  <div class="tafel">
+    <h2>Anwesenheit und Vorheizen</h2>
+    <div class="abschnitt">
+      <h3>Absenkung bei Abwesenheit</h3>
+      <label class="haken"><input type="checkbox" id="e-anw-aktiv">
+        <span>Absenken, wenn niemand Zuständiges zu Hause ist</span></label>
+      <div class="raster-felder eng" style="margin-top:var(--l3)">
+        <div class="feld"><label>Karenzzeit (Minuten)</label>
           <input type="number" id="e-anw-karenz" min="0" max="480" step="5">
-          <div class="hint">So lange muss ein Raum leer sein, bevor abgesenkt wird.</div>
-        </div>
+          <div class="notiz">So lange muss ein Raum leer sein, bevor abgesenkt wird.
+            Je Raum überschreibbar.</div></div>
       </div>
-      <label class="schalter" style="margin-top:8px">
-        <input type="checkbox" id="e-vor-aktiv">
-        <span>Vorheizen – rechtzeitig vor dem Zeitplanwechsel anlaufen</span>
-      </label>
-      <div class="zeile" style="margin-top:10px">
-        <div class="field"><label>Grundvorlauf (Minuten)</label>
+    </div>
+    <div class="abschnitt">
+      <h3>Vorheizen</h3>
+      <label class="haken"><input type="checkbox" id="e-vor-aktiv">
+        <span>Rechtzeitig vor dem Zeitplanwechsel anlaufen</span></label>
+      <div class="raster-felder eng" style="margin-top:var(--l3)">
+        <div class="feld"><label>Grundvorlauf (Min.)</label>
           <input type="number" id="e-vor-grund" min="0" max="240" step="5"></div>
-        <div class="field"><label>Zuschlag je Grad Kälte</label>
+        <div class="feld"><label>Zuschlag je Grad Kälte</label>
           <input type="number" id="e-vor-grad" min="0" max="15" step="0.5"></div>
-        <div class="field"><label>Höchstens (Minuten)</label>
+        <div class="feld"><label>Höchstens (Min.)</label>
           <input type="number" id="e-vor-max" min="0" max="360" step="10"></div>
-        <div class="field"><label>Heimkehr ab (km)</label>
+        <div class="feld"><label>Heimkehr ab (km)</label>
           <input type="number" id="e-vor-km" min="0" max="100" step="0.5">
-          <div class="hint">Ist eine zuständige Person näher, gilt der Raum wieder
+          <div class="notiz">Ist eine zuständige Person näher, gilt der Raum wieder
             als belegt.</div></div>
       </div>
-      <div class="hint" id="vor-beispiel"></div>
+      <div class="notiz" id="vor-beispiel" style="margin-top:var(--l2)"></div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>Fenstererkennung</h2>
-      <label class="schalter">
-        <input type="checkbox" id="e-fe-aktiv">
-        <span>Bei offenem Fenster auf Frostschutz gehen</span>
-      </label>
-      <div class="zeile" style="margin-top:10px">
-        <div class="field"><label>Temperatursturz (K)</label>
-          <input type="number" id="e-fe-sturz" min="0.2" max="10" step="0.1"></div>
-        <div class="field"><label>innerhalb von (Minuten)</label>
-          <input type="number" id="e-fe-min" min="2" max="120" step="1"></div>
-        <div class="field"><label>Sperre danach (Minuten)</label>
-          <input type="number" id="e-fe-sperre" min="1" max="240" step="5"></div>
-      </div>
-      <div class="hint">Ohne Fensterkontakte greift allein der Temperatursturz.
-        Fensterkontakte trägt man je Raum ein.</div>
+  <div class="tafel">
+    <h2>Fenstererkennung</h2>
+    <label class="haken"><input type="checkbox" id="e-fe-aktiv">
+      <span>Bei offenem Fenster auf Frostschutz gehen</span></label>
+    <div class="raster-felder eng" style="margin-top:var(--l3)">
+      <div class="feld"><label>Temperatursturz (K)</label>
+        <input type="number" id="e-fe-sturz" min="0.2" max="10" step="0.1"></div>
+      <div class="feld"><label>innerhalb von (Min.)</label>
+        <input type="number" id="e-fe-min" min="2" max="120" step="1"></div>
+      <div class="feld"><label>Sperre danach (Min.)</label>
+        <input type="number" id="e-fe-sperre" min="1" max="240" step="5"></div>
     </div>
+    <div class="notiz" style="margin-top:var(--l2)">Der Temperatursturz greift nur in
+      Räumen ohne Fensterkontakte. Kontakte trägt man je Raum ein.</div>
+  </div>
 
-    <div class="zeile">
-      <button id="btn-einstellungen-speichern">Einstellungen speichern</button>
-      <span class="meldung" id="einstellungen-meldung"></span>
-    </div>
-  </section>
+  <div class="zeile-aktionen">
+    <button id="btn-speichern-einst">Einstellungen speichern</button>
+    <span class="meldung" id="m-einstellungen"></span>
+  </div>
+</section>
 
-  <!-- ------------------------------------------------ Protokoll -->
-  <section id="protokoll">
-    <div class="zeile">
-      <button class="ghost" id="btn-protokoll-laden">Aktualisieren</button>
-      <button class="ghost danger" id="btn-protokoll-leeren">Protokoll leeren</button>
-    </div>
-    <div class="panel"><table id="protokoll-tabelle">
+<!-- ══════════════════════════════════════════════ Protokoll ══ -->
+<section id="protokoll">
+  <div class="tafel">
+    <table id="protokolltabelle">
       <thead><tr><th>Zeit</th><th>Raum</th><th>Was</th><th>Warum</th></tr></thead>
       <tbody></tbody>
-    </table></div>
-  </section>
+    </table>
+  </div>
+  <div class="zeile-aktionen">
+    <button class="leise" id="btn-protokoll-laden">Aktualisieren</button>
+    <button class="leise gefahr" id="btn-protokoll-leeren">Protokoll leeren</button>
+  </div>
+</section>
 </main>
 
-<!-- ------------------------------------------------ Raum-Dialog -->
+<!-- ═══════════════════════════════════════════ Raum-Dialog ══ -->
 <dialog id="raum-dialog">
-  <form method="dialog" class="dialog-kopf">
-    <h2 id="dialog-titel">Raum</h2>
-    <button class="ghost" value="abbruch">Schließen</button>
+  <form method="dialog" class="d-kopf">
+    <h2 id="d-titel">Raum</h2>
+    <button class="leise" value="abbruch">Schließen</button>
   </form>
-  <div class="dialog-inhalt">
-    <div class="zeile">
-      <div class="field" style="flex:2"><label>Name</label>
-        <input type="text" id="r-name" maxlength="60"></div>
-      <label class="schalter"><input type="checkbox" id="r-aktiv"><span>Raum aktiv</span></label>
-    </div>
-    <div class="zeile">
-      <div class="field"><label>Betriebsart</label>
-        <select id="r-betriebsart">
-          <option value="plan">Nach Zeitplan führen</option>
-          <option value="nur_absenken">Von Hand – nur zu festen Zeiten absenken</option>
-        </select>
-        <div class="hint" id="betriebsart-hinweis"></div></div>
-    </div>
-
-    <h3>Thermostate</h3>
-    <select id="r-thermostate" multiple></select>
-    <div class="hint">Mehrfachauswahl mit ⌘ bzw. Strg. Gruppen-Helfer gehören nicht
-      hierher – der Planer stellt jeden Heizkörper einzeln.</div>
-
-    <h3>Temperaturen</h3>
-    <div class="zeile">
-      <div class="field"><label>Komfort (°C)</label>
-        <input type="number" id="r-komfort" step="0.5" min="4" max="30"></div>
-      <div class="field"><label>Eco (°C)</label>
-        <input type="number" id="r-eco" step="0.5" min="4" max="30"></div>
-      <div class="field"><label>Nacht (°C)</label>
-        <input type="number" id="r-nacht" step="0.5" min="4" max="30"></div>
-      <div class="field"><label>Abwesend (°C)</label>
-        <input type="number" id="r-abwesend" step="0.5" min="4" max="30"></div>
-    </div>
-    <div class="zeile">
-      <div class="field"><label>Nie unter (°C)</label>
-        <input type="number" id="r-min" step="0.5" min="4" max="30"></div>
-      <div class="field"><label>Nie über (°C)</label>
-        <input type="number" id="r-max" step="0.5" min="4" max="35"></div>
-    </div>
-
-    <h3 id="zeitplan-titel">Zeitplan</h3>
-    <div id="r-zeitplan"></div>
-    <div class="zeile" style="margin-top:8px">
-      <button class="ghost" id="btn-slot-neu">Umschaltpunkt hinzufügen</button>
-      <select id="r-vorlage" style="width:auto">
-        <option value="">Vorlage einsetzen …</option>
-        <option value="wohnraum">Wohnraum</option>
-        <option value="kinderzimmer">Kinderzimmer</option>
-        <option value="schlafzimmer">Schlafzimmer</option>
-        <option value="nebenraum">Nebenraum</option>
-      </select>
-    </div>
-    <div class="hint" id="zeitplan-hinweis">Jeder Punkt gilt, bis der nächste
-      kommt. Der letzte Punkt des Tages reicht über Mitternacht.</div>
-
-    <h3>Freigabe</h3>
-    <div class="zeile">
-      <div class="field"><label>Nur heizen, wenn dieser Schalter an ist</label>
-        <select id="r-freigabe"></select>
-        <div class="hint">Für Räume, die nur zeitweise gebraucht werden – ein
-          Gästezimmer etwa. Steht der Schalter auf aus, bleibt der Raum kalt,
-          ganz gleich was Zeitplan und Anwesenheit sagen.</div></div>
-    </div>
-
-    <h3>Anwesenheit</h3>
-    <label class="schalter">
-      <input type="checkbox" id="r-anwesenheit">
-      <span>Absenken, wenn niemand Zuständiges da ist</span>
-    </label>
-    <label class="schalter">
-      <input type="checkbox" id="r-nur-praesenz">
-      <span>Nur der Präsenzmelder zählt – Personen im Haus bleiben außer Betracht</span>
-    </label>
-    <div class="zeile" style="margin-top:8px">
-      <div class="field" style="max-width:240px">
-        <label>Eigene Karenzzeit (Minuten)</label>
-        <input type="number" id="r-karenz" min="0" max="480" step="5"
-               placeholder="global">
-        <div class="hint">Leer lassen, dann gilt die Karenzzeit aus den
-          Einstellungen.</div></div>
-    </div>
-    <div class="zeile" style="margin-top:8px">
-      <div class="field"><label>Zuständige Personen</label>
-        <select id="r-personen" multiple size="5"></select>
-        <div class="hint">Nichts ausgewählt = die ganze Familie zählt.</div></div>
-      <div class="field"><label>Präsenz-/Bewegungsmelder</label>
-        <select id="r-praesenz" multiple size="5"></select></div>
-    </div>
-
-    <h3>Fühler und Fenster</h3>
-    <div class="zeile">
-      <div class="field"><label>Raumfühler (statt Thermostat-Mittelwert)</label>
-        <select id="r-raumtemp"></select></div>
-    </div>
-    <div class="zeile">
-      <div class="field"><label>Fensterkontakte</label>
-        <select id="r-fenster" multiple size="6"></select>
-        <div class="hint">Sobald hier ein Kontakt steht, entscheidet er allein –
-          die Temperatursturz-Erkennung tritt zurück. Meldet ein Kontakt nichts,
-          springt sie wieder ein.</div></div>
-    </div>
-    <label class="schalter">
-      <input type="checkbox" id="r-sturz">
-      <span>Zusätzlich auf Temperatursturz achten, auch wenn alle Kontakte
-            geschlossen melden</span>
-    </label>
-    <label class="schalter" style="margin-top:8px">
-      <input type="checkbox" id="r-heizkurve">
-      <span>Heizkurve auf diesen Raum anwenden</span>
-    </label>
-    <div class="meldung" id="raum-meldung"></div>
+  <div class="d-reiter">
+    <button data-blatt="grund" class="an">Grundlagen</button>
+    <button data-blatt="temperaturen">Temperaturen</button>
+    <button data-blatt="zeitplan">Zeitplan</button>
+    <button data-blatt="belegung">Belegung</button>
+    <button data-blatt="melder">Fühler und Melder</button>
   </div>
-  <div class="dialog-fuss">
-    <button class="ghost danger" id="btn-raum-loeschen">Raum löschen</button>
+
+  <div class="d-blatt">
+    <!-- ───────── Grundlagen ───────── -->
+    <div data-blatt="grund" class="an">
+      <div class="raster-felder" style="margin-bottom:var(--l4)">
+        <div class="feld" style="grid-column:span 2"><label>Name</label>
+          <input type="text" id="r-name" maxlength="60"></div>
+      </div>
+      <label class="haken" style="margin-bottom:var(--l4)">
+        <input type="checkbox" id="r-aktiv">
+        <span>Raum aktiv – ausgeschaltet bleibt das Ventil zu</span></label>
+
+      <div class="abschnitt">
+        <h3>Betriebsart</h3>
+        <div class="feld">
+          <select id="r-betriebsart">
+            <option value="plan">Nach Zeitplan führen</option>
+            <option value="nur_absenken">Von Hand – nur zu festen Zeiten absenken</option>
+          </select>
+          <div class="notiz" id="betriebsart-notiz"></div>
+        </div>
+      </div>
+
+      <div class="abschnitt">
+        <h3>Thermostate</h3>
+        <select id="r-thermostate" multiple></select>
+        <div class="notiz" style="margin-top:var(--l2)">Mehrfachauswahl mit ⌘ bzw.
+          Strg. Gruppen-Helfer gehören nicht hierher – der Planer stellt jeden
+          Heizkörper einzeln.</div>
+      </div>
+    </div>
+
+    <!-- ───────── Temperaturen ───────── -->
+    <div data-blatt="temperaturen">
+      <div class="abschnitt">
+        <h3>Sollwerte der Modi</h3>
+        <div class="raster-felder eng">
+          <div class="feld"><label>Komfort (°C)</label>
+            <input type="number" id="r-komfort" step="0.5" min="4" max="30"></div>
+          <div class="feld"><label>Eco (°C)</label>
+            <input type="number" id="r-eco" step="0.5" min="4" max="30"></div>
+          <div class="feld"><label>Nacht (°C)</label>
+            <input type="number" id="r-nacht" step="0.5" min="4" max="30"></div>
+          <div class="feld"><label>Abwesend (°C)</label>
+            <input type="number" id="r-abwesend" step="0.5" min="4" max="30"></div>
+        </div>
+      </div>
+      <div class="abschnitt">
+        <h3>Grenzen des Raumes</h3>
+        <div class="raster-felder eng">
+          <div class="feld"><label>Nie unter (°C)</label>
+            <input type="number" id="r-min" step="0.5" min="4" max="30"></div>
+          <div class="feld"><label>Nie über (°C)</label>
+            <input type="number" id="r-max" step="0.5" min="4" max="35"></div>
+        </div>
+        <div class="notiz" style="margin-top:var(--l2)">Die Grenzen deckeln auch die
+          Heizkurve.</div>
+      </div>
+      <div class="abschnitt">
+        <h3>Witterung</h3>
+        <label class="haken"><input type="checkbox" id="r-heizkurve">
+          <span>Heizkurve auf diesen Raum anwenden</span></label>
+      </div>
+    </div>
+
+    <!-- ───────── Zeitplan ───────── -->
+    <div data-blatt="zeitplan">
+      <div id="r-zeitplan"></div>
+      <div class="zeile-aktionen">
+        <button class="leise" id="btn-punkt-neu">Punkt hinzufügen</button>
+        <select id="r-vorlage" style="width:auto">
+          <option value="">Vorlage einsetzen …</option>
+          <option value="wohnraum">Wohnraum</option>
+          <option value="kinderzimmer">Kinderzimmer</option>
+          <option value="schlafzimmer">Schlafzimmer</option>
+          <option value="nebenraum">Nebenraum</option>
+        </select>
+      </div>
+      <div class="notiz" id="zeitplan-notiz" style="margin-top:var(--l3)"></div>
+    </div>
+
+    <!-- ───────── Belegung ───────── -->
+    <div data-blatt="belegung">
+      <div class="abschnitt">
+        <h3>Freigabe</h3>
+        <div class="feld"><label>Nur heizen, wenn dieser Schalter an ist</label>
+          <select id="r-freigabe"></select>
+          <div class="notiz">Für Räume, die nur zeitweise gebraucht werden – ein
+            Gästezimmer etwa. Steht der Schalter auf aus, bleibt der Raum kalt.</div>
+        </div>
+      </div>
+      <div class="abschnitt">
+        <h3>Wer den Raum belegt</h3>
+        <label class="haken"><input type="checkbox" id="r-anwesenheit">
+          <span>Absenken, wenn niemand Zuständiges da ist</span></label>
+        <label class="haken"><input type="checkbox" id="r-nur-praesenz">
+          <span>Nur der Präsenzmelder zählt – Personen im Haus bleiben außer
+            Betracht</span></label>
+        <div class="raster-felder" style="margin-top:var(--l3)">
+          <div class="feld"><label>Zuständige Personen</label>
+            <select id="r-personen" multiple size="5"></select>
+            <div class="notiz">Nichts ausgewählt = die ganze Familie zählt.</div></div>
+          <div class="feld"><label>Eigene Karenzzeit (Minuten)</label>
+            <input type="number" id="r-karenz" min="0" max="480" step="5"
+                   placeholder="global">
+            <div class="notiz">Leer lassen, dann gilt die Karenzzeit aus den
+              Einstellungen.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── Fühler und Melder ───────── -->
+    <div data-blatt="melder">
+      <div class="abschnitt">
+        <h3>Raumfühler</h3>
+        <div class="feld">
+          <select id="r-raumtemp"></select>
+          <div class="notiz">Ohne eigenen Fühler mittelt der Planer die
+            Ist-Temperaturen der Thermostate.</div></div>
+      </div>
+      <div class="abschnitt">
+        <h3>Präsenz- und Bewegungsmelder</h3>
+        <select id="r-praesenz" multiple size="5"></select>
+      </div>
+      <div class="abschnitt">
+        <h3>Fensterkontakte</h3>
+        <select id="r-fenster" multiple size="6"></select>
+        <div class="notiz" style="margin-top:var(--l2)">Sobald hier ein Kontakt steht,
+          entscheidet er allein – die Temperatursturz-Erkennung tritt zurück. Meldet
+          ein Kontakt nichts, springt sie wieder ein.</div>
+        <label class="haken" style="margin-top:var(--l2)">
+          <input type="checkbox" id="r-sturz">
+          <span>Zusätzlich auf Temperatursturz achten, auch wenn alle Kontakte
+            geschlossen melden</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-fuss">
+    <button class="leise gefahr" id="btn-raum-loeschen">Raum löschen</button>
+    <span class="meldung platz" id="m-raum"></span>
     <button id="btn-raum-speichern">Speichern</button>
   </div>
 </dialog>
@@ -524,14 +663,22 @@ const API = 'api/';
 const TAGE = [['mon','Mo'],['tue','Di'],['wed','Mi'],['thu','Do'],
               ['fri','Fr'],['sat','Sa'],['sun','So']];
 const MODUS_NAME = {komfort:'Komfort', eco:'Eco', nacht:'Nacht', aus:'Aus'};
+const ZUSTAND_NAME = {
+  komfort:'Komfort', eco:'Eco', nacht:'Nacht', abwesend:'Abwesend',
+  heimkehr:'Heimkehr', urlaub:'Urlaub', fenster:'Fenster offen', sommer:'Sommer',
+  aus:'Aus', gesperrt:'Gesperrt', manuell:'Von Hand', absenkung:'Absenkung',
+};
+// Zustände, in denen der Planer nichts stellt oder das Ventil schließt.
+const RUHT = ['sommer', 'aus', 'gesperrt'];
 
-let entitaeten = {thermostate:[], personen:[], aussen:[], fenster:[], praesenz:[], raumtemp:[]};
+let entitaeten = {thermostate:[], personen:[], aussen:[], fenster:[],
+                  sonstige_melder:[], praesenz:[], raumtemp:[], schalter:[]};
 let einstellungen = {};
 let raeume = [];
-let bearbeiteterRaum = null;
+let offenerRaum = null;
 let zeitplanEntwurf = [];
 
-// ------------------------------------------------------------ Werkzeuge --
+// ─────────────────────────────────────────────── Werkzeuge ──
 const $ = (id) => document.getElementById(id);
 
 async function hole(pfad, optionen) {
@@ -554,25 +701,21 @@ function zahl(wert, stellen = 1) {
                                        maximumFractionDigits: stellen});
 }
 
-function zeit(iso) {
-  if (!iso) return '–';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'});
-}
+const uhr = (iso) => iso
+  ? new Date(iso).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})
+  : '–';
 
 function zeitpunkt(iso) {
   if (!iso) return '–';
   const d = new Date(iso);
-  const heute = new Date();
-  const gleicherTag = d.toDateString() === heute.toDateString();
-  return (gleicherTag ? '' : d.toLocaleDateString('de-DE', {weekday: 'short'}) + ' ')
-    + d.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit'});
+  const heute = new Date().toDateString() === d.toDateString();
+  return (heute ? '' : d.toLocaleDateString('de-DE', {weekday:'short'}) + ' ') + uhr(iso);
 }
 
 function meldung(id, text, gut) {
   const el = $(id);
   el.textContent = text;
-  el.className = 'meldung' + (gut ? ' ok' : '');
+  el.className = 'meldung platz' + (gut ? ' gut' : '');
   if (text) setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, 6000);
 }
 
@@ -608,22 +751,22 @@ function fuelleAuswahl(select, liste, wert, leerText) {
   }
 }
 
-function fuelleFensterAuswahl(select, wert) {
-  // Nach Bereich gruppiert, damit ein nachgerüsteter Kontakt sofort beim
-  // richtigen Raum steht. Was nicht nach Fenster aussieht, kommt ans Ende –
-  // erreichbar, aber nicht im Weg.
+function fuelleMelderAuswahl(select, quelle, wert, anhang) {
+  // Nach Bereich gruppiert, damit ein nachgerüsteter Melder gleich beim
+  // richtigen Raum steht. Was nicht dazu passt, kommt ans Ende – erreichbar,
+  // aber nicht im Weg.
   select.innerHTML = '';
   const gruppen = new Map();
-  for (const eintrag of entitaeten.fenster || []) {
-    const schlüssel = eintrag.bereich || 'Ohne Bereich';
-    if (!gruppen.has(schlüssel)) gruppen.set(schlüssel, []);
-    gruppen.get(schlüssel).push(eintrag);
+  for (const eintrag of quelle || []) {
+    const schluessel = eintrag.bereich || 'Ohne Bereich';
+    if (!gruppen.has(schluessel)) gruppen.set(schluessel, []);
+    gruppen.get(schluessel).push(eintrag);
   }
   const vorhanden = new Set();
   const anhaengen = (ziel, eintrag) => {
     const option = document.createElement('option');
     option.value = eintrag.entity_id;
-    const stumm = eintrag.zustand && !['on', 'off'].includes(eintrag.zustand)
+    const stumm = eintrag.zustand && !['on','off'].includes(eintrag.zustand)
       ? '  ⚠ meldet nichts' : '';
     option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id + stumm;
     ziel.appendChild(option);
@@ -635,11 +778,10 @@ function fuelleFensterAuswahl(select, wert) {
     for (const eintrag of gruppen.get(name)) anhaengen(gruppe, eintrag);
     select.appendChild(gruppe);
   }
-  const sonstige = entitaeten.sonstige_melder || [];
-  if (sonstige.length) {
+  if (anhang && anhang.liste && anhang.liste.length) {
     const gruppe = document.createElement('optgroup');
-    gruppe.label = 'Sonstige Melder';
-    for (const eintrag of sonstige) anhaengen(gruppe, eintrag);
+    gruppe.label = anhang.titel;
+    for (const eintrag of anhang.liste) anhaengen(gruppe, eintrag);
     select.appendChild(gruppe);
   }
   for (const fehlend of (wert || []).filter(w => w && !vorhanden.has(w))) {
@@ -648,156 +790,212 @@ function fuelleFensterAuswahl(select, wert) {
     option.textContent = fehlend + '  (zurzeit nicht in Home Assistant)';
     select.appendChild(option);
   }
-  for (const option of select.options) option.selected = (wert || []).includes(option.value);
+  for (const option of select.options) {
+    option.selected = (wert || []).includes(option.value);
+  }
 }
 
 const gewaehlt = (select) =>
   Array.from(select.selectedOptions).map(o => o.value).filter(Boolean);
 
-// -------------------------------------------------------------- Reiter --
-document.querySelectorAll('nav button').forEach(knopf => {
-  knopf.onclick = () => {
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('aktiv'));
-    document.querySelectorAll('main section').forEach(s => s.classList.remove('aktiv'));
-    knopf.classList.add('aktiv');
-    $(knopf.dataset.reiter).classList.add('aktiv');
-    if (knopf.dataset.reiter === 'protokoll') protokollLaden();
-  };
-});
+// ────────────────────────────────────────────────── Reiter ──
+function reiterSetzen(leiste, blattRaum) {
+  leiste.querySelectorAll('button[data-blatt]').forEach(knopf => {
+    knopf.onclick = () => {
+      leiste.querySelectorAll('button[data-blatt]').forEach(b => b.classList.remove('an'));
+      blattRaum.querySelectorAll(':scope > [data-blatt], :scope > section')
+        .forEach(s => s.classList.remove('an'));
+      knopf.classList.add('an');
+      const ziel = blattRaum.querySelector(`:scope > [data-blatt="${knopf.dataset.blatt}"]`)
+        || $(knopf.dataset.blatt);
+      if (ziel) ziel.classList.add('an');
+      if (knopf.dataset.blatt === 'protokoll') protokollLaden();
+    };
+  });
+}
+reiterSetzen(document.querySelector('nav'), document.querySelector('main'));
+reiterSetzen(document.querySelector('.d-reiter'), document.querySelector('.d-blatt'));
 
-// ----------------------------------------------------------- Übersicht --
-function zeichneStatus(bericht) {
-  const teile = [];
-  if (bericht.zeit) teile.push('zuletzt ' + zeit(bericht.zeit));
-  if (bericht.trockenlauf) teile.push('Trockenlauf');
-  else if (bericht.automatik === false) teile.push('Automatik aus');
-  if (bericht.sommerbetrieb) teile.push('Sommerbetrieb');
-  if (bericht.urlaub) teile.push('Urlaub');
-  if (bericht.schulfrei === true) teile.push('schulfrei');
-  if (bericht.fehler) teile.push('Fehler: ' + bericht.fehler);
-  $('kopf-sub').textContent = teile.join(' · ') || 'bereit';
+// ─────────────────────────────────────────────── Übersicht ──
+function lageZeichnen(bericht) {
+  const raeumeImBericht = bericht.raeume || [];
+  const heizend = raeumeImBericht.filter(r => !RUHT.includes(r.zustand)).length;
+  const naechster = raeumeImBericht
+    .map(r => r.naechster_wechsel).filter(Boolean).sort()[0];
 
-  const aussen = bericht.aussen === null || bericht.aussen === undefined ? null : bericht.aussen;
-  $('kopf-aussen').textContent = aussen === null ? ''
-    : `außen ${zahl(aussen)} °C` +
-      (bericht.aussen_gedaempft !== null && bericht.aussen_gedaempft !== undefined
-        ? ` (gedämpft ${zahl(bericht.aussen_gedaempft)})` : '');
+  let betrieb = 'Regelbetrieb', betriebZusatz = '';
+  if (bericht.trockenlauf) {
+    betrieb = 'Trockenlauf'; betriebZusatz = 'es wird nichts gestellt';
+  } else if (bericht.automatik === false) {
+    betrieb = 'Automatik aus'; betriebZusatz = 'der Planer greift nicht ein';
+  } else if (bericht.urlaub) {
+    betrieb = 'Urlaub'; betriebZusatz = 'alle Räume abgesenkt';
+  } else if (bericht.sommerbetrieb) {
+    betrieb = 'Sommerbetrieb'; betriebZusatz = 'Ventile geschlossen';
+  } else if (bericht.schulfrei === true) {
+    betriebZusatz = 'schulfreier Tag';
+  } else if (bericht.schulfrei === false) {
+    betriebZusatz = 'Schultag';
+  }
 
-  const karten = $('raumkarten');
-  karten.innerHTML = '';
+  const posten = [
+    {marke:'Betrieb', wert:betrieb, zusatz:betriebZusatz, klein:true},
+    {marke:'Draußen',
+     wert: bericht.aussen === null || bericht.aussen === undefined
+       ? '–' : zahl(bericht.aussen) + ' °C',
+     zusatz: bericht.aussen_gedaempft === null || bericht.aussen_gedaempft === undefined
+       ? '' : 'gedämpft ' + zahl(bericht.aussen_gedaempft) + ' °C'},
+    {marke:'Räume', wert: `${heizend} von ${raeumeImBericht.length}`,
+     zusatz: heizend === 1 ? 'wird geregelt' : 'werden geregelt'},
+    {marke:'Nächster Wechsel', wert: zeitpunkt(naechster), zusatz:'', klein:true},
+    {marke:'Letzter Durchlauf', wert: uhr(bericht.zeit),
+     zusatz: bericht.fehler ? bericht.fehler : '', klein:true},
+  ];
+  $('lage').innerHTML = posten.map(p => `
+    <div class="posten">
+      <span class="marke">${p.marke}</span>
+      <span class="wert${p.klein ? ' klein' : ''}">${p.wert}</span>
+      ${p.zusatz ? `<span class="zusatz">${p.zusatz}</span>` : ''}
+    </div>`).join('');
+}
+
+function karteZeichnen(raum) {
+  const ruht = RUHT.includes(raum.zustand);
+  const handbetrieb = raum.zustand === 'manuell';
+  const hatHandwert = raum.handwert !== null && raum.handwert !== undefined;
+
+  let anzeige;
+  if (ruht) {
+    anzeige = `<span class="soll ruht">Aus<span class="einheit"> · Ventil zu</span></span>`;
+  } else if (handbetrieb && !hatHandwert) {
+    anzeige = `<span class="soll ruht">Von Hand</span>`;
+  } else if (handbetrieb) {
+    anzeige = `<span class="soll hand">${zahl(raum.handwert)}<span
+                 class="einheit">°C · von Hand</span></span>`;
+  } else {
+    anzeige = `<span class="soll">${zahl(raum.ziel)}<span class="einheit">°C</span></span>`;
+  }
+
+  const thermostate = (raum.thermostate || []).map(t => {
+    const klassen = ['thermo'];
+    if (!t.vorhanden) klassen.push('fehlt');
+    if (t.manuell_bis) klassen.push('hand');
+    const soll = t.soll === null || t.soll === undefined ? '–' : zahl(t.soll) + ' °C';
+    const ist = t.ist === null || t.ist === undefined ? '' : ' · ist ' + zahl(t.ist);
+    const betrieb = t.betriebsart === 'off' ? ' · aus' : '';
+    return `<div class="${klassen.join(' ')}">
+      <span class="tname">${t.name}</span>
+      <span class="twert">${soll}${ist}${betrieb}</span></div>`;
+  }).join('');
+
+  const anzahl = (raum.thermostate || []).length;
+  const karte = document.createElement('div');
+  karte.className = 'karte';
+  karte.innerHTML = `
+    <div class="kopfzeile">
+      <span class="name">${raum.name}</span>
+      <span class="pille ${raum.zustand}">${ZUSTAND_NAME[raum.zustand] || raum.zustand}</span>
+    </div>
+    <div class="werte">
+      ${anzeige}
+      <span class="ist">${raum.ist === null || raum.ist === undefined
+        ? '' : 'ist ' + zahl(raum.ist) + ' °C'}</span>
+    </div>
+    <div class="grund">${raum.begruendung}</div>
+    <div class="fusszeile">
+      <div class="wechsel">
+        <span>seit ${uhr(raum.seit)}</span>
+        <span>nächster Wechsel ${zeitpunkt(raum.naechster_wechsel)}</span>
+      </div>
+      ${thermostate ? `<details style="margin-top:var(--l1)">
+        <summary>${anzahl} Thermostat${anzahl === 1 ? '' : 'e'}</summary>
+        ${thermostate}</details>` : ''}
+    </div>`;
+  return karte;
+}
+
+function berichtZeichnen(bericht) {
+  $('k-fassung').textContent = bericht.version ? 'v' + bericht.version : '';
+  const aussen = bericht.aussen;
+  $('k-aussen').textContent = aussen === null || aussen === undefined
+    ? '' : `außen ${zahl(aussen)} °C`;
+
+  lageZeichnen(bericht);
+
+  const ziel = $('raumkarten');
+  ziel.innerHTML = '';
   const liste = bericht.raeume || [];
+  for (const raum of liste) ziel.appendChild(karteZeichnen(raum));
+
   // Ohne Antwort von Home Assistant ist der Bericht leer – das heißt aber
   // nicht, dass keine Räume eingerichtet wären.
   const leer = $('uebersicht-leer');
   leer.style.display = liste.length ? 'none' : 'block';
   leer.textContent = raeume.length
-    ? 'Kein Ergebnis vom letzten Durchlauf – ' +
-      (bericht.fehler || 'der erste Takt steht noch aus') + '.'
+    ? 'Kein Ergebnis vom letzten Durchlauf – '
+      + (bericht.fehler || 'der erste Takt steht noch aus') + '.'
     : 'Noch keine Räume eingerichtet.';
 
-  for (const raum of liste) {
-    const karte = document.createElement('div');
-    karte.className = 'karte';
-    const thermostate = (raum.thermostate || []).map(t => {
-      const klassen = ['thermo'];
-      if (!t.vorhanden) klassen.push('fehlt');
-      if (t.manuell_bis) klassen.push('manuell');
-      const wert = t.soll === null || t.soll === undefined ? '–' : zahl(t.soll) + ' °C';
-      const ist = t.ist === null || t.ist === undefined ? '' : ' · ist ' + zahl(t.ist);
-      const betrieb = t.betriebsart === 'off' ? ' · aus' : '';
-      return `<div class="${klassen.join(' ')}">
-        <span class="tname">${t.name}</span>
-        <span class="twert">${wert}${ist}${betrieb}</span></div>`;
-    }).join('');
-
-    karte.innerHTML = `
-      <div class="kopf">
-        <span class="name">${raum.name}</span>
-        <span class="pille ${raum.zustand}">${raum.zustand}</span>
-      </div>
-      <div class="temperaturen">
-        ${['sommer', 'aus', 'gesperrt'].includes(raum.zustand)
-          ? `<span class="ziel zu">Aus<span class="einheit"> · Ventil zu</span></span>`
-          : raum.zustand === 'manuell'
-            ? (raum.handwert === null || raum.handwert === undefined
-                ? `<span class="ziel zu">Von Hand</span>`
-                : `<span class="ziel hand">${zahl(raum.handwert)}<span class="einheit">
-                     °C · von Hand</span></span>`)
-            : `<span class="ziel">${zahl(raum.ziel)}<span class="einheit"> °C</span></span>`}
-        <span class="ist">${raum.ist === null || raum.ist === undefined
-          ? 'keine Ist-Temperatur' : 'ist ' + zahl(raum.ist) + ' °C'}</span>
-      </div>
-      <div class="begruendung">${raum.begruendung}</div>
-      <div class="fuss">
-        <span>seit ${zeit(raum.seit)}</span>
-        <span>· nächster Wechsel ${zeitpunkt(raum.naechster_wechsel)}</span>
-        ${thermostate}
-      </div>`;
-    karten.appendChild(karte);
-  }
-
   const personen = bericht.personen || {};
-  const zeilen = Object.entries(personen).map(([id, p]) => {
+  const eintraege = Object.entries(personen).map(([id, p]) => {
     const wo = p.zuhause ? 'zu Hause'
       : (p.entfernung_km !== null && p.entfernung_km !== undefined
           ? `${zahl(p.entfernung_km)} km entfernt` : p.zustand);
-    return `<tr><td>${p.name}</td><td>${wo}</td><td><code>${id}</code></td></tr>`;
+    return `<span class="person${p.zuhause ? ' daheim' : ''}">
+      <span class="zu-hause"></span>${p.name}<span class="wo">${wo}</span></span>`;
   }).join('');
-  $('personen-liste').innerHTML = zeilen
-    ? `<table><tbody>${zeilen}</tbody></table>`
-    : '<div class="leer">Keine Personen in Home Assistant gefunden.</div>';
+  $('personen').innerHTML = eintraege
+    || '<div class="leer">Keine Personen in Home Assistant gefunden.</div>';
 }
 
 async function gesundheitLaden() {
   try {
     const daten = await hole('gesundheit');
-    $('kopf-punkt').className = 'dot' + (daten.mqtt ? ' ok' : '');
-    $('kopf-mqtt').textContent = daten.mqtt ? 'MQTT' : 'kein MQTT';
+    $('k-punkt').className = 'punkt' + (daten.mqtt ? ' ok' : '');
+    $('k-mqtt').textContent = daten.mqtt ? 'MQTT' : 'kein MQTT';
+
     const alle = daten.hinweise || [];
     const meldungen = alle.filter(h => h.art !== 'vorschlag');
-    const vorschlaege = alle.filter(h => h.art === 'vorschlag');
+    const angebote = alle.filter(h => h.art === 'vorschlag');
 
     const zeile = (h) => {
-      const zeichen = h.art === 'fehler' ? '✕' : h.art === 'warnung' ? '!' : 'i';
+      const zeichen = h.art === 'fehler' ? '✕' : h.art === 'warnung' ? '!' : '+';
       const knoepfe = h.raum_id
-        ? `<button class="ghost" data-hinweis-raum="${h.raum_id}"
-                   data-hinweis-entity="${h.entity_id || ''}"
-                   data-hinweis-feld="${h.feld || 'fenster'}">Zuordnen</button>
-           <button class="ghost" data-abweisen="${h.entity_id || ''}"
+        ? `<button class="leise" data-raum="${h.raum_id}"
+                   data-entity="${h.entity_id || ''}"
+                   data-feld="${h.feld || 'fenster'}">Zuordnen</button>
+           <button class="leise" data-abweisen="${h.entity_id || ''}"
                    title="Diesen Vorschlag nicht mehr anzeigen">Nicht nötig</button>` : '';
-      return `<div class="hinweis ${h.art === 'vorschlag' ? 'info' : h.art}">
-                <span class="zeichen">${h.art === 'vorschlag' ? '+' : zeichen}</span>
-                <span style="flex:1">${h.text}</span>${knoepfe}</div>`;
+      return `<div class="hinweis ${h.art === 'vorschlag' ? '' : h.art}">
+        <span class="zeichen">${zeichen}</span>
+        <span class="text">${h.text}</span>${knoepfe}</div>`;
     };
 
-    // Vorschläge sind Angebote, keine Meldungen. Ab dreien wandern sie in ein
+    // Angebote sind Vorschläge, keine Meldungen. Ab dreien wandern sie in ein
     // zugeklapptes Fach, damit sie die echten Hinweise nicht zudecken.
     let inhalt = meldungen.map(zeile).join('');
-    if (vorschlaege.length) {
-      const liste = vorschlaege.map(zeile).join('');
-      inhalt += vorschlaege.length > 2
-        ? `<details class="vorschlaege"><summary>${vorschlaege.length} Melder
-             könnten einem Raum zugeordnet werden</summary>${liste}</details>`
-        : liste;
+    if (angebote.length) {
+      inhalt += angebote.length > 2
+        ? `<details class="angebote"><summary>${angebote.length} Melder könnten
+             einem Raum zugeordnet werden</summary>${angebote.map(zeile).join('')}</details>`
+        : angebote.map(zeile).join('');
     }
     $('hinweise').innerHTML = inhalt;
-    // Aus dem Hinweis heraus direkt in den Raum springen, mit dem gemeldeten
-    // Kontakt schon vorausgewählt.
+
     $('hinweise').querySelectorAll('[data-abweisen]').forEach(knopf => {
       knopf.onclick = async () => {
         knopf.disabled = true;
-        await sendeJSON('vorschlag/abweisen', 'POST',
-                        {entity_id: knopf.dataset.abweisen});
+        await sendeJSON('vorschlag/abweisen', 'POST', {entity_id: knopf.dataset.abweisen});
         gesundheitLaden();
       };
     });
-    $('hinweise').querySelectorAll('[data-hinweis-raum]').forEach(knopf => {
+    $('hinweise').querySelectorAll('[data-raum]').forEach(knopf => {
       knopf.onclick = () => {
-        const raum = raeume.find(r => r.id === knopf.dataset.hinweisRaum);
+        const raum = raeume.find(r => r.id === knopf.dataset.raum);
         if (!raum) return;
-        raumOeffnen(raum);
-        const entity = knopf.dataset.hinweisEntity;
-        const ziel = knopf.dataset.hinweisFeld === 'praesenz' ? 'r-praesenz' : 'r-fenster';
+        raumOeffnen(raum, 'melder');
+        const entity = knopf.dataset.entity;
+        const ziel = knopf.dataset.feld === 'praesenz' ? 'r-praesenz' : 'r-fenster';
         if (entity) {
           for (const option of $(ziel).options) {
             if (option.value === entity) { option.selected = true; option.scrollIntoView(); }
@@ -810,22 +1008,22 @@ async function gesundheitLaden() {
 
 async function statusLaden() {
   try {
-    zeichneStatus(await hole('status'));
+    berichtZeichnen(await hole('status'));
   } catch (err) {
-    $('kopf-sub').textContent = 'nicht erreichbar: ' + err.message;
+    $('k-aussen').textContent = 'nicht erreichbar';
   }
   gesundheitLaden();
 }
 
 $('btn-rechnen').onclick = async () => {
   $('btn-rechnen').disabled = true;
-  try { zeichneStatus(await hole('takt', {method: 'POST'})); }
+  try { berichtZeichnen(await hole('takt', {method:'POST'})); }
   finally { $('btn-rechnen').disabled = false; gesundheitLaden(); }
 };
 
-// -------------------------------------------------------- Einrichtung --
+// ───────────────────────────────────────────── Einrichtung ──
 async function vorschlagAnzeigen() {
-  const ziel = $('vorschlag-liste');
+  const ziel = $('vorschlagsliste');
   ziel.innerHTML = '<div class="leer">wird geladen …</div>';
   try {
     const vorschlag = await hole('uebernahme');
@@ -833,24 +1031,29 @@ async function vorschlagAnzeigen() {
       ziel.innerHTML = '<div class="leer">Keine Bereiche mit Thermostaten gefunden.</div>';
       return;
     }
-    ziel.innerHTML = vorschlag.map(raum => `
+    ziel.innerHTML = `<div class="raumliste">` + vorschlag.map(raum => `
       <label class="raumzeile">
-        <input type="checkbox" class="vorschlag-haken" value="${raum.name}" checked>
-        <span class="rname">${raum.name}</span>
-        <span class="rinfo">${raum.thermostate.length} Thermostat(e) ·
-          ${raum.personen.length ? raum.personen.join(', ') : 'ganze Familie'} ·
-          Komfort ${raum.komfort} °C · ${raum.zeitplan.length} Umschaltpunkte</span>
-      </label>`).join('');
+        <span class="rname"><input type="checkbox" class="vorschlag-haken"
+          value="${raum.name}" checked style="width:auto; accent-color:var(--warm)">
+          <span>${raum.name}</span></span>
+        <span class="rinfo">
+          <span class="merkmal">${raum.thermostate.length} Thermostat(e)</span>
+          <span class="merkmal">${raum.personen.length
+            ? raum.personen.map(p => p.split('.')[1]).join(', ') : 'ganze Familie'}</span>
+          <span class="merkmal">Komfort ${zahl(raum.komfort)} °C</span>
+          <span class="merkmal">${raum.zeitplan.length} Punkte</span>
+        </span>
+      </label>`).join('') + `</div>`;
     $('btn-uebernehmen').style.display = 'inline-block';
   } catch (err) {
     ziel.innerHTML = `<div class="hinweis fehler"><span class="zeichen">✕</span>
-                      <span>${err.message}</span></div>`;
+                      <span class="text">${err.message}</span></div>`;
   }
 }
 
 $('btn-vorschlag').onclick = vorschlagAnzeigen;
 $('btn-vorschlag2').onclick = () => {
-  document.querySelector('nav button[data-reiter=uebersicht]').click();
+  document.querySelector('nav button[data-blatt=uebersicht]').click();
   $('einrichtung').style.display = 'block';
   vorschlagAnzeigen();
 };
@@ -858,38 +1061,50 @@ $('btn-vorschlag2').onclick = () => {
 $('btn-uebernehmen').onclick = async () => {
   const namen = Array.from(document.querySelectorAll('.vorschlag-haken:checked'))
     .map(h => h.value);
-  if (!namen.length) { meldung('einrichtung-meldung', 'Nichts ausgewählt'); return; }
+  if (!namen.length) { meldung('m-einrichtung', 'Nichts ausgewählt'); return; }
   try {
     const ergebnis = await sendeJSON('uebernahme', 'POST', {raeume: namen});
-    meldung('einrichtung-meldung',
+    meldung('m-einrichtung',
             `${ergebnis.angelegt.length} Räume angelegt: ${ergebnis.angelegt.join(', ')}`,
             true);
     await raeumeLaden();
     await statusLaden();
-  } catch (err) { meldung('einrichtung-meldung', err.message); }
+  } catch (err) { meldung('m-einrichtung', err.message); }
 };
 
-// -------------------------------------------------------------- Räume --
-function zeichneRaumliste() {
+// ─────────────────────────────────────────────────── Räume ──
+function raumMerkmale(raum) {
+  const merkmale = [];
+  if (raum.betriebsart === 'nur_absenken') {
+    merkmale.push('von Hand', `${raum.zeitplan.length} Absenkpunkt(e)`);
+  } else {
+    merkmale.push(`Komfort ${zahl(raum.komfort)} / Eco ${zahl(raum.eco)} °C`,
+                  `${raum.zeitplan.length} Punkte`);
+    if (raum.nur_praesenz) merkmale.push('nur Präsenzmelder');
+    else if (raum.personen.length) merkmale.push(raum.personen.length + ' Person(en)');
+    else merkmale.push('ganze Familie');
+  }
+  merkmale.push(`${raum.thermostate.length} Thermostat(e)`);
+  if (raum.freigabe_entity) merkmale.push('Freigabe');
+  if (raum.fenster.length) merkmale.push(`${raum.fenster.length} Fensterkontakt(e)`);
+  return merkmale;
+}
+
+function raumlisteZeichnen() {
   const ziel = $('raumliste');
   if (!raeume.length) {
-    ziel.innerHTML = '<div class="leer">Noch keine Räume. '
-      + 'Der Assistent übernimmt sie aus Home Assistant.</div>';
+    ziel.innerHTML = '<div class="leer">Noch keine Räume. Der Assistent übernimmt '
+      + 'sie aus Home Assistant.</div>';
     $('einrichtung').style.display = 'block';
     return;
   }
   $('einrichtung').style.display = 'none';
   ziel.innerHTML = raeume.map(raum => `
     <div class="raumzeile">
-      <span class="rname">${raum.aktiv ? '' : '⏻ '}${raum.name}</span>
-      <span class="rinfo">${raum.thermostate.length} Thermostat(e) ·
-        ${raum.betriebsart === 'nur_absenken'
-          ? `von Hand, ${raum.zeitplan.length} Absenkzeitpunkt(e)`
-          : `Komfort ${raum.komfort} °C / Eco ${raum.eco} °C · `
-            + `${raum.zeitplan.length} Umschaltpunkte · `
-            + (raum.personen.length ? raum.personen.length + ' Person(en)'
-                                    : 'ganze Familie')}</span>
-      <button class="ghost" data-raum="${raum.id}">Bearbeiten</button>
+      <span class="rname">${raum.aktiv ? '' : '⏻ '}<span>${raum.name}</span></span>
+      <span class="rinfo">${raumMerkmale(raum)
+        .map(m => `<span class="merkmal">${m}</span>`).join('')}</span>
+      <button class="leise" data-raum="${raum.id}">Bearbeiten</button>
     </div>`).join('');
   ziel.querySelectorAll('button[data-raum]').forEach(knopf => {
     knopf.onclick = () => raumOeffnen(raeume.find(r => r.id === knopf.dataset.raum));
@@ -898,175 +1113,180 @@ function zeichneRaumliste() {
 
 async function raeumeLaden() {
   raeume = await hole('raeume');
-  zeichneRaumliste();
+  raumlisteZeichnen();
 }
 
-// ------------------------------------------------------ Zeitplan-Editor --
-function zeichneZeitplan() {
+// ─────────────────────────────────────── Zeitplan-Editor ──
+function zeitplanZeichnen() {
   const ziel = $('r-zeitplan');
   if (!zeitplanEntwurf.length) {
-    ziel.innerHTML = '<div class="leer">Kein Zeitplan – es gilt dauerhaft Eco.</div>';
+    ziel.innerHTML = '<div class="leer">Kein Zeitplan hinterlegt – '
+      + 'es gilt dauerhaft die Eco-Temperatur.</div>';
     return;
   }
   ziel.innerHTML = '';
-  zeitplanEntwurf.forEach((slot, index) => {
+  zeitplanEntwurf.forEach((punkt, nummer) => {
     const zeile = document.createElement('div');
-    zeile.className = 'slot';
+    zeile.className = 'schaltpunkt';
     zeile.innerHTML = `
-      <input type="time" value="${slot.start}" data-feld="start">
+      <input type="time" value="${punkt.start}" data-feld="start">
       <select data-feld="modus">
         ${Object.entries(MODUS_NAME).map(([wert, name]) =>
-          `<option value="${wert}"${slot.modus === wert ? ' selected' : ''}>${name}</option>`
+          `<option value="${wert}"${punkt.modus === wert ? ' selected' : ''}>${name}</option>`
         ).join('')}
       </select>
       <select data-feld="gilt">
-        <option value="immer"${slot.gilt === 'immer' ? ' selected' : ''}>immer</option>
-        <option value="schultag"${slot.gilt === 'schultag' ? ' selected' : ''}>Schultag</option>
-        <option value="schulfrei"${slot.gilt === 'schulfrei' ? ' selected' : ''}>schulfrei</option>
+        <option value="immer"${punkt.gilt === 'immer' ? ' selected' : ''}>immer</option>
+        <option value="schultag"${punkt.gilt === 'schultag' ? ' selected' : ''}>Schultag</option>
+        <option value="schulfrei"${punkt.gilt === 'schulfrei' ? ' selected' : ''}>schulfrei</option>
       </select>
       <span class="tage">${TAGE.map(([kuerzel, name]) =>
-        `<button type="button" class="tag${slot.tage.includes(kuerzel) ? ' an' : ''}"
+        `<button type="button" class="tag${punkt.tage.includes(kuerzel) ? ' an' : ''}"
                  data-tag="${kuerzel}">${name}</button>`).join('')}</span>
-      <button type="button" class="ghost danger" data-loeschen="1">✕</button>`;
+      <button type="button" class="leise gefahr" data-loeschen="1">✕</button>`;
 
     zeile.querySelectorAll('[data-feld]').forEach(feld => {
       feld.onchange = () => {
-        zeitplanEntwurf[index][feld.dataset.feld] = feld.value;
+        zeitplanEntwurf[nummer][feld.dataset.feld] = feld.value;
         if (feld.dataset.feld === 'start') {
           zeitplanEntwurf.sort((a, b) => a.start.localeCompare(b.start));
-          zeichneZeitplan();
+          zeitplanZeichnen();
         }
       };
     });
     zeile.querySelectorAll('[data-tag]').forEach(knopf => {
       knopf.onclick = () => {
-        const tage = zeitplanEntwurf[index].tage;
-        const position = tage.indexOf(knopf.dataset.tag);
-        if (position >= 0) tage.splice(position, 1); else tage.push(knopf.dataset.tag);
+        const tage = zeitplanEntwurf[nummer].tage;
+        const stelle = tage.indexOf(knopf.dataset.tag);
+        if (stelle >= 0) tage.splice(stelle, 1); else tage.push(knopf.dataset.tag);
         knopf.classList.toggle('an');
       };
     });
     zeile.querySelector('[data-loeschen]').onclick = () => {
-      zeitplanEntwurf.splice(index, 1);
-      zeichneZeitplan();
+      zeitplanEntwurf.splice(nummer, 1);
+      zeitplanZeichnen();
     };
     ziel.appendChild(zeile);
   });
 }
 
-$('btn-slot-neu').onclick = (ereignis) => {
+$('btn-punkt-neu').onclick = (ereignis) => {
   ereignis.preventDefault();
-  zeitplanEntwurf.push({start: '07:00', modus: 'komfort', gilt: 'immer',
+  zeitplanEntwurf.push({start:'07:00', modus:'komfort', gilt:'immer',
                         tage: TAGE.map(t => t[0])});
   zeitplanEntwurf.sort((a, b) => a.start.localeCompare(b.start));
-  zeichneZeitplan();
+  zeitplanZeichnen();
 };
 
+const alleTage = TAGE.map(t => t[0]);
+const werktage = ['mon','tue','wed','thu','fri'];
 const VORLAGEN = {
   wohnraum: [
-    {start: '05:30', modus: 'komfort', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '07:30', modus: 'eco', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '12:30', modus: 'komfort', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '09:00', modus: 'komfort', gilt: 'schulfrei', tage: TAGE.map(t => t[0])},
-    {start: '21:00', modus: 'nacht', gilt: 'immer', tage: TAGE.map(t => t[0])},
+    {start:'05:30', modus:'komfort', gilt:'schultag', tage:werktage},
+    {start:'07:30', modus:'eco', gilt:'schultag', tage:werktage},
+    {start:'12:30', modus:'komfort', gilt:'schultag', tage:werktage},
+    {start:'09:00', modus:'komfort', gilt:'schulfrei', tage:alleTage},
+    {start:'21:00', modus:'nacht', gilt:'immer', tage:alleTage},
   ],
   kinderzimmer: [
-    {start: '06:00', modus: 'komfort', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '07:30', modus: 'eco', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '13:00', modus: 'komfort', gilt: 'schultag', tage: ['mon','tue','wed','thu','fri']},
-    {start: '09:00', modus: 'komfort', gilt: 'schulfrei', tage: TAGE.map(t => t[0])},
-    {start: '21:00', modus: 'nacht', gilt: 'immer', tage: TAGE.map(t => t[0])},
+    {start:'06:00', modus:'komfort', gilt:'schultag', tage:werktage},
+    {start:'07:30', modus:'eco', gilt:'schultag', tage:werktage},
+    {start:'13:00', modus:'komfort', gilt:'schultag', tage:werktage},
+    {start:'09:00', modus:'komfort', gilt:'schulfrei', tage:alleTage},
+    {start:'21:00', modus:'nacht', gilt:'immer', tage:alleTage},
   ],
   schlafzimmer: [
-    {start: '06:00', modus: 'komfort', gilt: 'immer', tage: TAGE.map(t => t[0])},
-    {start: '09:00', modus: 'eco', gilt: 'immer', tage: TAGE.map(t => t[0])},
-    {start: '19:00', modus: 'komfort', gilt: 'immer', tage: TAGE.map(t => t[0])},
-    {start: '22:00', modus: 'nacht', gilt: 'immer', tage: TAGE.map(t => t[0])},
+    {start:'06:00', modus:'komfort', gilt:'immer', tage:alleTage},
+    {start:'09:00', modus:'eco', gilt:'immer', tage:alleTage},
+    {start:'19:00', modus:'komfort', gilt:'immer', tage:alleTage},
+    {start:'22:00', modus:'nacht', gilt:'immer', tage:alleTage},
   ],
   nebenraum: [
-    {start: '07:00', modus: 'eco', gilt: 'immer', tage: TAGE.map(t => t[0])},
-    {start: '21:00', modus: 'nacht', gilt: 'immer', tage: TAGE.map(t => t[0])},
+    {start:'07:00', modus:'eco', gilt:'immer', tage:alleTage},
+    {start:'21:00', modus:'nacht', gilt:'immer', tage:alleTage},
   ],
 };
-
-function betriebsartAnzeigen() {
-  const handbetrieb = $('r-betriebsart').value === 'nur_absenken';
-  $('betriebsart-hinweis').textContent = handbetrieb
-    ? 'Der Planer stellt den Raum nur zu den Zeitpunkten unten. Dazwischen '
-      + 'bleibt er unangetastet – auch wenn jemand hochdreht. Anwesenheit, '
-      + 'Vorheizen und Heizkurve gelten hier nicht.'
-    : 'Der Planer führt den Sollwert durchgehend nach Zeitplan, Anwesenheit '
-      + 'und Außentemperatur.';
-  $('zeitplan-titel').textContent = handbetrieb ? 'Absenkzeitpunkte' : 'Zeitplan';
-  $('zeitplan-hinweis').textContent = handbetrieb
-    ? 'Zu jedem Zeitpunkt wird die zugehörige Temperatur einmal gestellt. '
-      + 'Verpasst der Planer einen (etwa weil er stand), holt er ihn nicht nach.'
-    : 'Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des Tages '
-      + 'reicht über Mitternacht.';
-  for (const id of ['r-anwesenheit', 'r-heizkurve', 'r-nur-praesenz']) {
-    $(id).disabled = handbetrieb;
-    $(id).parentElement.style.opacity = handbetrieb ? .45 : 1;
-  }
-  $('r-karenz').disabled = handbetrieb;
-  $('btn-slot-neu').textContent = handbetrieb
-    ? 'Absenkzeitpunkt hinzufügen' : 'Umschaltpunkt hinzufügen';
-}
-
-$('r-betriebsart').onchange = betriebsartAnzeigen;
 
 $('r-vorlage').onchange = (ereignis) => {
   const vorlage = VORLAGEN[ereignis.target.value];
   if (vorlage) {
     zeitplanEntwurf = JSON.parse(JSON.stringify(vorlage));
-    zeichneZeitplan();
+    zeitplanZeichnen();
   }
   ereignis.target.value = '';
 };
 
-// -------------------------------------------------------- Raum-Dialog --
-function raumOeffnen(raum) {
-  bearbeiteterRaum = raum;
+// ─────────────────────────────────────────── Raum-Dialog ──
+function betriebsartAnzeigen() {
+  const handbetrieb = $('r-betriebsart').value === 'nur_absenken';
+  $('betriebsart-notiz').textContent = handbetrieb
+    ? 'Der Planer stellt den Raum nur zu den Zeitpunkten des Plans. Dazwischen '
+      + 'bleibt er unangetastet – auch wenn jemand hochdreht. Anwesenheit, '
+      + 'Vorheizen und Heizkurve gelten hier nicht.'
+    : 'Der Planer führt den Sollwert durchgehend nach Zeitplan, Anwesenheit und '
+      + 'Außentemperatur.';
+  $('zeitplan-notiz').textContent = handbetrieb
+    ? 'Zu jedem Punkt wird die zugehörige Temperatur einmal gestellt und dabei eine '
+      + 'Handeinstellung überschrieben. Einen verpassten Punkt holt der Planer nicht nach.'
+    : 'Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des Tages reicht '
+      + 'über Mitternacht.';
+  $('btn-punkt-neu').textContent = handbetrieb
+    ? 'Absenkpunkt hinzufügen' : 'Umschaltpunkt hinzufügen';
+  for (const id of ['r-anwesenheit', 'r-heizkurve', 'r-nur-praesenz', 'r-karenz']) {
+    $(id).disabled = handbetrieb;
+    const traeger = $(id).closest('.haken') || $(id).closest('.feld');
+    if (traeger) traeger.style.opacity = handbetrieb ? .45 : 1;
+  }
+}
+$('r-betriebsart').onchange = betriebsartAnzeigen;
+
+function raumOeffnen(raum, startblatt) {
+  offenerRaum = raum;
   const neu = !raum;
-  const daten = raum || {
-    name: '', aktiv: true, thermostate: [], personen: [], praesenz: [], fenster: [],
-    raumtemp: '', komfort: 21, eco: 19, nacht: 18, abwesend: 17, min: 5, max: 26,
-    heizkurve: true, anwesenheit: true, sturz_auch_mit_kontakten: false,
-    nur_praesenz: false, karenz_min: null, freigabe_entity: '',
-    betriebsart: 'plan', zeitplan: [],
+  const d = raum || {
+    name:'', aktiv:true, betriebsart:'plan', thermostate:[], personen:[], praesenz:[],
+    fenster:[], raumtemp:'', komfort:21, eco:19, nacht:18, abwesend:17, min:5, max:26,
+    heizkurve:true, anwesenheit:true, nur_praesenz:false, karenz_min:null,
+    freigabe_entity:'', sturz_auch_mit_kontakten:false, zeitplan:[],
   };
-  $('dialog-titel').textContent = neu ? 'Neuer Raum' : daten.name;
-  $('r-name').value = daten.name;
-  $('r-aktiv').checked = daten.aktiv;
-  $('r-betriebsart').value = daten.betriebsart || 'plan';
-  $('r-komfort').value = daten.komfort;
-  $('r-eco').value = daten.eco;
-  $('r-nacht').value = daten.nacht;
-  $('r-abwesend').value = daten.abwesend;
-  $('r-min').value = daten.min;
-  $('r-max').value = daten.max;
-  $('r-heizkurve').checked = daten.heizkurve;
-  $('r-anwesenheit').checked = daten.anwesenheit;
-  $('r-sturz').checked = daten.sturz_auch_mit_kontakten;
-  $('r-nur-praesenz').checked = daten.nur_praesenz;
-  $('r-karenz').value = daten.karenz_min === null || daten.karenz_min === undefined
-    ? '' : daten.karenz_min;
-  fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], daten.freigabe_entity,
-                'immer freigegeben');
+  $('d-titel').textContent = neu ? 'Neuer Raum' : d.name;
+  $('r-name').value = d.name;
+  $('r-aktiv').checked = d.aktiv;
+  $('r-betriebsart').value = d.betriebsart || 'plan';
+  $('r-komfort').value = d.komfort;
+  $('r-eco').value = d.eco;
+  $('r-nacht').value = d.nacht;
+  $('r-abwesend').value = d.abwesend;
+  $('r-min').value = d.min;
+  $('r-max').value = d.max;
+  $('r-heizkurve').checked = d.heizkurve;
+  $('r-anwesenheit').checked = d.anwesenheit;
+  $('r-nur-praesenz').checked = d.nur_praesenz;
+  $('r-sturz').checked = d.sturz_auch_mit_kontakten;
+  $('r-karenz').value = d.karenz_min === null || d.karenz_min === undefined
+    ? '' : d.karenz_min;
   $('btn-raum-loeschen').style.display = neu ? 'none' : 'inline-block';
 
-  const einzelthermostate = entitaeten.thermostate.filter(
-    t => !t.gruppe || daten.thermostate.includes(t.entity_id));
-  fuelleAuswahl($('r-thermostate'), einzelthermostate, daten.thermostate);
-  fuelleAuswahl($('r-personen'), entitaeten.personen, daten.personen);
-  fuelleAuswahl($('r-praesenz'), entitaeten.praesenz, daten.praesenz);
-  fuelleFensterAuswahl($('r-fenster'), daten.fenster);
-  fuelleAuswahl($('r-raumtemp'), entitaeten.raumtemp, daten.raumtemp,
+  const einzeln = entitaeten.thermostate.filter(
+    t => !t.gruppe || d.thermostate.includes(t.entity_id));
+  fuelleAuswahl($('r-thermostate'), einzeln, d.thermostate);
+  fuelleAuswahl($('r-personen'), entitaeten.personen, d.personen);
+  fuelleAuswahl($('r-raumtemp'), entitaeten.raumtemp, d.raumtemp,
                 'Mittelwert der Thermostate');
+  fuelleAuswahl($('r-freigabe'), entitaeten.schalter || [], d.freigabe_entity,
+                'immer freigegeben');
+  fuelleMelderAuswahl($('r-praesenz'), entitaeten.praesenz, d.praesenz);
+  fuelleMelderAuswahl($('r-fenster'), entitaeten.fenster, d.fenster,
+                      {titel:'Sonstige Melder', liste: entitaeten.sonstige_melder});
 
-  zeitplanEntwurf = JSON.parse(JSON.stringify(daten.zeitplan || []));
-  zeichneZeitplan();
+  zeitplanEntwurf = JSON.parse(JSON.stringify(d.zeitplan || []));
+  zeitplanZeichnen();
   betriebsartAnzeigen();
-  $('raum-meldung').textContent = '';
+  $('m-raum').textContent = '';
+
+  const reiter = document.querySelector(
+    `.d-reiter button[data-blatt="${startblatt || 'grund'}"]`);
+  if (reiter) reiter.click();
   $('raum-dialog').showModal();
 }
 
@@ -1090,35 +1310,35 @@ $('btn-raum-speichern').onclick = async () => {
     max: parseFloat($('r-max').value),
     heizkurve: $('r-heizkurve').checked,
     anwesenheit: $('r-anwesenheit').checked,
-    sturz_auch_mit_kontakten: $('r-sturz').checked,
     nur_praesenz: $('r-nur-praesenz').checked,
     karenz_min: $('r-karenz').value === '' ? null : parseInt($('r-karenz').value, 10),
     freigabe_entity: $('r-freigabe').value,
+    sturz_auch_mit_kontakten: $('r-sturz').checked,
     zeitplan: zeitplanEntwurf,
   };
   try {
-    if (bearbeiteterRaum) await sendeJSON('raeume/' + bearbeiteterRaum.id, 'PUT', koerper);
+    if (offenerRaum) await sendeJSON('raeume/' + offenerRaum.id, 'PUT', koerper);
     else await sendeJSON('raeume', 'POST', koerper);
     $('raum-dialog').close();
     await raeumeLaden();
     setTimeout(statusLaden, 800);
-  } catch (err) { meldung('raum-meldung', err.message); }
+  } catch (err) { meldung('m-raum', err.message); }
 };
 
 $('btn-raum-loeschen').onclick = async () => {
-  if (!bearbeiteterRaum) return;
-  if (!confirm(`Raum „${bearbeiteterRaum.name}“ wirklich löschen?\n\n`
+  if (!offenerRaum) return;
+  if (!confirm(`Raum „${offenerRaum.name}“ wirklich löschen?\n\n`
     + 'Die Thermostate behalten ihren zuletzt gestellten Wert.')) return;
   try {
-    await hole('raeume/' + bearbeiteterRaum.id, {method: 'DELETE'});
+    await hole('raeume/' + offenerRaum.id, {method:'DELETE'});
     $('raum-dialog').close();
     await raeumeLaden();
     setTimeout(statusLaden, 800);
-  } catch (err) { meldung('raum-meldung', err.message); }
+  } catch (err) { meldung('m-raum', err.message); }
 };
 
-// ------------------------------------------------------ Einstellungen --
-function zeichneEinstellungen() {
+// ───────────────────────────────────────── Einstellungen ──
+function einstellungenZeichnen() {
   const e = einstellungen;
   $('e-automatik').checked = e.automatik;
   $('e-trockenlauf').checked = e.trockenlauf;
@@ -1128,29 +1348,8 @@ function zeichneEinstellungen() {
   $('e-urlaub-temp').value = e.urlaub_temperatur;
 
   fuelleAuswahl($('e-aussen'), entitaeten.aussen, e.aussen_entity, 'keine');
-  // Steht die eingestellte Entität nicht in der Liste, wird sie unten als
-  // eigener Eintrag ergänzt – sonst verfiele die Einstellung beim Speichern.
-  for (const [id, wert] of [['e-urlaub', e.urlaub_entity],
-                            ['e-schulfrei', e.schulfrei_entity]]) {
-    const select = $(id);
-    select.innerHTML = '';
-    const leer = document.createElement('option');
-    leer.value = ''; leer.textContent = 'keine';
-    select.appendChild(leer);
-    for (const eintrag of entitaeten.schalter || []) {
-      const option = document.createElement('option');
-      option.value = eintrag.entity_id;
-      option.textContent = eintrag.name + '  ·  ' + eintrag.entity_id;
-      select.appendChild(option);
-    }
-    select.value = wert || '';
-    if (wert && select.value !== wert) {
-      const option = document.createElement('option');
-      option.value = wert; option.textContent = wert + '  (nicht gefunden)';
-      select.appendChild(option);
-      select.value = wert;
-    }
-  }
+  fuelleAuswahl($('e-urlaub'), entitaeten.schalter || [], e.urlaub_entity, 'keiner');
+  fuelleAuswahl($('e-schulfrei'), entitaeten.schalter || [], e.schulfrei_entity, 'keiner');
 
   $('e-hk-aktiv').checked = e.heizkurve.aktiv;
   $('e-hk-basis').value = e.heizkurve.basis_aussen;
@@ -1171,10 +1370,10 @@ function zeichneEinstellungen() {
   $('e-fe-sturz').value = e.fenster.sturz_k;
   $('e-fe-min').value = e.fenster.sturz_min;
   $('e-fe-sperre').value = e.fenster.sperre_min;
-  beispieleAktualisieren();
+  beispieleZeichnen();
 }
 
-function beispieleAktualisieren() {
+function beispieleZeichnen() {
   const basis = parseFloat($('e-hk-basis').value);
   const steil = parseFloat($('e-hk-steil').value);
   const grenze = parseFloat($('e-hk-max').value);
@@ -1200,22 +1399,22 @@ function beispieleAktualisieren() {
 }
 
 ['e-hk-basis','e-hk-steil','e-hk-max','e-vor-grund','e-vor-grad','e-vor-max']
-  .forEach(id => { $(id).oninput = beispieleAktualisieren; });
+  .forEach(id => { $(id).oninput = beispieleZeichnen; });
 
 $('btn-anlauf').onclick = async () => {
   $('btn-anlauf').disabled = true;
   try {
-    const bericht = await hole('anlauf', {method: 'POST'});
+    const bericht = await hole('anlauf', {method:'POST'});
     const wert = bericht.aussen_gedaempft;
-    meldung('anlauf-meldung', wert === null || wert === undefined
+    meldung('m-anlauf', wert === null || wert === undefined
       ? 'Zurückgesetzt – noch kein Wert'
       : `Neu angesetzt auf ${zahl(wert)} °C`, true);
-    zeichneStatus(bericht);
-  } catch (err) { meldung('anlauf-meldung', err.message); }
+    berichtZeichnen(bericht);
+  } catch (err) { meldung('m-anlauf', err.message); }
   finally { $('btn-anlauf').disabled = false; }
 };
 
-$('btn-einstellungen-speichern').onclick = async () => {
+$('btn-speichern-einst').onclick = async () => {
   const koerper = {
     automatik: $('e-automatik').checked,
     trockenlauf: $('e-trockenlauf').checked,
@@ -1258,19 +1457,19 @@ $('btn-einstellungen-speichern').onclick = async () => {
   };
   try {
     einstellungen = await sendeJSON('einstellungen', 'PUT', koerper);
-    meldung('einstellungen-meldung', 'Gespeichert', true);
+    meldung('m-einstellungen', 'Gespeichert', true);
     setTimeout(statusLaden, 800);
-  } catch (err) { meldung('einstellungen-meldung', err.message); }
+  } catch (err) { meldung('m-einstellungen', err.message); }
 };
 
-// ---------------------------------------------------------- Protokoll --
+// ─────────────────────────────────────────────── Protokoll ──
 async function protokollLaden() {
-  const koerper = $('protokoll-tabelle').querySelector('tbody');
+  const koerper = $('protokolltabelle').querySelector('tbody');
   try {
     const eintraege = await hole('logbuch');
     koerper.innerHTML = eintraege.length ? eintraege.map(e => `
-      <tr><td>${zeitpunkt(e.zeit)}</td><td>${e.raum}</td>
-          <td>${e.was}</td><td>${e.warum}</td></tr>`).join('')
+      <tr><td class="zeit">${zeitpunkt(e.zeit)}</td><td>${e.raum}</td>
+          <td class="was">${e.was}</td><td>${e.warum}</td></tr>`).join('')
       : '<tr><td colspan="4" class="leer">Noch nichts geschehen.</td></tr>';
   } catch (err) {
     koerper.innerHTML = `<tr><td colspan="4" class="leer">${err.message}</td></tr>`;
@@ -1280,11 +1479,11 @@ async function protokollLaden() {
 $('btn-protokoll-laden').onclick = protokollLaden;
 $('btn-protokoll-leeren').onclick = async () => {
   if (!confirm('Protokoll wirklich leeren?')) return;
-  await hole('logbuch', {method: 'DELETE'});
+  await hole('logbuch', {method:'DELETE'});
   protokollLaden();
 };
 
-// ------------------------------------------------------------- Start --
+// ─────────────────────────────────────────────────── Start ──
 async function start() {
   try {
     entitaeten = await hole('entitaeten');
@@ -1293,10 +1492,10 @@ async function start() {
     const config = await hole('config');
     einstellungen = config.einstellungen;
     raeume = config.raeume;
-    zeichneEinstellungen();
-    zeichneRaumliste();
+    einstellungenZeichnen();
+    raumlisteZeichnen();
   } catch (err) {
-    $('kopf-sub').textContent = 'Konfiguration nicht lesbar: ' + err.message;
+    $('k-aussen').textContent = 'Konfiguration nicht lesbar';
   }
   statusLaden();
   setInterval(statusLaden, 30000);
