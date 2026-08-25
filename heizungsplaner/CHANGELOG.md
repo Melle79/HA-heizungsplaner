@@ -1,5 +1,14 @@
 # Änderungen
 
+## 1.12.2
+
+- **„Heute nicht“ statt „nicht“.** Scheitert eine Regel an einem Ferientag
+  oder einem freien Tag, steht dort jetzt *greift heute nicht – Ferien &
+  Feiertage läuft*; scheitert sie an einer abwesenden Person, *greift gerade
+  nicht – Isabel ist nicht zu Hause*. Ein Ferientag gilt bis Mitternacht, eine
+  Person kann in fünf Minuten zurück sein – das sind zwei verschiedene
+  Aussagen.
+
 ## 1.12.1
 
 - **„Ruht“ sagt jetzt, warum.** Statt eines Worts, das man erst deuten muss,

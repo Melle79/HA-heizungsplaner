@@ -1712,15 +1712,31 @@ function uebersteuerungZeichnen() {
         const bedingung = regel.wenn[wo];
         const gemeint = auswahl.find(e => e.entity_id === bedingung.entity);
         const kurz = (gemeint ? gemeint.name : bedingung.entity) || 'eine Bedingung';
-        lage.textContent = stand[wo] === null
-          ? 'greift nicht: ' + kurz + ' meldet nichts'
-          : 'greift nicht: ' + kurz;
-        lage.title = stand[wo] === null
-          ? kurz + ' meldet weder an noch aus.'
-          : kurz + ' ist gerade nicht „' +
-            (bedingung.zustand === 'aus' ? 'aus' : 'an') + '“.';
+        const art = (bedingung.entity || '').split('.')[0];
+        const person = art === 'person' || art === 'device_tracker';
+        // Ein Ferientag oder ein freier Tag gilt für den ganzen Tag, eine
+        // abwesende Person nur für den Augenblick. Das darf die Anzeige nicht
+        // durcheinanderbringen: „heute nicht“ heißt etwas anderes als
+        // „gerade nicht“.
+        const tagesfrage = art === 'calendar'
+          || /workday|feiertag|ferien|schulfrei|urlaub/.test(bedingung.entity || '');
+        let grund;
+        if (stand[wo] === null) {
+          grund = kurz + ' meldet nichts';
+        } else if (bedingung.zustand === 'aus') {
+          grund = person ? kurz + ' ist zu Hause'
+                : (art === 'calendar' ? kurz + ' läuft' : kurz + ' ist an');
+        } else {
+          grund = person ? kurz + ' ist nicht zu Hause'
+                : (art === 'calendar' ? kurz + ' läuft nicht' : kurz + ' ist aus');
+        }
+        lage.textContent = (tagesfrage ? 'greift heute nicht – '
+                                       : 'greift gerade nicht – ') + grund;
+        lage.title = 'Die Regel ist eingerichtet, aber diese Bedingung trifft '
+          + 'nicht zu. Sobald sie erfüllt ist, greift die Regel von selbst.';
       } else {
-        lage.textContent = 'greift nicht: außerhalb ' + regel.von + '–' + regel.bis;
+        lage.textContent = 'greift gerade nicht – außerhalb '
+          + regel.von + '–' + regel.bis + ' Uhr';
         lage.title = 'Alle Bedingungen treffen zu, aber die Uhrzeit liegt '
           + 'außerhalb des Zeitfensters.';
       }
