@@ -1,4 +1,4 @@
-# Heizungsplaner – Anleitung
+# Heizungsplaner · Heating Planner – Anleitung
 
 Diese Anleitung erklärt, was der Planer tut und warum. Für die Installation
 genügt die [README](https://github.com/Melle79/HA-heizungsplaner/blob/main/README.de.md).

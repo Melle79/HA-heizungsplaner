@@ -1,4 +1,4 @@
-# Heizungsplaner
+# Heizungsplaner · Heating Planner
 
 Ein Home-Assistant-Add-on, das Heizkörperthermostate vorausschauend stellt –
 nach Zeitplan, Außentemperatur und Anwesenheit.

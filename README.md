@@ -1,4 +1,4 @@
-# Heating Planner
+# Heating Planner · Heizungsplaner
 
 A Home Assistant add-on that sets radiator thermostats ahead of time – by
 schedule, outdoor temperature and presence.

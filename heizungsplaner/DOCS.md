@@ -1,4 +1,4 @@
-# Heating Planner – Manual
+# Heating Planner · Heizungsplaner – Manual
 
 This manual explains what the planner does and why. For installation the
 [README](https://github.com/Melle79/HA-heizungsplaner) is enough.
