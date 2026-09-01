@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 
 from flask import Flask, jsonify, request, send_from_directory
 
+import einheit
 import ha_api
 import logbuch
 import regelung
@@ -204,13 +205,14 @@ def statisch(datei: str):
 
 @app.route("/api/sprache")
 def api_sprache():
-    """Welche Sprache spricht Home Assistant?
+    """Welche Sprache und welches Maßsystem führt Home Assistant?
 
     Die Oberfläche fragt das einmal beim Laden. Ein eigener, winziger Endpunkt
     statt eines Feldes im Status: Die Übersetzung soll stehen, bevor die
     ersten Daten eintreffen – sonst blitzt die deutsche Fassung kurz auf.
     """
-    return jsonify({"sprache": texte.sprache()})
+    return jsonify({"sprache": texte.sprache(),
+                    "einheit": einheit.einheit()})
 
 @app.route("/api/status")
 def api_status():

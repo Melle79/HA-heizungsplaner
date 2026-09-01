@@ -17,6 +17,7 @@ import os
 import urllib.error
 import urllib.request
 
+import einheit
 import texte
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,6 +71,8 @@ def ist_bereit() -> bool:
     # nachgezogen: Wer sie in Home Assistant umstellt, soll sie nicht erst
     # nach einem Neustart des Add-ons wiederfinden.
     texte.sprache_setzen(config.get("language"))
+    einheit.einheit_setzen(
+        (config.get("unit_system") or {}).get("temperature"))
 
     zustand = config.get("state")
     # Ältere Fassungen melden kein `state` – dann wird Bereitschaft angenommen.

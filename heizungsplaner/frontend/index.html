@@ -439,9 +439,9 @@
     <div class="raster-felder eng" style="margin-top:var(--l3)">
       <div class="feld"><label>Takt (Sekunden)</label>
         <input type="number" id="e-takt" min="60" max="3600" step="30"></div>
-      <div class="feld"><label>Frostschutz (°C)</label>
+      <div class="feld"><label>Frostschutz (<span class="einheit-marke">°C</span>)</label>
         <input type="number" id="e-frostschutz" min="4" max="15" step="0.5"></div>
-      <div class="feld"><label>Urlaubstemperatur (°C)</label>
+      <div class="feld"><label>Urlaubstemperatur (<span class="einheit-marke">°C</span>)</label>
         <input type="number" id="e-urlaub-temp" min="5" max="25" step="0.5"></div>
     </div>
   </div>
@@ -469,7 +469,7 @@
       <label class="haken"><input type="checkbox" id="e-hk-aktiv">
         <span>Sollwert nach Außentemperatur nachführen</span></label>
       <div class="raster-felder eng" style="margin-top:var(--l3)">
-        <div class="feld"><label>Basis-Außentemperatur (°C)</label>
+        <div class="feld"><label>Basis-Außentemperatur (<span class="einheit-marke">°C</span>)</label>
           <input type="number" id="e-hk-basis" min="-10" max="25" step="0.5"></div>
         <div class="feld"><label>Steilheit (K je K)</label>
           <input type="number" id="e-hk-steil" min="0" max="0.5" step="0.01"></div>
@@ -483,7 +483,7 @@
       <label class="haken"><input type="checkbox" id="e-sommer-aktiv">
         <span>Bei milder Witterung nicht heizen</span></label>
       <div class="raster-felder eng" style="margin-top:var(--l3)">
-        <div class="feld"><label>Grenze (°C, gedämpft)</label>
+        <div class="feld"><label>Grenze (<span class="einheit-marke">°C</span>, gedämpft)</label>
           <input type="number" id="e-sommer-grenze" min="5" max="30" step="0.5"></div>
         <div class="feld"><label>Hysterese (K)</label>
           <input type="number" id="e-sommer-hyst" min="0" max="5" step="0.1"></div>
@@ -675,22 +675,22 @@
       <div class="abschnitt">
         <h3>Sollwerte der Modi</h3>
         <div class="raster-felder eng">
-          <div class="feld"><label>Komfort (°C)</label>
+          <div class="feld"><label>Komfort (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-komfort" step="0.5" min="4" max="30"></div>
-          <div class="feld"><label>Eco (°C)</label>
+          <div class="feld"><label>Eco (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-eco" step="0.5" min="4" max="30"></div>
-          <div class="feld"><label>Nacht (°C)</label>
+          <div class="feld"><label>Nacht (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-nacht" step="0.5" min="4" max="30"></div>
-          <div class="feld"><label>Abwesend (°C)</label>
+          <div class="feld"><label>Abwesend (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-abwesend" step="0.5" min="4" max="30"></div>
         </div>
       </div>
       <div class="abschnitt">
         <h3>Grenzen des Raumes</h3>
         <div class="raster-felder eng">
-          <div class="feld"><label>Nie unter (°C)</label>
+          <div class="feld"><label>Nie unter (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-min" step="0.5" min="4" max="30"></div>
-          <div class="feld"><label>Nie über (°C)</label>
+          <div class="feld"><label>Nie über (<span class="einheit-marke">°C</span>)</label>
             <input type="number" id="r-max" step="0.5" min="4" max="35"></div>
         </div>
         <div class="notiz" style="margin-top:var(--l2)">Die Grenzen deckeln auch die
@@ -804,6 +804,21 @@
   </div>
 </dialog>
 
+<script>
+// Die Beschriftungen tragen die Einheit als eigene Marke – so lässt sie sich
+// austauschen, ohne jeden Text zu kennen.
+// Die Temperatureinheit kommt aus dem Maßsystem von Home Assistant. Bis die
+// Antwort da ist, gilt °C – der häufigere Fall, und der Unterschied ist beim
+// ersten Zeichnen wieder weg.
+window.EINHEIT = '°C';
+// Spannen heißen in Celsius „K“ (Kelvin), in Fahrenheit schlicht „°F“.
+window.SPANNE = 'K';
+
+function einheitAnschreiben(wert) {
+  window.EINHEIT = wert;
+  for (const el of document.querySelectorAll('.einheit-marke')) el.textContent = wert;
+}
+</script>
 <script src="englisch.js"></script>
 <script>
 // Sprache aus Home Assistant. Die Abfrage läuft vor allem anderen: Steht die
@@ -813,7 +828,10 @@ fetch('api/sprache', {cache: 'no-store'})
   .then(a => a.json())
   .then(d => {
     window.SPRACHE = d.sprache || 'de';
+    window.EINHEIT = d.einheit || '°C';
     if (window.SPRACHE !== 'de') window.englischAnschalten();
+    if (window.EINHEIT !== '°C') einheitAnschreiben(window.EINHEIT);
+    window.SPANNE = window.EINHEIT === '°F' ? '°F' : 'K';
   })
   .catch(() => {});
 </script>
@@ -1292,9 +1310,9 @@ function lageZeichnen(bericht) {
     {marke:'Betrieb', wert:betrieb, zusatz:betriebZusatz, klein:true},
     {marke:'Draußen',
      wert: bericht.aussen === null || bericht.aussen === undefined
-       ? '–' : zahl(bericht.aussen) + ' °C',
+       ? '–' : zahl(bericht.aussen) +  ' ' + EINHEIT,
      zusatz: bericht.aussen_gedaempft === null || bericht.aussen_gedaempft === undefined
-       ? '' : 'gedämpft ' + zahl(bericht.aussen_gedaempft) + ' °C'},
+       ? '' : 'gedämpft ' + zahl(bericht.aussen_gedaempft) +  ' ' + EINHEIT},
     {marke:'Räume', wert: `${heizend} von ${raeumeImBericht.length}`,
      zusatz: heizend === 1 ? 'wird geregelt' : 'werden geregelt'},
     {marke:'Nächster Wechsel', wert: zeitpunkt(naechster), zusatz:'', klein:true},
@@ -1327,16 +1345,16 @@ function karteZeichnen(raum) {
     anzeige = `<span class="soll ruht">Von Hand</span>`;
   } else if (handbetrieb) {
     anzeige = `<span class="soll hand">${zahl(raum.handwert)}<span
-                 class="einheit">°C · von Hand</span></span>`;
+                 class="einheit">${EINHEIT} · von Hand</span></span>`;
   } else {
-    anzeige = `<span class="soll">${zahl(raum.ziel)}<span class="einheit">°C</span></span>`;
+    anzeige = `<span class="soll">${zahl(raum.ziel)}<span class="einheit">${EINHEIT}</span></span>`;
   }
 
   const thermostate = (raum.thermostate || []).map(t => {
     const klassen = ['thermo'];
     if (!t.vorhanden) klassen.push('fehlt');
     if (t.manuell_bis) klassen.push('hand');
-    const soll = t.soll === null || t.soll === undefined ? '–' : zahl(t.soll) + ' °C';
+    const soll = t.soll === null || t.soll === undefined ? '–' : zahl(t.soll) +  ' ' + EINHEIT;
     const ist = t.ist === null || t.ist === undefined ? '' : ' · ist ' + zahl(t.ist);
     const betrieb = t.betriebsart === 'off' ? ' · aus' : '';
     return `<div class="${klassen.join(' ')}">
@@ -1355,7 +1373,7 @@ function karteZeichnen(raum) {
     <div class="werte">
       ${anzeige}
       <span class="ist">${raum.ist === null || raum.ist === undefined
-        ? '' : 'ist ' + zahl(raum.ist) + ' °C'}</span>
+        ? '' : 'ist ' + zahl(raum.ist) +  ' ' + EINHEIT}</span>
     </div>
     <div class="grund">${raum.begruendung}</div>
     <div class="fusszeile">
@@ -1374,7 +1392,7 @@ function berichtZeichnen(bericht) {
   $('k-fassung').textContent = bericht.version ? 'v' + bericht.version : '';
   const aussen = bericht.aussen;
   $('k-aussen').textContent = aussen === null || aussen === undefined
-    ? '' : `außen ${zahl(aussen)} °C`;
+    ? '' : `außen ${zahl(aussen)} ${EINHEIT}`;
 
   partyAnzeigen(bericht);
   lageZeichnen(bericht);
@@ -1555,7 +1573,7 @@ async function vorschlagAnzeigen() {
           <span class="merkmal">${raum.thermostate.length} Thermostat(e)</span>
           <span class="merkmal">${raum.personen.length
             ? raum.personen.map(p => p.split('.')[1]).join(', ') : 'ganze Familie'}</span>
-          <span class="merkmal">Komfort ${zahl(raum.komfort)} °C</span>
+          <span class="merkmal">Komfort ${zahl(raum.komfort)} ${EINHEIT}</span>
           <span class="merkmal">${raum.zeitplan.length} Punkte</span>
         </span>
       </label>`).join('') + `</div>`;
@@ -1593,7 +1611,7 @@ function raumMerkmale(raum) {
   if (raum.betriebsart === 'nur_absenken') {
     merkmale.push('von Hand', `${raum.zeitplan.length} Absenkpunkt(e)`);
   } else {
-    merkmale.push(`Komfort ${zahl(raum.komfort)} / Eco ${zahl(raum.eco)} °C`,
+    merkmale.push(`Komfort ${zahl(raum.komfort)} / Eco ${zahl(raum.eco)} ${EINHEIT}`,
                   `${raum.zeitplan.length} Punkte`);
     if (raum.nur_praesenz) merkmale.push('nur Präsenzmelder');
     else if (raum.personen.length) merkmale.push(raum.personen.length + ' Person(en)');
@@ -2172,13 +2190,19 @@ function beispieleZeichnen() {
   const steil = parseFloat($('e-hk-steil').value);
   const grenze = parseFloat($('e-hk-max').value);
   if ([basis, steil, grenze].every(Number.isFinite)) {
+    // Drei Außentemperaturen als Beispiel – in Fahrenheit andere Marken,
+    // denn −10 °F wäre für Mitteleuropa so exotisch wie −10 °C für Florida.
+    const kalt = EINHEIT === '°F' ? [14, 32, 50] : [-10, 0, 10];
     const beispiel = (aussen) => {
       const wert = Math.max(-grenze, Math.min(grenze, steil * (basis - aussen)));
       return (wert >= 0 ? '+' : '') + zahl(wert);
     };
     $('hk-beispiel').textContent =
-      `Bei −10 °C außen ${beispiel(-10)} K, bei 0 °C ${beispiel(0)} K, `
-      + `bei 10 °C ${beispiel(10)} K auf den Sollwert.`;
+      // Die Beispiele der Heizkurve rechnen in der geltenden Einheit: In
+      // Fahrenheit sind −10 °C keine sinnvolle Marke.
+      `Bei ${kalt[0]} ${EINHEIT} außen ${beispiel(kalt[0])} ${SPANNE}, `
+      + `bei ${kalt[1]} ${EINHEIT} ${beispiel(kalt[1])} ${SPANNE}, `
+      + `bei ${kalt[2]} ${EINHEIT} ${beispiel(kalt[2])} ${SPANNE} auf den Sollwert.`;
   }
   const grund = parseFloat($('e-vor-grund').value);
   const jeGrad = parseFloat($('e-vor-grad').value);

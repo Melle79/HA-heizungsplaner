@@ -12,6 +12,7 @@ Drei Dinge passieren hier:
 from __future__ import annotations
 
 import math
+import einheit
 
 
 def daempfen(alt: float | None, neu: float | None, sekunden: float,
@@ -36,7 +37,7 @@ def korrektur(aussen: float | None, heizkurve: dict) -> float:
     """
     if not heizkurve.get("aktiv") or aussen is None:
         return 0.0
-    basis = float(heizkurve.get("basis_aussen", 15.0))
+    basis = float(heizkurve.get("basis_aussen", einheit.absolut(15.0)))
     steilheit = float(heizkurve.get("steilheit", 0.06))
     grenze = float(heizkurve.get("max_korrektur", 1.5))
     wert = steilheit * (basis - aussen)
@@ -63,7 +64,8 @@ def vorlaufminuten(aussen: float | None, vorheizen: dict) -> int:
     obergrenze = float(vorheizen.get("max_min", 120))
     if aussen is None:
         return int(min(grund, obergrenze))
-    zuschlag = je_grad * max(0.0, 15.0 - aussen)
+    # Der Bezugspunkt sind 15 °C – in Fahrenheit derselbe Punkt, andere Zahl.
+    zuschlag = je_grad * max(0.0, einheit.absolut(15.0) - aussen)
     return int(min(grund + zuschlag, obergrenze))
 
 

@@ -633,6 +633,32 @@ zeigt eine Tile-Karte ersatzweise den Zustand des Sensors – deshalb ist
 | `zustand.json` | zuletzt geschriebene Sollwerte, Laufzeitzustand je Raum |
 | `logbuch.json` | Protokoll der letzten 500 Schaltvorgänge |
 
+## Einheit: Celsius oder Fahrenheit
+
+Die Einheit nimmt der Planer aus dem Maßsystem von Home Assistant
+(`/config` → `unit_system.temperature`) – aus derselben Antwort wie die
+Sprache. Die Zahlen selbst kommen bereits richtig an, denn Home Assistant
+rechnet Klima-Entitäten in dieses Maßsystem um. Entscheidend ist, dass alles
+**Feste** mitzieht:
+
+* die **Vorgaben** – aus Komfort 21 °C werden 70 °F, aus Frostschutz 8 °C
+  werden 46 °F, auf ganze Grad gerundet, weil eine Vorgabe sich so lesen soll;
+* die **Grenzen** der Eingabeprüfung – 70 °F läge außerhalb einer Spanne, die
+  für Celsius gedacht ist;
+* **Spannen** im Unterschied zu Temperaturen: Aus 1,5 K Hysterese werden
+  2,7 °F, nicht 34,7. Auf einen Abstand 32 zu addieren ist hier der
+  klassische Fehler;
+* die **Schrittweite**: ein halbes Grad in Celsius, ein ganzes in Fahrenheit,
+  weil die Geräte dort nicht feiner auflösen und jeder Schreibvorgang
+  Batterie kostet;
+* die **Steilheit** der Heizkurve bleibt, wie sie ist – Kelvin je Kelvin ist
+  dasselbe Verhältnis wie Grad Fahrenheit je Grad Fahrenheit.
+
+**Wechselt das Maßsystem**, werden die gespeicherten Werte einmal umgerechnet
+und die neue Einheit in `config.json` vermerkt. Ohne das bliebe ein
+Komfortwert von 21 die Zahl 21 – und der Planer kühlte das Haus auf 21 °F
+herunter. Die Umrechnung steht im Protokoll.
+
 ## Sprache
 
 Der Planer spricht Deutsch und Englisch. Die Sprache nimmt er von Home

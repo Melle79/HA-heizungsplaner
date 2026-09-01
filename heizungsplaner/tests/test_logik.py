@@ -23,6 +23,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
 
 import anwesenheit
 import regelung
+import json
+import einheit
 import store
 import texte
 import witterung
@@ -1214,6 +1216,60 @@ pruefe(gerufen and regelung._BATTERIEN["stand"]["climate.a"] == "sensor.neu_batt
 regelung.wachhund.batterien_je_thermostat = echt
 regelung._BATTERIEN["stand"] = None
 
+
+print("\n=== Temperatureinheit ===")
+
+# Absolute Temperaturen und Spannen duerfen nicht verwechselt werden: Wer eine
+# Spanne wie eine Temperatur umrechnet, addiert 32 auf einen Abstand.
+pruefe(einheit.absolut(21, "°F") == 69.8, "21 °C sind 69.8 °F")
+pruefe(einheit.differenz(1.5, "°F") == 2.7, "eine Spanne von 1.5 K sind 2.7 °F")
+pruefe(einheit.nach_celsius(69.8, "°F") == 21.0, "und wieder zurueck")
+pruefe(einheit.umrechnen(21, "°C", "°F") == 69.8
+       and einheit.umrechnen(1.5, "°C", "°F", spanne=True) == 2.7,
+       "Umrechnen kennt den Unterschied")
+
+einheit.einheit_setzen("°F")
+pruefe(einheit.schritt() == 1.0, "in Fahrenheit wird in ganzen Graden gestellt")
+_vorgabe = store.standard_einstellungen()
+_raum_f = store.standard_raum()
+pruefe(_raum_f["komfort"] == 70 and _vorgabe["frostschutz"] == 46,
+       f"Vorgaben in Fahrenheit gerundet ({_raum_f['komfort']}, {_vorgabe['frostschutz']})")
+pruefe(_vorgabe["sommer"]["hysterese"] == 2.5,
+       f"die Hysterese als Spanne ({_vorgabe['sommer']['hysterese']})")
+pruefe(_vorgabe["heizkurve"]["steilheit"] == 0.06,
+       "die Steilheit bleibt gleich - sie ist ein Verhaeltnis")
+
+# Ein Raum mit 70 °F muss zulaessig sein; in Celsius-Grenzen waere er es nicht.
+_r = store.validate_raum({"name": "Test", "komfort": 70, "eco": 66,
+                          "nacht": 64, "abwesend": 62, "min": 41, "max": 79})
+pruefe(_r["komfort"] == 70, "Fahrenheit-Werte bestehen die Pruefung")
+
+# Der Wechsel des Massystems zieht die gespeicherten Werte mit. Ohne das
+# stuende nach einem Umschalten 21 in der Datei - und das Haus kuehlte auf
+# 21 °F herunter.
+einheit.einheit_setzen("°C")
+_config = {"einheit": "°C",
+           "einstellungen": {**store.STANDARD_EINSTELLUNGEN,
+                             "frostschutz": 8.0,
+                             "sommer": {"aktiv": True, "grenze": 16.0, "hysterese": 1.5}},
+           "raeume": [{"name": "Wohnzimmer", "komfort": 21.0, "eco": 19.0,
+                       "nacht": 18.0, "abwesend": 17.0, "min": 5.0, "max": 26.0}]}
+einheit.einheit_setzen("°F")
+_gespeichert = []
+_echt = store.save_config
+store.save_config = lambda c: _gespeichert.append(c) or c
+_neu = store.einheit_angleichen(json.loads(json.dumps(_config)))
+store.save_config = _echt
+pruefe(_neu["raeume"][0]["komfort"] == 69.8,
+       f"beim Wechsel wird der Sollwert umgerechnet ({_neu['raeume'][0]['komfort']})")
+pruefe(_neu["einstellungen"]["sommer"]["hysterese"] == 2.7,
+       f"die Hysterese als Spanne ({_neu['einstellungen']['sommer']['hysterese']})")
+pruefe(_neu["einheit"] == "°F" and _gespeichert,
+       "die neue Einheit wird vermerkt und gespeichert")
+_nochmal = store.einheit_angleichen(_neu)
+pruefe(_nochmal["raeume"][0]["komfort"] == 69.8,
+       "ein zweiter Lauf rechnet nicht noch einmal um")
+einheit.einheit_setzen("°C")
 
 print("\n=== Zweisprachigkeit ===")
 

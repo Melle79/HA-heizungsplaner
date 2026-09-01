@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import logging
 
+import einheit
+
 _LOGGER = logging.getLogger(__name__)
 
 SPRACHEN = ("de", "en")
@@ -42,6 +44,13 @@ def t(schluessel: str, **werte) -> str:
         _LOGGER.warning("Unbekannter Text: %s", schluessel)
         return schluessel
     vorlage = eintrag.get(_sprache) or eintrag["de"]
+    # Die Einheit steht in keinem Satz fest: Sie kommt aus dem Maßsystem von
+    # Home Assistant und wird hier eingesetzt, ohne dass jeder Aufruf sie
+    # mitgeben muss.
+    werte.setdefault("einheit", einheit.einheit())
+    # Eine Spanne heißt in Celsius „K“ (Kelvin) und in Fahrenheit schlicht
+    # „°F“ – ein Kelvin-Abstand in einer Fahrenheit-Anzeige wäre falsch.
+    werte.setdefault("spanne", "°F" if einheit.ist_fahrenheit() else "K")
     try:
         return vorlage.format(**werte)
     except (KeyError, IndexError) as fehler:
@@ -108,8 +117,8 @@ TEXTE: dict[str, dict[str, str]] = {
         "de": "{name} meldet ein offenes Fenster",
         "en": "{name} reports an open window"},
     "fenster_sturz": {
-        "de": "Temperatursturz um {grad} K in {minuten} Minuten",
-        "en": "Temperature dropped {grad} K in {minuten} minutes"},
+        "de": "Temperatursturz um {grad} {spanne} in {minuten} Minuten",
+        "en": "Temperature dropped {grad} {spanne} in {minuten} minutes"},
     "fenster_sperre": {
         "de": "Fenster war offen – Sperrzeit bis {uhrzeit} Uhr",
         "en": "Window was open – locked until {uhrzeit}"},
@@ -126,8 +135,8 @@ TEXTE: dict[str, dict[str, str]] = {
         "de": "Urlaub ist eingeschaltet",
         "en": "Holiday mode is on"},
     "sommer": {
-        "de": "Sommerbetrieb – Außentemperatur liegt im Mittel bei {grad} °C",
-        "en": "Summer mode – outdoor temperature averages {grad} °C"},
+        "de": "Sommerbetrieb – Außentemperatur liegt im Mittel bei {grad} {einheit}",
+        "en": "Summer mode – outdoor temperature averages {grad} {einheit}"},
     "sommer_ohne_wert": {
         "de": "Sommerbetrieb",
         "en": "Summer mode"},
@@ -159,8 +168,8 @@ TEXTE: dict[str, dict[str, str]] = {
         "de": "Präsenzmelder meldet Bewegung",
         "en": "Presence sensor reports movement"},
     "heizkurve": {
-        "de": " · Heizkurve {vorzeichen}{grad} K",
-        "en": " · heating curve {vorzeichen}{grad} K"},
+        "de": " · Heizkurve {vorzeichen}{grad} {spanne}",
+        "en": " · heating curve {vorzeichen}{grad} {spanne}"},
     "handbetrieb": {
         "de": "Von Hand gestellt – nächste Absenkung {uhrzeit} Uhr",
         "en": "Set manually – next setback at {uhrzeit}"},
@@ -259,12 +268,12 @@ TEXTE: dict[str, dict[str, str]] = {
         "de": "Absenkung um {uhrzeit} Uhr verpasst, nicht nachgeholt{ausblick}",
         "en": "Setback at {uhrzeit} missed, not made up{ausblick}"},
     "hand_zurueck": {
-        "de": "Sonderzustand vorbei – die Handeinstellung von {grad} °C gilt wieder",
-        "en": "Special state over – the manual setting of {grad} °C applies again"},
+        "de": "Sonderzustand vorbei – die Handeinstellung von {grad} {einheit} gilt wieder",
+        "en": "Special state over – the manual setting of {grad} {einheit} applies again"},
     "hand_erkannt": {
-        "de": "Von Hand auf {grad} °C gestellt – der Planer hält sich bis zum "
+        "de": "Von Hand auf {grad} {einheit} gestellt – der Planer hält sich bis zum "
               "nächsten Zeitplanwechsel zurück",
-        "en": "Set to {grad} °C by hand – the planner stands back until the "
+        "en": "Set to {grad} {einheit} by hand – the planner stands back until the "
               "next scheduled change"},
     "sperre_rest": {
         "de": "Fenster war offen – Sperre noch {minuten} Minuten",
@@ -278,12 +287,12 @@ TEXTE: dict[str, dict[str, str]] = {
         "en": "{name} refuses to switch off – from now on the planner closes "
               "the valve via the frost protection value"},
     "nicht_bestaetigt": {
-        "de": "{grad} °C bestätigt, steht aber weiter auf dem alten Wert",
-        "en": "confirmed {grad} °C but is still on the old value"},
+        "de": "{grad} {einheit} bestätigt, steht aber weiter auf dem alten Wert",
+        "en": "confirmed {grad} {einheit} but is still on the old value"},
     "sollwert_abgelehnt": {
-        "de": "{name} nimmt den Sollwert {grad} °C nicht an{grund}",
-        "en": "{name} does not accept the setpoint of {grad} °C{grund}"},
-    "zurueck_auf": {"de": "zurück auf {grad} °C", "en": "back to {grad} °C"},
+        "de": "{name} nimmt den Sollwert {grad} {einheit} nicht an{grund}",
+        "en": "{name} does not accept the setpoint of {grad} {einheit}{grund}"},
+    "zurueck_auf": {"de": "zurück auf {grad} {einheit}", "en": "back to {grad} {einheit}"},
     "absenkung_leer": {
         "de": "{grund}, Absenkung in {minuten} Minuten",
         "en": "{grund}, setback in {minuten} minutes"},
@@ -302,11 +311,11 @@ TEXTE: dict[str, dict[str, str]] = {
     "log_anlauf": {"de": "Anlauf", "en": "Warm-up"},
     "log_einrichtung": {"de": "Einrichtung", "en": "Setup"},
     "log_nicht_angenommen": {
-        "de": "{entity} hat den Sollwert {grad} °C nicht angenommen",
-        "en": "{entity} did not accept the setpoint of {grad} °C"},
+        "de": "{entity} hat den Sollwert {grad} {einheit} nicht angenommen",
+        "en": "{entity} did not accept the setpoint of {grad} {einheit}"},
     "log_gedaempft_uebernommen": {
-        "de": "Gedämpfte Außentemperatur aus der Historie übernommen: {grad} °C",
-        "en": "Damped outdoor temperature taken from history: {grad} °C"},
+        "de": "Gedämpfte Außentemperatur aus der Historie übernommen: {grad} {einheit}",
+        "en": "Damped outdoor temperature taken from history: {grad} {einheit}"},
     "log_gedaempft_zurueck": {
         "de": "Gedämpfte Außentemperatur zurückgesetzt",
         "en": "Damped outdoor temperature reset"},
@@ -316,8 +325,8 @@ TEXTE: dict[str, dict[str, str]] = {
                           "en": "Ended early – the schedule is back in charge"},
     "log_aussen_unbekannt": {"de": "Außentemperatur unbekannt",
                              "en": "Outdoor temperature unknown"},
-    "log_gedaempft": {"de": "Gedämpfte Außentemperatur {grad} °C",
-                      "en": "Damped outdoor temperature {grad} °C"},
+    "log_gedaempft": {"de": "Gedämpfte Außentemperatur {grad} {einheit}",
+                      "en": "Damped outdoor temperature {grad} {einheit}"},
 
     "log_fehlt": {"de": "fehlt", "en": "missing"},
     "log_bleibt_an": {"de": "bleibt an", "en": "stays on"},

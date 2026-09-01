@@ -1,5 +1,20 @@
 # Änderungen
 
+## 1.15.0
+
+- **Celsius oder Fahrenheit, je nach Maßsystem von Home Assistant.** Die
+  Einheit steht in derselben Antwort wie die Sprache und wird bei jedem Takt
+  gelesen. Anzeige, Vorgaben, Grenzen und die Schrittweite folgen ihr.
+- Spannen werden dabei anders gerechnet als Temperaturen: Aus 1,5 K Hysterese
+  werden 2,7 °F, nicht 34,7. Die Steilheit der Heizkurve bleibt unverändert –
+  sie ist ein Verhältnis.
+- **Beim Wechsel des Maßsystems werden die gespeicherten Werte umgerechnet**
+  und die Einheit in `config.json` vermerkt. Ohne das bliebe ein Komfortwert
+  von 21 die Zahl 21 – und der Planer kühlte das Haus auf 21 °F herunter.
+- In Fahrenheit wird in ganzen Graden gestellt und die Beispiele der Heizkurve
+  rechnen mit 14/32/50 °F statt mit −10/0/10 °C.
+- Für deutsche Installationen ändert sich nichts.
+
 ## 1.14.0
 
 - **Der Planer spricht Englisch.** Oberfläche, Begründungen, Protokoll,

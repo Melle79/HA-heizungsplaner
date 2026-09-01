@@ -627,6 +627,32 @@ never empty but carries “idle” when nothing is running.
 | `zustand.json` | last written setpoints, runtime state per room |
 | `logbuch.json` | log of the last 500 switching operations |
 
+## Units: Celsius or Fahrenheit
+
+The planner takes the unit from the measurement system of Home Assistant
+(`/config` → `unit_system.temperature`) – the same answer that carries the
+language. Home Assistant already converts climate entities into that unit, so
+the numbers arrive correct; what matters is that everything **fixed** follows
+along:
+
+* the **defaults** – comfort 21 °C becomes 70 °F, frost protection 8 °C
+  becomes 46 °F, rounded to whole degrees because that is how a default should
+  read;
+* the **limits** of the input checks – 70 °F would fall outside a range meant
+  for Celsius;
+* **spans** as opposed to temperatures: a hysteresis of 1.5 K becomes 2.7 °F,
+  not 34.7. Adding 32 to a distance is the classic mistake here;
+* the **step size**: half a degree in Celsius, a whole one in Fahrenheit,
+  because the devices do not resolve finer there and every write costs
+  battery;
+* the **slope** of the heating curve stays as it is – kelvin per kelvin is the
+  same ratio as degrees Fahrenheit per degree Fahrenheit.
+
+**When the measurement system changes**, the stored values are converted once
+and the new unit is noted in `config.json`. Without that a comfort value of 21
+would remain the number 21 – and the planner would cool the house down to
+21 °F. The conversion is logged.
+
 ## Language
 
 The planner speaks German and English. It takes the language from Home

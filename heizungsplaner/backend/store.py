@@ -13,10 +13,12 @@ Dauerfeuer, das der Urlaubsplaner sich geleistet hat.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import threading
 import uuid
+import einheit
 import texte
 
 DATA_DIR = os.environ.get("DATA_DIR", "./data")
@@ -38,11 +40,45 @@ BETRIEBSARTEN = ["plan", "nur_absenken"]
 # zählt also als an, solange sie zu Hause ist.
 ZUSTAENDE = ["an", "aus"]
 
+_LOGGER = logging.getLogger(__name__)
+
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
 class ValidationError(ValueError):
     """Ungültige Eingabedaten."""
+
+
+# ── Was eine Temperatur ist ─────────────────────────────────────────────────
+#
+# Die Vorgaben unten stehen in Celsius. Läuft Home Assistant in Fahrenheit,
+# werden sie beim Anlegen umgerechnet – und beim Wechsel des Maßsystems auch
+# die bereits gespeicherten Werte (siehe `einheit_angleichen`).
+#
+# „absolut“ meint eine Temperatur (21 °C → 69,8 °F), „spanne“ eine Differenz
+# (1,5 K → 2,7 °F). Wer eine Spanne wie eine Temperatur umrechnet, addiert 32
+# auf einen Abstand – und bekommt Unsinn.
+
+TEMPERATURFELDER_EINSTELLUNGEN = {
+    ("urlaub_temperatur",): "absolut",
+    ("frostschutz",): "absolut",
+    ("heizkurve", "basis_aussen"): "absolut",
+    ("heizkurve", "max_korrektur"): "spanne",
+    ("sommer", "grenze"): "absolut",
+    ("sommer", "hysterese"): "spanne",
+    ("fenster", "sturz_k"): "spanne",
+    # Minuten je Grad Kälte: ein Grad Fahrenheit ist die kleinere Spanne,
+    # also braucht es je Grad weniger Vorlauf.
+    ("vorheizen", "min_pro_grad"): "je_grad",
+}
+
+TEMPERATURFELDER_RAUM = {
+    "komfort": "absolut", "eco": "absolut", "nacht": "absolut",
+    "abwesend": "absolut", "min": "absolut", "max": "absolut",
+}
+
+# Die Steilheit der Heizkurve bleibt, wie sie ist: Kelvin je Kelvin ist
+# dasselbe Verhältnis wie Grad Fahrenheit je Grad Fahrenheit.
 
 
 # --------------------------------------------------------------- Vorgaben ----
@@ -138,8 +174,43 @@ STANDARD_RAUM = {
 }
 
 
+def standard_einstellungen() -> dict:
+    """Die Vorgaben in der Einheit, die Home Assistant gerade führt."""
+    import copy
+    e = copy.deepcopy(STANDARD_EINSTELLUNGEN)
+    for pfad, art in TEMPERATURFELDER_EINSTELLUNGEN.items():
+        ziel = e
+        for teil in pfad[:-1]:
+            ziel = ziel[teil]
+        ziel[pfad[-1]] = _umrechnen_vorgabe(ziel[pfad[-1]], art)
+    return e
+
+
+def standard_raum() -> dict:
+    r = dict(STANDARD_RAUM)
+    for feld, art in TEMPERATURFELDER_RAUM.items():
+        r[feld] = _umrechnen_vorgabe(r[feld], art)
+    return r
+
+
+def _umrechnen_vorgabe(wert, art):
+    # In Fahrenheit auf ganze Grad runden: 70 °F liest sich wie eine bewusste
+    # Vorgabe, 69,8 °F wie das Ergebnis einer Umrechnung.
+    if art == "absolut":
+        gerechnet = einheit.absolut(wert)
+        return round(gerechnet) if einheit.ist_fahrenheit() else gerechnet
+    if art == "spanne":
+        gerechnet = einheit.differenz(wert)
+        return round(gerechnet * 2) / 2 if einheit.ist_fahrenheit() else gerechnet
+    if art == "je_grad":
+        # Minuten je Grad: bei Fahrenheit sind die Grade kleiner.
+        return round(float(wert) * 5 / 9, 2) if einheit.ist_fahrenheit() else wert
+    return wert
+
+
 def _leer_config() -> dict:
-    return {"einstellungen": dict(STANDARD_EINSTELLUNGEN), "raeume": []}
+    return {"einstellungen": standard_einstellungen(), "raeume": [],
+            "einheit": einheit.einheit()}
 
 
 # ------------------------------------------------------------------- I/O ----
@@ -184,10 +255,52 @@ def load_config() -> dict:
         roh = _read(CONFIG_FILE, None)
     if not roh:
         return _leer_config()
-    return {
-        "einstellungen": _merge(STANDARD_EINSTELLUNGEN, roh.get("einstellungen") or {}),
-        "raeume": [_merge(STANDARD_RAUM, r) for r in (roh.get("raeume") or [])],
+    config = {
+        "einstellungen": _merge(standard_einstellungen(), roh.get("einstellungen") or {}),
+        "raeume": [_merge(standard_raum(), r) for r in (roh.get("raeume") or [])],
+        "einheit": roh.get("einheit") or einheit.CELSIUS,
     }
+    return einheit_angleichen(config)
+
+
+def einheit_angleichen(config: dict) -> dict:
+    """Gespeicherte Temperaturen an einen Wechsel des Maßsystems anpassen.
+
+    Stellt jemand Home Assistant von Celsius auf Fahrenheit um, stehen in der
+    Konfiguration weiterhin die alten Zahlen. Ohne diese Anpassung würde der
+    Planer ein Haus auf 21 °F herunterkühlen – die Zahl bliebe dieselbe, ihre
+    Bedeutung nicht.
+
+    Umgerechnet wird einmal, danach steht die neue Einheit in der Datei.
+    """
+    alt = config.get("einheit") or einheit.CELSIUS
+    neu = einheit.einheit()
+    if alt == neu:
+        return config
+
+    _LOGGER.warning("Maßsystem gewechselt: %s → %s, Temperaturen werden "
+                    "umgerechnet", alt, neu)
+    e = config["einstellungen"]
+    for pfad, art in TEMPERATURFELDER_EINSTELLUNGEN.items():
+        ziel = e
+        for teil in pfad[:-1]:
+            ziel = ziel.get(teil) or {}
+        if pfad[-1] not in ziel:
+            continue
+        if art == "je_grad":
+            faktor = 5 / 9 if neu == einheit.FAHRENHEIT else 9 / 5
+            ziel[pfad[-1]] = round(float(ziel[pfad[-1]]) * faktor, 2)
+        else:
+            ziel[pfad[-1]] = einheit.umrechnen(ziel[pfad[-1]], alt, neu,
+                                               spanne=(art == "spanne"))
+    for raum in config["raeume"]:
+        for feld, art in TEMPERATURFELDER_RAUM.items():
+            if feld in raum:
+                raum[feld] = einheit.umrechnen(raum[feld], alt, neu,
+                                               spanne=(art == "spanne"))
+    config["einheit"] = neu
+    save_config(config)
+    return config
 
 
 def save_config(config: dict) -> dict:
@@ -197,6 +310,18 @@ def save_config(config: dict) -> dict:
 
 
 # ------------------------------------------------------------ Validierung ----
+
+def _temp(wert, name: str, min_c: float, max_c: float) -> float:
+    """Eine Temperatur prüfen – die Grenzen in Celsius, geprüft in der Einheit
+    des Systems. Sonst lehnte der Planer in Fahrenheit jeden brauchbaren Wert
+    ab: 70 °F liegt weit außerhalb von „4 bis 30“."""
+    return _zahl(wert, name, einheit.absolut(min_c), einheit.absolut(max_c))
+
+
+def _spanne(wert, name: str, min_k: float, max_k: float) -> float:
+    """Eine Differenz prüfen – Kelvin-Grenzen, umgerechnet ohne Nullpunkt."""
+    return _zahl(wert, name, einheit.differenz(min_k), einheit.differenz(max_k))
+
 
 def _zahl(wert, name: str, minimum: float, maximum: float) -> float:
     try:
@@ -244,16 +369,17 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         if not eid.startswith("climate."):
             raise ValidationError(texte.t("fehler_kein_thermostat", entity=eid))
 
-    minimum = _zahl(raum.get("min", 5.0), "Minimum", 4.0, 30.0)
-    maximum = _zahl(raum.get("max", 26.0), "Maximum", 4.0, 35.0)
+    minimum = _temp(raum.get("min", einheit.absolut(5.0)), "Minimum", 4.0, 30.0)
+    maximum = _temp(raum.get("max", einheit.absolut(26.0)), "Maximum", 4.0, 35.0)
     if maximum <= minimum:
         raise ValidationError(texte.t("fehler_max_min"))
 
     temperaturen = {}
-    for schluessel, vorgabe in (("komfort", 21.0), ("eco", 19.0),
-                                ("abwesend", 17.0), ("nacht", 18.0)):
-        temperaturen[schluessel] = _zahl(raum.get(schluessel, vorgabe),
-                                         schluessel.capitalize(), minimum, maximum)
+    for schluessel, vorgabe_c in (("komfort", 21.0), ("eco", 19.0),
+                                  ("abwesend", 17.0), ("nacht", 18.0)):
+        temperaturen[schluessel] = _zahl(
+            raum.get(schluessel, einheit.absolut(vorgabe_c)),
+            schluessel.capitalize(), minimum, maximum)
 
     betriebsart = str(raum.get("betriebsart") or "plan").strip()
     if betriebsart not in BETRIEBSARTEN:
@@ -336,15 +462,15 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
 
 def validate_einstellungen(roh: dict) -> dict:
     """Nur bekannte Felder übernehmen und in vernünftige Grenzen zwingen."""
-    e = _merge(STANDARD_EINSTELLUNGEN, roh or {})
+    e = _merge(standard_einstellungen(), roh or {})
     e["automatik"] = bool(e["automatik"])
     e["trockenlauf"] = bool(e["trockenlauf"])
     e["manuell_respektieren"] = bool(e["manuell_respektieren"])
     e["aussen_entity"] = str(e["aussen_entity"] or "").strip()
     e["schulfrei_entity"] = str(e["schulfrei_entity"] or "").strip()
     e["urlaub_entity"] = str(e["urlaub_entity"] or "").strip()
-    e["urlaub_temperatur"] = _zahl(e["urlaub_temperatur"], "Urlaubstemperatur", 5.0, 25.0)
-    e["frostschutz"] = _zahl(e["frostschutz"], "Frostschutz", 4.0, 15.0)
+    e["urlaub_temperatur"] = _temp(e["urlaub_temperatur"], "Urlaubstemperatur", 5.0, 25.0)
+    e["frostschutz"] = _temp(e["frostschutz"], "Frostschutz", 4.0, 15.0)
     e["daempfung_stunden"] = _zahl(e["daempfung_stunden"], "Dämpfung", 0.0, 48.0)
     e["takt_sekunden"] = int(_zahl(e["takt_sekunden"], "Takt", 60, 3600))
     e["ignorierte_vorschlaege"] = sorted({
@@ -352,14 +478,14 @@ def validate_einstellungen(roh: dict) -> dict:
 
     k = e["heizkurve"]
     k["aktiv"] = bool(k["aktiv"])
-    k["basis_aussen"] = _zahl(k["basis_aussen"], "Basis-Außentemperatur", -10.0, 25.0)
+    k["basis_aussen"] = _temp(k["basis_aussen"], "Basis-Außentemperatur", -10.0, 25.0)
     k["steilheit"] = _zahl(k["steilheit"], "Steilheit", 0.0, 0.5)
-    k["max_korrektur"] = _zahl(k["max_korrektur"], "Maximale Korrektur", 0.0, 6.0)
+    k["max_korrektur"] = _spanne(k["max_korrektur"], "Maximale Korrektur", 0.0, 6.0)
 
     s = e["sommer"]
     s["aktiv"] = bool(s["aktiv"])
-    s["grenze"] = _zahl(s["grenze"], "Sommergrenze", 5.0, 30.0)
-    s["hysterese"] = _zahl(s["hysterese"], "Hysterese", 0.0, 5.0)
+    s["grenze"] = _temp(s["grenze"], "Sommergrenze", 5.0, 30.0)
+    s["hysterese"] = _spanne(s["hysterese"], "Hysterese", 0.0, 5.0)
 
     a = e["anwesenheit"]
     a["aktiv"] = bool(a["aktiv"])
@@ -387,7 +513,7 @@ def validate_einstellungen(roh: dict) -> dict:
 
     f = e["fenster"]
     f["aktiv"] = bool(f["aktiv"])
-    f["sturz_k"] = _zahl(f["sturz_k"], "Temperatursturz", 0.2, 10.0)
+    f["sturz_k"] = _spanne(f["sturz_k"], "Temperatursturz", 0.2, 10.0)
     f["sturz_min"] = int(_zahl(f["sturz_min"], "Sturz-Zeitfenster", 2, 120))
     f["sperre_min"] = int(_zahl(f["sperre_min"], "Fenstersperre", 1, 240))
     return e

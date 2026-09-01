@@ -27,6 +27,7 @@ import logging
 from datetime import datetime, timedelta
 
 import anwesenheit
+import einheit
 import ha_api
 import texte
 import wachhund
@@ -41,7 +42,15 @@ _LOGGER = logging.getLogger(__name__)
 BESTAETIGUNG_MIN = 15
 
 # Feinere Sollwerte als ein halbes Grad kann kein Heizkörperthermostat.
-SCHRITT = 0.5
+# Die kleinste Änderung, die geschrieben wird. In Fahrenheit ein ganzes Grad:
+# feiner lösen die Geräte dort nicht auf, und jeder Schreibvorgang kostet
+# Batterie. Über `_schritt()` statt als feste Zahl, damit ein Wechsel des
+# Maßsystems sofort wirkt.
+SCHRITT_CELSIUS = 0.5
+
+
+def _schritt() -> float:
+    return einheit.schritt()
 
 # Ein Thermostat, das den Sollwert nicht annimmt, wird nicht bei jedem Takt
 # aufs Neue bestürmt. Nach ein paar Fehlschlägen genügt ein Versuch in
@@ -74,7 +83,8 @@ def _aus_iso(text: str | None) -> datetime | None:
 
 
 def _runden(wert: float) -> float:
-    return round(round(wert / SCHRITT) * SCHRITT, 1)
+    schritt = _schritt()
+    return round(round(wert / schritt) * schritt, 1)
 
 
 def _bool_state(states_index: dict, entity_id: str) -> bool | None:
@@ -637,7 +647,7 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                 if trockenlauf:
                     aktionen.append({"entity_id": entity_id, "aktion": "zurück",
                                      "wert": gesichert, "trocken": True})
-                elif ist_soll_jetzt is None or abs(ist_soll_jetzt - gesichert) >= SCHRITT / 2:
+                elif ist_soll_jetzt is None or abs(ist_soll_jetzt - gesichert) >= _schritt() / 2:
                     if ha_api.set_temperature(entity_id, gesichert):
                         gedaechtnis.update({"soll": gesichert, "gesetzt_am": _iso(jetzt),
                                             "hvac": "heat"})
@@ -716,9 +726,9 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
             # der teuerste Irrtum: Der Planer zöge sich zurück und der Raum
             # bliebe auf einem Wert, den niemand gewollt hat.
             nicht_umgesetzt = (vor_schreiben is not None and ist_soll is not None
-                               and abs(ist_soll - vor_schreiben) < SCHRITT / 2)
+                               and abs(ist_soll - vor_schreiben) < _schritt() / 2)
             if nicht_umgesetzt and geschrieben is not None \
-                    and abs(ist_soll - ziel) >= SCHRITT:
+                    and abs(ist_soll - ziel) >= _schritt():
                 fehler = gedaechtnis.get("schreib_fehler", 0) + 1
                 gedaechtnis["schreib_fehler"] = fehler
                 gedaechtnis["fehler_zuletzt"] = _iso(jetzt)
@@ -728,8 +738,8 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                               + texte.t("nicht_bestaetigt", grad=f"{geschrieben:.1f}")
                               + f" ({ist_soll:.1f} °C)", entity_id)
             elif (geschrieben is not None and ist_soll is not None
-                    and abs(ist_soll - geschrieben) >= SCHRITT
-                    and abs(ist_soll - ziel) >= SCHRITT):
+                    and abs(ist_soll - geschrieben) >= _schritt()
+                    and abs(ist_soll - ziel) >= _schritt()):
                 manuell_bis = umgebung["raum_wechsel"].get(raum["id"])
                 gedaechtnis["manuell_bis"] = _iso(manuell_bis)
                 gedaechtnis["soll"] = ist_soll
@@ -753,13 +763,13 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                 gedaechtnis["gesetzt_am"] = _iso(jetzt)
 
         # -- Sollwert nur auf Flanke -----------------------------------------
-        if ist_soll is not None and abs(ist_soll - ziel) < SCHRITT / 2:
+        if ist_soll is not None and abs(ist_soll - ziel) < _schritt() / 2:
             # Angekommen: Gedächtnis auffrischen und den Fehlerzähler löschen.
             gedaechtnis.update({"soll": ziel, "schreib_fehler": 0,
                                 "fehler_zuletzt": None, "vor_schreiben": None})
             continue
         if frisch and gedaechtnis.get("soll") is not None \
-                and abs(gedaechtnis["soll"] - ziel) < SCHRITT / 2:
+                and abs(gedaechtnis["soll"] - ziel) < _schritt() / 2:
             continue  # bereits geschickt, Bestätigung steht noch aus
 
         if trockenlauf:

@@ -26,10 +26,13 @@ PARTY_COMMAND_TOPIC = f"{BASE_TOPIC}/party/set"
 DEVICE_ID = "heizungsplaner"
 
 # (component, key, Anzeigename, Icon, Einheit, device_class)
+# „TEMPERATUR“ steht für die Einheit des Maßsystems – °C oder °F.
 GRUND_ENTITAETEN = [
     ("sensor", "status", "Heizungsplaner Status", "mdi:radiator", None, None),
+    # Die Einheit steht als None und wird beim Veröffentlichen gesetzt – sie
+    # hängt am Maßsystem von Home Assistant, nicht an dieser Tabelle.
     ("sensor", "aussentemperatur_gedaempft", "Außentemperatur gedämpft",
-     "mdi:thermometer-lines", "°C", "temperature"),
+     "mdi:thermometer-lines", "TEMPERATUR", "temperature"),
     ("binary_sensor", "sommerbetrieb", "Sommerbetrieb", "mdi:sun-thermometer", None, None),
     ("binary_sensor", "trockenlauf", "Trockenlauf", "mdi:test-tube", None, None),
     ("binary_sensor", "stoerung", "Heizung Störung", "mdi:radiator-off", None, "problem"),
@@ -157,7 +160,7 @@ class Publisher:
 
     def publish_discovery(self, raeume: list[dict] | None = None) -> None:
         device = self._device()
-        for component, key, name, icon, einheit, klasse in GRUND_ENTITAETEN:
+        for component, key, name, icon, mass, klasse in GRUND_ENTITAETEN:
             payload = {
                 "name": name,
                 "unique_id": f"{DEVICE_ID}_{key}",
@@ -168,8 +171,10 @@ class Publisher:
                 "icon": icon,
                 "device": device,
             }
-            if einheit:
-                payload["unit_of_measurement"] = einheit
+            if mass:
+                # „TEMPERATUR“ steht für das Maßsystem von Home Assistant.
+                payload["unit_of_measurement"] = (
+                    einheit.einheit() if mass == "TEMPERATUR" else mass)
             if klasse:
                 payload["device_class"] = klasse
             self._publish(f"{DISCOVERY_PREFIX}/{component}/{DEVICE_ID}/{key}/config",
@@ -199,7 +204,7 @@ class Publisher:
                 "state_topic": f"{BASE_TOPIC}/{key}/state",
                 "json_attributes_topic": f"{BASE_TOPIC}/{key}/attributes",
                 "availability_topic": AVAILABILITY_TOPIC,
-                "unit_of_measurement": "°C",
+                "unit_of_measurement": einheit.einheit(),
                 "device_class": "temperature",
                 "icon": "mdi:radiator",
                 "device": device,
