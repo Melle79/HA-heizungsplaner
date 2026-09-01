@@ -1,10 +1,10 @@
 # Heizungsplaner · Heating Planner – Anleitung
 
 Diese Anleitung erklärt, was der Planer tut und warum. Für die Installation
-genügt die [README](https://github.com/Melle79/HA-heizungsplaner/blob/main/README.de.md).
+genügt die [README](https://github.com/Melle79/HA-heizungsplaner-heating-planner/blob/main/README.de.md).
 
 🇬🇧 *This manual is also available in English:*
-[DOCS.md](https://github.com/Melle79/HA-heizungsplaner/blob/main/heizungsplaner/DOCS.md)
+[DOCS.md](https://github.com/Melle79/HA-heizungsplaner-heating-planner/blob/main/heizungsplaner/DOCS.md)
 
 ## Die Oberfläche
 
@@ -16,7 +16,7 @@ Je Raum der Zielwert, die gemessene Temperatur und in einem Satz die
 Begründung. Oben stehen die Außentemperatur, die Partytaste und der Knopf
 *Jetzt prüfen*; darunter der Hinweisbalken, wenn etwas Aufmerksamkeit braucht.
 
-![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
+![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/uebersicht.png)
 
 Die Zustandsworte auf den Kacheln:
 
@@ -34,29 +34,29 @@ Die Zustandsworte auf den Kacheln:
 
 ### Räume
 
-![Raumliste mit Betriebsart und Zahl der Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raeume.png)
+![Raumliste mit Betriebsart und Zahl der Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raeume.png)
 
 Jeder Raum öffnet sich in einem Dialog mit fünf Reitern. Unter **Grundlagen**
 stehen Name, Betriebsart und die Thermostate des Raumes:
 
-![Grundlagen eines Raumes: Betriebsart und zugeordnete Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-grundlagen.png)
+![Grundlagen eines Raumes: Betriebsart und zugeordnete Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raum-grundlagen.png)
 
 Der **Zeitplan** besteht aus Umschaltpunkten (siehe unten). *Vorlage einsetzen*
 füllt einen leeren Plan mit einem üblichen Tagesablauf:
 
-![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
+![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
 
 Unter **Belegung** steht, wer den Raum benutzt – zuständige Personen, ein
 eigener Freigabeschalter, eine eigene Karenzzeit – und ob der Raum bei der
 Partytaste mitmacht:
 
-![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-belegung.png)
+![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raum-belegung.png)
 
 **Temperaturen** hält die vier Sollwerte und die harten Grenzen des Raumes.
 Unter **Fühler und Melder** stehen Temperaturfühler, Präsenzmelder und
 Fensterkontakte:
 
-![Fühler und Melder mit Filterzeile über jeder Auswahlliste](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-melder.png)
+![Fühler und Melder mit Filterzeile über jeder Auswahlliste](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raum-melder.png)
 
 Geräte werden **angehakt**; was zugeordnet ist, sieht man auf einen Blick.
 Über jeder Liste sitzt eine Filterzeile – nötig, weil ein Haushalt schnell
@@ -85,7 +85,7 @@ Alles, was fürs ganze Haus gilt: Takt, Heizkurve, Sommerbetrieb, Vorheizen,
 Anwesenheit, Fenstererkennung, Urlaub, Partytaste, Überwachung und Meldewege.
 Die Beispielwerte unter der Heizkurve rechnen beim Verstellen mit.
 
-![Einstellungen mit Heizkurve und Sommerbetrieb](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/einstellungen.png)
+![Einstellungen mit Heizkurve und Sommerbetrieb](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/einstellungen.png)
 
 ### Protokoll
 
@@ -93,7 +93,7 @@ Jede Änderung mit Begründung, die jüngste zuerst. Störungen sind rot
 hinterlegt, Warnungen gelb – so ist auf einen Blick zu sehen, ob etwas
 liegengeblieben ist.
 
-![Protokoll der Schaltvorgänge mit Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/protokoll.png)
+![Protokoll der Schaltvorgänge mit Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/protokoll.png)
 
 ## Wie der Sollwert zustande kommt
 
@@ -211,7 +211,7 @@ Ein Raum kann Regeln bekommen, die den Zeitplan außer Kraft setzen. Eine Regel
 besteht aus einem Modus und beliebig vielen Bedingungen; sie greift, solange
 **alle** Bedingungen zutreffen.
 
-![Homeoffice-Regel im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
+![Homeoffice-Regel im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
 
 Der Anlass ist das Homeoffice. Das Wohnzimmer läuft nach einem Plan, der es
 vormittags auf Eco stellt, weil dann üblicherweise niemand da ist. Arbeitet

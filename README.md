@@ -3,7 +3,7 @@
 A Home Assistant add-on that sets radiator thermostats ahead of time – by
 schedule, outdoor temperature and presence.
 
-[![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner)
+[![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner-heating-planner)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-melle79-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/melle79)
 
 > 📖 Full manual: **[DOCS.md](heizungsplaner/DOCS.md)** · 🇩🇪 Auf Deutsch:
@@ -110,7 +110,7 @@ yellow:
    **Repositories** from the three-dot menu, and add this address:
 
    ```
-   https://github.com/Melle79/HA-heizungsplaner
+   https://github.com/Melle79/HA-heizungsplaner-heating-planner
    ```
 
    Or use the button at the top of this document.

@@ -8,7 +8,7 @@ nach Zeitplan, Außentemperatur und Anwesenheit.
 > 📖 Full manual: **[DOCS.md](DOCS.md)** (English) · **[DOCS.de.md](DOCS.de.md)**
 > (Deutsch). Im Add-on steht sie unter *Dokumentation*.
 
-![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
+![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/uebersicht.png)
 
 Statt fester Uhrzeiten je Thermostat rechnet der Planer für jeden Raum in
 jedem Takt einen Sollwert aus und begründet ihn: nicht nur, dass das

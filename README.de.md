@@ -3,7 +3,7 @@
 Ein Home-Assistant-Add-on, das Heizkörperthermostate vorausschauend stellt –
 nach Zeitplan, Außentemperatur und Anwesenheit.
 
-[![Repository zu Home Assistant hinzufügen](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner)
+[![Repository zu Home Assistant hinzufügen](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner-heating-planner)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-melle79-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/melle79)
 
 > 📖 Ausführliche Anleitung: **[DOCS.de.md](heizungsplaner/DOCS.de.md)** ·
@@ -110,7 +110,7 @@ Warnungen gelb:
    Dreipunktmenü **Repositories** öffnen und diese Adresse hinzufügen:
 
    ```
-   https://github.com/Melle79/HA-heizungsplaner
+   https://github.com/Melle79/HA-heizungsplaner-heating-planner
    ```
 
    Oder den Knopf oben im Dokument benutzen.

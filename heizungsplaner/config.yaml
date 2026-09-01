@@ -2,7 +2,7 @@ name: "Heizungsplaner"
 version: "1.14.0"
 slug: "heizungsplaner"
 description: "Predictive heating control: per-room schedules, a heating curve based on outdoor temperature, presence-based setback and preheating. German and English."
-url: "https://github.com/Melle79/HA-heizungsplaner"
+url: "https://github.com/Melle79/HA-heizungsplaner-heating-planner"
 arch:
   - aarch64
   - amd64

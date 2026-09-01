@@ -1,10 +1,10 @@
 # Heating Planner · Heizungsplaner – Manual
 
 This manual explains what the planner does and why. For installation the
-[README](https://github.com/Melle79/HA-heizungsplaner) is enough.
+[README](https://github.com/Melle79/HA-heizungsplaner-heating-planner) is enough.
 
 🇩🇪 *Diese Anleitung gibt es auch auf Deutsch:*
-[DOCS.de.md](https://github.com/Melle79/HA-heizungsplaner/blob/main/heizungsplaner/DOCS.de.md)
+[DOCS.de.md](https://github.com/Melle79/HA-heizungsplaner-heating-planner/blob/main/heizungsplaner/DOCS.de.md)
 
 The interface follows the language of Home Assistant. German and English are
 built in; anything other than German shows English. There is nothing to
@@ -20,7 +20,7 @@ For each room the setpoint, the measured temperature and the reasoning in one
 sentence. On top the outdoor temperature, the party button and the *Check now*
 button; below them the notice bar whenever something needs attention.
 
-![Overview with all rooms, setpoint and reasoning](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/uebersicht.png)
+![Overview with all rooms, setpoint and reasoning](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/uebersicht.png)
 
 The state words on the tiles:
 
@@ -38,29 +38,29 @@ The state words on the tiles:
 
 ### Rooms
 
-![Room list with operating mode and number of thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/raeume.png)
+![Room list with operating mode and number of thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/raeume.png)
 
 Every room opens in a dialogue with five tabs. **Basics** holds the name, the
 operating mode and the thermostats of the room:
 
-![Basics of a room: operating mode and assigned thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/raum-grundlagen.png)
+![Basics of a room: operating mode and assigned thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/raum-grundlagen.png)
 
 The **schedule** consists of switching points (see below). *Insert template*
 fills an empty plan with a typical day:
 
-![Schedule with switching points for school days and days off](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
+![Schedule with switching points for school days and days off](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
 
 **Occupancy** says who uses the room – the people in charge, an own release
 switch, an own grace period – and whether the room takes part in the party
 button:
 
-![Occupancy: release switch, people in charge, grace period](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/raum-belegung.png)
+![Occupancy: release switch, people in charge, grace period](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/raum-belegung.png)
 
 **Temperatures** holds the four setpoints and the hard limits of the room.
 Under **Sensors** you find the temperature sensor, presence sensors and window
 contacts:
 
-![Sensors with a filter row above every list](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/raum-melder.png)
+![Sensors with a filter row above every list](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/raum-melder.png)
 
 Devices are **ticked**; what is assigned can be seen at a glance. Above every
 list sits a filter row – necessary because a household quickly has several
@@ -90,7 +90,7 @@ preheating, presence, window detection, holiday, party button, monitoring and
 notification targets. The example values below the heating curve are
 recalculated while you change it.
 
-![Settings with heating curve and summer mode](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/einstellungen.png)
+![Settings with heating curve and summer mode](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/einstellungen.png)
 
 ### Log
 
@@ -98,7 +98,7 @@ Every change with its reason, the most recent first. Faults have a red
 background, warnings a yellow one – so you can see at a glance whether
 something has been left behind.
 
-![Log of switching operations with reasons](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/protokoll.png)
+![Log of switching operations with reasons](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/protokoll.png)
 
 ## How the setpoint is decided
 
@@ -213,7 +213,7 @@ once the damped outdoor temperature falls below the summer threshold.
 A room can be given rules that suspend the schedule. A rule consists of a mode
 and any number of conditions; it applies while **all** conditions are met.
 
-![Working-from-home rule in the schedule tab](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/en/uebersteuerung.png)
+![Working-from-home rule in the schedule tab](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner-heating-planner/main/heizungsplaner/doku/bilder/en/uebersteuerung.png)
 
 The occasion is working from home. The living room follows a schedule that
 sets it to eco in the morning, because usually nobody is there. If somebody
