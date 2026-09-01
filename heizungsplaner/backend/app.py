@@ -20,6 +20,7 @@ import ha_api
 import logbuch
 import regelung
 import store
+import texte
 import uebernahme
 import wachhund
 from version import VERSION
@@ -201,6 +202,16 @@ def statisch(datei: str):
 
 # ------------------------------------------------------------------ API ----
 
+@app.route("/api/sprache")
+def api_sprache():
+    """Welche Sprache spricht Home Assistant?
+
+    Die Oberfläche fragt das einmal beim Laden. Ein eigener, winziger Endpunkt
+    statt eines Feldes im Status: Die Übersetzung soll stehen, bevor die
+    ersten Daten eintreffen – sonst blitzt die deutsche Fassung kurz auf.
+    """
+    return jsonify({"sprache": texte.sprache()})
+
 @app.route("/api/status")
 def api_status():
     return jsonify(_letzter_bericht)
@@ -234,7 +245,7 @@ def api_raeume():
 def api_raum(raum_id: str):
     if request.method == "DELETE":
         if not store.delete_raum(raum_id):
-            return jsonify({"fehler": "Raum nicht gefunden"}), 404
+            return jsonify({"fehler": texte.t("api_raum_fehlt")}), 404
         zustand = store.load_state()
         zustand["raeume"].pop(raum_id, None)
         store.save_state(zustand)
@@ -346,7 +357,7 @@ def api_vorschlag_abweisen():
     """
     entity_id = str((request.get_json(force=True) or {}).get("entity_id") or "").strip()
     if not entity_id:
-        return jsonify({"fehler": "Keine Entität angegeben"}), 400
+        return jsonify({"fehler": texte.t("api_keine_entitaet")}), 400
     config = store.load_config()
     liste = set(config["einstellungen"].get("ignorierte_vorschlaege") or [])
     liste.add(entity_id)
@@ -386,7 +397,7 @@ def api_party():
     try:
         stunden = float(stunden) if stunden else None
     except (TypeError, ValueError):
-        return jsonify({"fehler": "Ungültige Dauer"}), 400
+        return jsonify({"fehler": texte.t("api_dauer")}), 400
     if stunden is not None and not 0.5 <= stunden <= 24:
         return jsonify({"fehler": "Die Dauer muss zwischen 0,5 und 24 Stunden liegen"}), 400
     return jsonify(_party_setzen(True, stunden))
@@ -461,7 +472,7 @@ def api_wachhund_probe():
     dienste = ((store.load_config()["einstellungen"].get("wachhund") or {})
                .get("melden_an") or [])
     if not dienste:
-        return jsonify({"fehler": "Es ist kein Meldeweg eingestellt."}), 400
+        return jsonify({"fehler": texte.t("api_kein_meldeweg")}), 400
     ergebnis = {}
     for dienst in dienste:
         ergebnis[dienst] = ha_api.notify(
@@ -489,8 +500,7 @@ def api_gesundheit():
     if not ha_api.ist_bereit():
         return jsonify({"hinweise": [{
             "art": "info",
-            "text": "Home Assistant startet gerade – der Planer setzt aus, bis "
-                    "alle Geräte geladen sind."}],
+            "text": texte.t("hin_startet")}],
             "startet": True,
             "mqtt": _publisher is not None and _publisher.connected.is_set()})
 
@@ -507,23 +517,22 @@ def api_gesundheit():
 
     if not config["raeume"]:
         hinweise.append({"art": "info",
-                         "text": "Noch keine Räume eingerichtet – der Assistent "
-                                 "übernimmt sie aus Home Assistant."})
+                         "text": texte.t("hin_keine_raeume")})
     if einst.get("trockenlauf"):
         hinweise.append({"art": "warnung",
-                         "text": "Trockenlauf ist aktiv: Der Planer rechnet, "
-                                 "stellt aber kein Thermostat."})
+                         "text": texte.t("hin_trockenlauf")})
     if not einst.get("automatik"):
-        hinweise.append({"art": "warnung", "text": "Die Automatik ist ausgeschaltet."})
+        hinweise.append({"art": "warnung", "text": texte.t("hin_automatik_aus")})
 
-    for schluessel, beschriftung in (("aussen_entity", "Außentemperatur"),
-                                     ("urlaub_entity", "Urlaubsschalter"),
-                                     ("schulfrei_entity", "Schulfrei-Schalter")):
+    for schluessel, feld in (("aussen_entity", "feld_aussen"),
+                             ("urlaub_entity", "feld_urlaub"),
+                             ("schulfrei_entity", "feld_schulfrei")):
         entity_id = einst.get(schluessel)
         if entity_id and entity_id not in vorhanden:
             hinweise.append({"art": "fehler",
-                             "text": f"{beschriftung}: {entity_id} gibt es in "
-                                     f"Home Assistant nicht."})
+                             "text": texte.t("hin_entity_fehlt",
+                                             feld=texte.t(feld),
+                                             entity=entity_id)})
 
     zustand_je_id = {s.get("entity_id"): s.get("state") for s in states}
     zugeordnete_kontakte = {e for raum in config["raeume"] for e in raum["fenster"]}
@@ -537,46 +546,44 @@ def api_gesundheit():
             if zustand_je_id.get(entity_id) not in ("on", "off"):
                 hinweise.append({
                     "art": "warnung",
-                    "text": f"Fensterkontakt {entity_id} (Raum „{raum['name']}“) "
-                            f"meldet nichts – der Raum fällt auf die "
-                            f"Temperatursturz-Erkennung zurück."})
+                    "text": texte.t("hin_kontakt_stumm", entity=entity_id,
+                                    raum=raum["name"])})
         freigabe = raum.get("freigabe_entity")
         if freigabe and freigabe not in vorhanden:
             hinweise.append({
                 "art": "fehler",
-                "text": f"Der Freigabeschalter {freigabe} (Raum „{raum['name']}“) "
-                        f"gibt es in Home Assistant nicht – der Raum wird "
-                        f"deshalb normal geregelt."})
+                "text": texte.t("hin_freigabe_fehlt", entity=freigabe,
+                                raum=raum["name"])})
         stumme_melder = [e for e in raum["praesenz"]
                          if zustand_je_id.get(e) not in ("on", "off")]
         for entity_id in stumme_melder:
             hinweise.append({
                 "art": "warnung",
-                "text": f"Präsenzmelder {entity_id} (Raum „{raum['name']}“) "
-                        f"meldet nichts."})
+                "text": texte.t("hin_melder_stumm", entity=entity_id,
+                                raum=raum["name"])})
         if raum.get("nur_praesenz") and len(stumme_melder) == len(raum["praesenz"]):
             hinweise.append({
                 "art": "warnung",
-                "text": f"Raum „{raum['name']}“ soll allein dem Präsenzmelder "
-                        f"folgen, aber keiner meldet sich – er gilt darum "
-                        f"immer als belegt."})
+                "text": texte.t("hin_nur_praesenz_stumm", raum=raum["name"])})
         if not raum["thermostate"]:
             hinweise.append({"art": "warnung",
-                             "text": f"Raum „{raum['name']}“ hat kein Thermostat."})
+                             "text": texte.t("hin_kein_thermostat",
+                                             raum=raum["name"])})
         if not raum["zeitplan"]:
             hinweise.append({"art": "warnung",
-                             "text": f"Raum „{raum['name']}“ hat keinen Zeitplan – "
-                                     f"es gilt dauerhaft die Eco-Temperatur."})
+                             "text": texte.t("hin_kein_zeitplan",
+                                             raum=raum["name"])})
         for entity_id in raum["thermostate"]:
             if entity_id not in vorhanden:
                 hinweise.append({"art": "fehler",
-                                 "text": f"{entity_id} (Raum „{raum['name']}“) gibt es "
-                                         f"in Home Assistant nicht mehr."})
+                                 "text": texte.t("hin_thermostat_weg",
+                                                 entity=entity_id,
+                                                 raum=raum["name"])})
             if entity_id in belegt:
                 hinweise.append({"art": "fehler",
-                                 "text": f"{entity_id} steht in „{belegt[entity_id]}“ "
-                                         f"und in „{raum['name']}“ – zwei Räume würden "
-                                         f"dasselbe Thermostat gegeneinander stellen."})
+                                 "text": texte.t("hin_doppelt", entity=entity_id,
+                                                 a=belegt[entity_id],
+                                                 b=raum["name"])})
             else:
                 belegt[entity_id] = raum["name"]
 

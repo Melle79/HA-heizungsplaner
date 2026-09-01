@@ -1,165 +1,173 @@
-# Heizungsplaner
+# Heating Planner
 
-Ein Home-Assistant-Add-on, das Heizkörperthermostate vorausschauend stellt –
-nach Zeitplan, Außentemperatur und Anwesenheit.
+A Home Assistant add-on that sets radiator thermostats ahead of time – by
+schedule, outdoor temperature and presence.
 
-[![Repository zu Home Assistant hinzufügen](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner)
+[![Add repository to Home Assistant](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FMelle79%2FHA-heizungsplaner)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-melle79-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/melle79)
 
-> 📖 Ausführliche Anleitung: **[DOCS.md](heizungsplaner/DOCS.md)**
+> 📖 Full manual: **[DOCS.md](heizungsplaner/DOCS.md)** · 🇩🇪 Auf Deutsch:
+> **[README.de.md](README.de.md)**
 
-Statt fester Uhrzeiten je Thermostat rechnet der Planer für jeden Raum in
-jedem Takt einen Sollwert aus und begründet ihn. In der Oberfläche steht nicht
-nur, dass das Wohnzimmer 21,5 °C bekommt, sondern warum: „Vorheizen für
-komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
+Instead of fixed times per thermostat, the planner calculates a setpoint for
+every room in every cycle – and explains it. The interface does not only say
+that the living room gets 21.5 °C, but why: “Preheating for comfort at 12:30
+(50 minutes lead time) · heating curve +0.6 K”.
 
-![Übersicht mit allen Räumen, Zielwert und Begründung](heizungsplaner/doku/bilder/uebersicht.png)
+**The interface follows Home Assistant's language.** German and English are
+built in; anything other than German shows English. There is nothing to
+configure.
 
-## Was der Planer berücksichtigt
+![Overview with all rooms, setpoint and reasoning](heizungsplaner/doku/bilder/uebersicht.png)
 
-* **Zeitplan je Raum** – Umschaltpunkte für Komfort, Eco, Nacht und Aus,
-  getrennt nach Schultagen und schulfreien Tagen.
-* **Außentemperatur** – eine Heizkurve führt den Sollwert nach: je kälter
-  draußen, desto höher der Sollwert. Bei milder Witterung geht die Anlage in
-  den Sommerbetrieb und schließt die Ventile.
-* **Anwesenheit je Raum** – jedem Raum lassen sich die zuständigen Personen
-  zuordnen. Ist niemand von ihnen da, senkt der Planer nach einer Karenzzeit
-  ab; nähert sich jemand dem Haus, heizt er wieder vor.
-* **Vorheizen** – der Vorlauf richtet sich nach der Außentemperatur. Bei 12 °C
-  reichen 30 Minuten, bei −10 °C sind es zwei Stunden.
-* **Fenster** – über Fensterkontakte oder, wo es keine gibt, über den
-  Temperatursturz im Raum. Nachgerüstete Kontakte meldet der Planer von selbst
-  zur Zuordnung; fällt einer aus, gilt er nicht als „geschlossen“.
-* **Urlaub** – ein Schalter in Home Assistant legt das ganze Haus auf die
-  Urlaubstemperatur.
-* **Überwachung** – meldet ein Thermostat sich nicht mehr, kommt eine
-  Benachrichtigung. Weil die Geräte keinen Batteriestand liefern, wacht der
-  Planer über das Lebenszeichen statt über die Batterie.
-* **Handbetrieb je Raum** – wer einen Raum selbst stellen will, lässt den
-  Planer nur zu festen Zeiten absenken. Dazwischen rührt er ihn nicht an.
-* **Freigabe je Raum** – ein Gästezimmer wird nur geheizt, wenn ein Schalter
-  in Home Assistant es freigibt.
-* **Partytaste** – hebt die gewählten Räume für ein paar Stunden auf Komfort
-  und stellt sich danach von selbst zurück.
-* **Übersteuerung je Raum** – Regeln aus mehreren Bedingungen setzen den
-  Zeitplan außer Kraft: „Werktag, keine Ferien, Isabel ist zu Hause“ hält das
-  Wohnzimmer auf Komfort, statt es vormittags abzusenken. Als Bedingung taugt
-  alles, was an oder aus sein kann – Schalter, Melder, Kalender und Personen.
+## What the planner takes into account
 
-## Die Oberfläche
+* **A schedule per room** – switching points for comfort, eco, night and off,
+  separated into school days and days off.
+* **Outdoor temperature** – a heating curve follows it: the colder it is
+  outside, the higher the setpoint. In mild weather the system enters summer
+  mode and closes the valves.
+* **Presence per room** – every room can have the people responsible for it
+  assigned. If none of them is at home, the planner sets back after a grace
+  period; if someone approaches the house, it preheats again.
+* **Preheating** – the lead time depends on the outdoor temperature. At 12 °C
+  thirty minutes are enough, at −10 °C it takes two hours.
+* **Windows** – via contacts or, where there are none, via the temperature
+  drop in the room. Retrofitted contacts are offered for assignment by the
+  planner itself; a contact that fails does not count as “closed”.
+* **Holiday** – a switch in Home Assistant puts the whole house on the holiday
+  temperature.
+* **Monitoring** – if a thermostat stops reporting, a notification goes out.
+  Because these devices report no battery level at all, the planner watches
+  for signs of life instead of the battery.
+* **Manual mode per room** – whoever wants to set a room by hand lets the
+  planner set back at fixed times only. In between it does not touch the room.
+* **Release per room** – a guest room is only heated while a switch in Home
+  Assistant allows it.
+* **Override rules** – rules made of conditions replace the schedule: “workday,
+  no holidays, someone is at home” keeps the living room at comfort instead of
+  setting it back in the morning. Anything that can be on or off works as a
+  condition – switches, sensors, calendars and people.
+* **Party button** – lifts the selected rooms to comfort for a few hours and
+  resets itself afterwards.
 
-Vier Reiter: **Übersicht**, **Räume**, **Einstellungen**, **Protokoll**.
+## The interface
 
-Die **Übersicht** (Bild oben) zeigt je Raum den Zielwert, die gemessene
-Temperatur und in einem Satz, warum gerade dieser Wert gilt. Oben stehen
-Außentemperatur, Partytaste und der Knopf *Jetzt prüfen*.
+Four tabs: **Overview**, **Rooms**, **Settings**, **Log**.
 
-Unter **Räume** wird eingerichtet:
+The **overview** (image above) shows each room's setpoint, the measured
+temperature and, in one sentence, why this value applies. On top you find the
+outdoor temperature, the party button and the *Check now* button.
 
-![Raumliste mit Betriebsart und Zahl der Thermostate](heizungsplaner/doku/bilder/raeume.png)
+Rooms are set up under **Rooms**:
 
-Jeder Raum öffnet sich in einem Dialog mit fünf Reitern – Grundlagen,
-Temperaturen, Zeitplan, Belegung, Fühler und Melder:
+![Room list with operating mode and number of thermostats](heizungsplaner/doku/bilder/raeume.png)
 
-![Grundlagen eines Raumes: Betriebsart und zugeordnete Thermostate](heizungsplaner/doku/bilder/raum-grundlagen.png)
+Every room opens in a dialogue with five tabs – basics, temperatures,
+schedule, occupancy, sensors:
 
-Der **Zeitplan** besteht aus Umschaltpunkten, nicht aus Zeitfenstern: Jeder
-Punkt gilt, bis der nächste kommt – wahlweise immer, nur an Schultagen oder
-nur an schulfreien Tagen:
+![Basics of a room: operating mode and assigned thermostats](heizungsplaner/doku/bilder/raum-grundlagen.png)
 
-![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](heizungsplaner/doku/bilder/raum-zeitplan.png)
+The **schedule** consists of switching points, not of time ranges: each point
+applies until the next one comes – always, on school days only or on days off
+only:
 
-Darunter stehen die **Übersteuerungsregeln**: Solange alle Bedingungen einer
-Regel zutreffen und die Uhrzeit im Fenster liegt, gilt ihr Modus statt des
-Zeitplans. So entsteht eine Homeoffice-Regelung ohne Schalter – Werktag, keine
-Ferien, jemand ist zu Hause. Die Regel sagt selbst, ob sie greift, und wenn
-nicht, woran es liegt:
+![Schedule with switching points for school days and days off](heizungsplaner/doku/bilder/raum-zeitplan.png)
 
-![Übersteuerungsregel mit Bedingungen und Zeitfenster](heizungsplaner/doku/bilder/uebersteuerung.png)
+Below it are the **override rules**: while all conditions of a rule apply and
+the time is within its window, its mode replaces the schedule. That is how a
+working-from-home rule works without any switch. Each rule says whether it is
+active and, if not, what is missing:
 
-Unter **Belegung** steht, wer den Raum benutzt: zuständige Personen, ein
-Präsenzmelder, eine eigene Karenzzeit – und ob der Raum bei der Partytaste
-mitmacht:
+![Override rule with conditions and time window](heizungsplaner/doku/bilder/uebersteuerung.png)
 
-![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](heizungsplaner/doku/bilder/raum-belegung.png)
+**Occupancy** holds who uses the room – the people responsible, a presence
+sensor, an own grace period – and whether the room takes part in the party
+button:
 
-Unter **Fühler und Melder** hängen Temperaturfühler, Präsenzmelder und
-Fensterkontakte am Raum. Geräte werden angehakt, und eine Filterzeile über
-jeder Liste zeigt auf Wunsch nur, was zu diesem Raum gehört – sonst stünde im
-Wohnzimmer auch der Briefkastenkontakt zur Auswahl:
+![Occupancy: release switch, people in charge, grace period](heizungsplaner/doku/bilder/raum-belegung.png)
 
-![Fühler und Melder mit Filterzeile über jeder Auswahlliste](heizungsplaner/doku/bilder/raum-melder.png)
+Under **Sensors** the temperature sensor, presence sensors and window contacts
+are attached to the room. Devices are ticked, and a filter row above each list
+shows only what belongs to this room – otherwise the letterbox contact would
+be on offer in the living room:
 
-Die **Einstellungen** gelten fürs ganze Haus: Heizkurve, Sommerbetrieb,
-Vorheizen, Anwesenheit, Fenstererkennung, Überwachung und Meldewege:
+![Sensors with a filter row above each list](heizungsplaner/doku/bilder/raum-melder.png)
 
-![Einstellungen mit Heizkurve und Sommerbetrieb](heizungsplaner/doku/bilder/einstellungen.png)
+The **settings** apply to the whole house: heating curve, summer mode,
+preheating, presence, window detection, monitoring and notification targets:
 
-Das **Protokoll** hält jede Änderung mit Begründung fest – Störungen rot,
-Warnungen gelb:
+![Settings with heating curve and summer mode](heizungsplaner/doku/bilder/einstellungen.png)
 
-![Protokoll der Schaltvorgänge mit Begründung](heizungsplaner/doku/bilder/protokoll.png)
+The **log** records every change with its reason – faults in red, warnings in
+yellow:
+
+![Log of switching operations with reasons](heizungsplaner/doku/bilder/protokoll.png)
 
 ## Installation
 
-1. In Home Assistant unter **Einstellungen → Add-ons → Add-on-Store** über das
-   Dreipunktmenü **Repositories** öffnen und diese Adresse hinzufügen:
+1. In Home Assistant open **Settings → Add-ons → Add-on Store**, then
+   **Repositories** from the three-dot menu, and add this address:
 
    ```
    https://github.com/Melle79/HA-heizungsplaner
    ```
 
-   Oder den Knopf oben im Dokument benutzen.
+   Or use the button at the top of this document.
 
-2. Das Add-on **Heizungsplaner** installieren und starten.
-3. Die Oberfläche öffnen. Sie startet im **Trockenlauf**: Der Planer rechnet
-   und protokolliert, stellt aber noch kein Thermostat.
-4. Über **Räume aus Home Assistant übernehmen** die Räume anlegen lassen,
-   Zeitpläne und Temperaturen prüfen.
-5. Wenn das Ergebnis stimmt: in den Einstellungen den Trockenlauf abschalten.
+2. Install and start the **Heizungsplaner** add-on.
+3. Open the interface. It starts in **dry run**: the planner calculates and
+   logs, but does not set any thermostat yet.
+4. Use **Import from Home Assistant** to create the rooms, then check
+   schedules and temperatures.
+5. Once the result looks right, switch off the dry run in the settings.
 
-Die ausführliche Anleitung steht in [DOCS.md](heizungsplaner/DOCS.md).
+The full manual is in [DOCS.md](heizungsplaner/DOCS.md).
 
-## Entitäten in Home Assistant
+## Entities in Home Assistant
 
-Über MQTT legt das Add-on ein Gerät „Heizungsplaner“ an:
+Over MQTT the add-on creates a device called “Heizungsplaner”:
 
-| Entität | Bedeutung |
+| Entity | Meaning |
 |---|---|
-| `sensor.heizungsplaner_status` | Kurzfassung des Betriebszustands |
-| `sensor.heizungsplaner_aussentemperatur_gedaempft` | geglättete Außentemperatur |
-| `binary_sensor.heizungsplaner_sommerbetrieb` | Sommerbetrieb aktiv |
-| `binary_sensor.heizungsplaner_trockenlauf` | Trockenlauf aktiv |
-| `sensor.heizungsplaner_raum_<name>` | Zielwert je Raum; Attribute: `zustand`, `begruendung`, `ist_temperatur`, `naechster_wechsel` sowie `uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` und `uebersteuerung_bis` |
-| `switch.heizungsplaner_party` | Partytaste, mit Restzeit als Attribut |
-| `binary_sensor.heizungsplaner_stoerung` | ein Thermostat meldet sich nicht mehr; Meldungen nach Schwere getrennt als Attribute |
-| `sensor.heizungsplaner_stoerungen` | Zahl der ausgefallenen Thermostate |
+| `sensor.heizungsplaner_status` | short form of the operating state |
+| `sensor.heizungsplaner_aussentemperatur_gedaempft` | damped outdoor temperature |
+| `binary_sensor.heizungsplaner_sommerbetrieb` | summer mode active |
+| `binary_sensor.heizungsplaner_trockenlauf` | dry run active |
+| `sensor.heizungsplaner_raum_<name>` | setpoint per room; attributes: `zustand`, `begruendung`, `ist_temperatur`, `naechster_wechsel` as well as `uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` and `uebersteuerung_bis` |
+| `switch.heizungsplaner_party` | party button, with the remaining time as an attribute |
+| `binary_sensor.heizungsplaner_stoerung` | a thermostat has stopped reporting; messages separated by severity as attributes |
+| `sensor.heizungsplaner_stoerungen` | number of failed thermostats |
 
-## Karten fürs Dashboard
+The entity ids stay German – they are part of every existing installation, and
+renaming them would break dashboards and automations.
 
-Unter [`heizungsplaner/dashboard/`](heizungsplaner/dashboard/) liegt eine
-fertige Übersicht zum Einfügen: Partytaste, Störungsanzeige und eine Tabelle
-aller Räume mit Zielwert, Ist-Temperatur und nächstem Schaltpunkt. Sie kommt
-mit den MQTT-Entitäten aus und funktioniert damit auch von unterwegs.
+## Cards for the dashboard
 
-Dazu `regelkarte(sensor)` – eine Kachel, die **nur erscheint, solange eine
-Übersteuerungsregel greift**, und zeigt, bis wann. Sie gehört dorthin, wo man
-den Raum ohnehin ansieht, nicht in den Planer-Abschnitt.
+[`heizungsplaner/dashboard/`](heizungsplaner/dashboard/) holds a ready-made
+overview: party button, fault display and a table of all rooms with setpoint,
+measured temperature and the next switching point. It relies on the MQTT
+entities only and therefore works from outside the house as well.
 
-## Prüflauf
+There is also `regelkarte(sensor)` – a tile that **only appears while an
+override rule is active**, showing until when. It belongs where you look at
+the room anyway, not in the planner's own section.
 
-Die Regellogik lässt sich ohne Home Assistant und ohne Fremdpakete prüfen:
+## Test run
+
+The control logic can be checked without Home Assistant and without any
+third-party packages:
 
 ```
 python3 heizungsplaner/tests/test_logik.py
 ```
 
-Geprüft werden Zeitplan über Tagesgrenzen, Heizkurve und Sommerhysterese,
-Anwesenheit samt Heimkehr, Fenstererkennung, die Betriebsart „nur absenken“
-und das Schreiben auf Flanke. Etliche Fälle stehen dort, weil sie einmal
-falsch waren – etwa eine Schule in einem Kilometer Entfernung, die das
-Kinderzimmer den ganzen Vormittag als „auf dem Heimweg“ gelten ließ.
+Around 190 checks cover schedules across midnight, the heating curve and
+summer hysteresis, presence including the return home, window detection, the
+“setback only” mode and writing on edges. Quite a few of them are there
+because the case was wrong once – for instance a school one kilometre away
+that kept a child's room “on the way home” all morning.
 
-## Lizenz
+## Licence
 
 MIT

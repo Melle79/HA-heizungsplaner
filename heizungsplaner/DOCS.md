@@ -1,631 +1,647 @@
-# Heizungsplaner – Anleitung
+# Heating Planner – Manual
 
-Diese Anleitung erklärt, was der Planer tut und warum. Für die Installation
-genügt die [README](https://github.com/Melle79/HA-heizungsplaner).
+This manual explains what the planner does and why. For installation the
+[README](https://github.com/Melle79/HA-heizungsplaner) is enough.
 
-## Die Oberfläche
+🇩🇪 *Diese Anleitung gibt es auch auf Deutsch:*
+[DOCS.de.md](https://github.com/Melle79/HA-heizungsplaner/blob/main/heizungsplaner/DOCS.de.md)
 
-Vier Reiter: Übersicht, Räume, Einstellungen, Protokoll.
+The interface follows the language of Home Assistant. German and English are
+built in; anything other than German shows English. There is nothing to
+configure – the planner reads the language from Home Assistant on every cycle.
 
-### Übersicht
+## The interface
 
-Je Raum der Zielwert, die gemessene Temperatur und in einem Satz die
-Begründung. Oben stehen die Außentemperatur, die Partytaste und der Knopf
-*Jetzt prüfen*; darunter der Hinweisbalken, wenn etwas Aufmerksamkeit braucht.
+Four tabs: Overview, Rooms, Settings, Log.
 
-![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
+### Overview
 
-Die Zustandsworte auf den Kacheln:
+For each room the setpoint, the measured temperature and the reasoning in one
+sentence. On top the outdoor temperature, the party button and the *Check now*
+button; below them the notice bar whenever something needs attention.
 
-| Wort | Bedeutung |
+![Overview with all rooms, setpoint and reasoning](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
+
+The state words on the tiles:
+
+| Word | Meaning |
 |---|---|
-| Komfort / Eco / Nacht | der Zeitplan führt |
-| Vorheizen | der nächste Wechsel wird vorgezogen |
-| Abwesend | niemand Zuständiges im Haus, Karenzzeit abgelaufen |
-| Heimkehr | jemand nähert sich, der Raum wird wieder warm |
-| Fenster offen | Frostschutz, danach Sperrzeit |
-| Von Hand | jemand hat am Thermostat gedreht, der Planer hält sich zurück |
-| Gesperrt | Freigabeschalter aus |
-| Party | die Partytaste läuft |
-| Sommer / Urlaub | Ventile zu bzw. Urlaubstemperatur |
+| Comfort / Eco / Night | the schedule is in charge |
+| Preheating | the next change is being brought forward |
+| Away | nobody responsible is in the house, the grace period has passed |
+| Coming home | someone is approaching, the room warms up again |
+| Window open | frost protection, then a lock period |
+| Manual | somebody turned the thermostat, the planner stands back |
+| Blocked | the release switch is off |
+| Party | the party button is running |
+| Summer / Holiday | valves closed, or the holiday temperature |
 
-### Räume
+### Rooms
 
-![Raumliste mit Betriebsart und Zahl der Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raeume.png)
+![Room list with operating mode and number of thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raeume.png)
 
-Jeder Raum öffnet sich in einem Dialog mit fünf Reitern. Unter **Grundlagen**
-stehen Name, Betriebsart und die Thermostate des Raumes:
+Every room opens in a dialogue with five tabs. **Basics** holds the name, the
+operating mode and the thermostats of the room:
 
-![Grundlagen eines Raumes: Betriebsart und zugeordnete Thermostate](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-grundlagen.png)
+![Basics of a room: operating mode and assigned thermostats](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-grundlagen.png)
 
-Der **Zeitplan** besteht aus Umschaltpunkten (siehe unten). *Vorlage einsetzen*
-füllt einen leeren Plan mit einem üblichen Tagesablauf:
+The **schedule** consists of switching points (see below). *Insert template*
+fills an empty plan with a typical day:
 
-![Zeitplan mit Umschaltpunkten für Schultage und schulfreie Tage](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
+![Schedule with switching points for school days and days off](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-zeitplan.png)
 
-Unter **Belegung** steht, wer den Raum benutzt – zuständige Personen, ein
-eigener Freigabeschalter, eine eigene Karenzzeit – und ob der Raum bei der
-Partytaste mitmacht:
+**Occupancy** says who uses the room – the people in charge, an own release
+switch, an own grace period – and whether the room takes part in the party
+button:
 
-![Belegung: Freigabeschalter, zuständige Personen, Karenzzeit](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-belegung.png)
+![Occupancy: release switch, people in charge, grace period](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-belegung.png)
 
-**Temperaturen** hält die vier Sollwerte und die harten Grenzen des Raumes.
-Unter **Fühler und Melder** stehen Temperaturfühler, Präsenzmelder und
-Fensterkontakte:
+**Temperatures** holds the four setpoints and the hard limits of the room.
+Under **Sensors** you find the temperature sensor, presence sensors and window
+contacts:
 
-![Fühler und Melder mit Filterzeile über jeder Auswahlliste](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-melder.png)
+![Sensors with a filter row above every list](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/raum-melder.png)
 
-Geräte werden **angehakt**; was zugeordnet ist, sieht man auf einen Blick.
-Über jeder Liste sitzt eine Filterzeile – nötig, weil ein Haushalt schnell
-mehrere hundert binäre Melder hat. Ohne sie stünde im Wohnzimmer auch der
-Briefkastenkontakt zur Auswahl:
+Devices are **ticked**; what is assigned can be seen at a glance. Above every
+list sits a filter row – necessary because a household quickly has several
+hundred binary sensors. Without it the letterbox contact would be on offer in
+the living room:
 
-* **Häkchen „nur <Raum>“** – zeigt nur, was zu diesem Raum gehört. Das ist
-  der Bereich in Home Assistant, aber auch der Name: In dieser Installation
-  trägt ausgerechnet der Wohnzimmer-Fensterkontakt keinen Bereich, und ein
-  reiner Bereichsfilter würde ihn verstecken. Das Häkchen erscheint nur, wenn
-  es für den Raum überhaupt etwas zu finden gibt.
-* **Suchfeld** – durchsucht Namen und Entitäts-ID. Sobald etwas darin steht,
-  werden auch die *sonstigen Melder* durchsucht.
-* Was **angehakt ist, bleibt immer sichtbar**, gleich wie gefiltert wird.
-  Eine ausgeblendete Zuordnung würde beim Speichern verlorengehen.
-* Rechts steht, wie viele Geräte die Liste gerade zeigt und wie viele davon
-  angehakt sind.
+* **Tick “only <room>”** – shows only what belongs to this room. That means
+  the area in Home Assistant, but also the name: in this installation of all
+  things the living-room window contact carries no area, and a pure area
+  filter would hide it. The tick only appears when there is anything to find
+  for that room at all.
+* **Search field** – searches names and entity ids. As soon as something is
+  typed, the *other binary sensors* are searched as well.
+* Whatever is **ticked stays visible**, no matter how you filter. A hidden
+  assignment would be lost on saving.
+* On the right you see how many devices the list currently shows and how many
+  of them are ticked.
 
-Die Gruppe **Sonstige Melder** – alles Binäre, das kein Kontakt ist – bleibt
-zunächst zugeklappt und erscheint erst beim Suchen. Die Zeile rechts sagt,
-wie viele dort warten.
+The group **Other binary sensors** – everything binary that is not a contact –
+stays collapsed at first and only appears when you search. The line on the
+right says how many are waiting there.
 
-### Einstellungen
+### Settings
 
-Alles, was fürs ganze Haus gilt: Takt, Heizkurve, Sommerbetrieb, Vorheizen,
-Anwesenheit, Fenstererkennung, Urlaub, Partytaste, Überwachung und Meldewege.
-Die Beispielwerte unter der Heizkurve rechnen beim Verstellen mit.
+Everything that applies to the whole house: cycle, heating curve, summer mode,
+preheating, presence, window detection, holiday, party button, monitoring and
+notification targets. The example values below the heating curve are
+recalculated while you change it.
 
-![Einstellungen mit Heizkurve und Sommerbetrieb](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/einstellungen.png)
+![Settings with heating curve and summer mode](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/einstellungen.png)
 
-### Protokoll
+### Log
 
-Jede Änderung mit Begründung, die jüngste zuerst. Störungen sind rot
-hinterlegt, Warnungen gelb – so ist auf einen Blick zu sehen, ob etwas
-liegengeblieben ist.
+Every change with its reason, the most recent first. Faults have a red
+background, warnings a yellow one – so you can see at a glance whether
+something has been left behind.
 
-![Protokoll der Schaltvorgänge mit Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/protokoll.png)
+![Log of switching operations with reasons](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/protokoll.png)
 
-## Wie der Sollwert zustande kommt
+## How the setpoint is decided
 
-In jedem Takt (Standard: alle fünf Minuten) durchläuft jeder Raum dieselbe
-Rangfolge. Der erste zutreffende Fall gewinnt, die späteren kommen nicht mehr
-zum Zug:
+In every cycle (default: every five minutes) each room runs through the same
+order of precedence. The first case that applies wins, the later ones are not
+considered:
 
-Sie gilt für Räume in der Betriebsart *nach Zeitplan führen*; für
-*nur absenken* siehe unten.
+It applies to rooms in the *follow the schedule* mode; for *setback only* see
+below.
 
-| Rang | Fall | Ergebnis |
+| Rank | Case | Result |
 |---|---|---|
-| 1 | Raum im Planer abgeschaltet | Ventil zu |
-| 2 | Freigabeschalter aus | Ventil zu |
-| 3 | Fenster offen | Frostschutz, danach Sperrzeit |
-| 4 | Partytaste läuft | Komfort, für die eingestellte Dauer |
-| 5 | Urlaubsschalter an | Urlaubstemperatur |
-| 6 | Sommerbetrieb | Ventil zu |
-| 7 | Zeitplan, ggf. übersteuert | Komfort / Eco / Nacht, ggf. vorgezogen |
-| 8 | niemand Zuständiges da | Abwesenheitstemperatur |
-| 9 | Heizkurve | Aufschlag nach Außentemperatur |
+| 1 | room switched off in the planner | valve closed |
+| 2 | release switch off | valve closed |
+| 3 | window open | frost protection, then a lock period |
+| 4 | party button running | comfort, for the configured duration |
+| 5 | holiday switch on | holiday temperature |
+| 6 | summer mode | valve closed |
+| 7 | schedule, possibly overridden | comfort / eco / night, possibly brought forward |
+| 8 | nobody responsible present | away temperature |
+| 9 | heating curve | surcharge based on the outdoor temperature |
 
-Die Heizkurve gilt nur für gewollte Raumtemperaturen (Komfort, Eco, Nacht).
-Auf die Abwesenheits-, Urlaubs- und Frostschutztemperatur wird sie **nicht**
-angewandt: Das sind Haltewerte, kein Zielklima.
+The heating curve only applies to intended room temperatures (comfort, eco,
+night). It is **not** applied to the away, holiday and frost-protection
+temperatures: those are holding values, not a target climate.
 
-Jede Entscheidung trägt ihre Begründung mit. Sie steht auf der Raumkachel und
-im Protokoll.
+Every decision carries its reasoning with it. It appears on the room tile and
+in the log.
 
-## Der Knopf „Jetzt prüfen“
+## The “Check now” button
 
-Von selbst rechnet der Planer alle paar Minuten (einstellbar unter *Takt*) und
-außerdem sofort, wenn sich an der Konfiguration etwas ändert. Der Knopf zieht
-einen solchen Durchlauf vor: Zustände aus Home Assistant neu einlesen, für
-jeden Raum entscheiden, und wo nötig die Thermostate stellen. Danach zeigt er
-kurz, wie viele Thermostate dabei gestellt wurden – oder dass nichts zu tun
-war.
+By itself the planner calculates every few minutes (configurable under
+*Cycle*) and also immediately whenever the configuration changes. The button
+brings such a run forward: read the states from Home Assistant again, decide
+for every room, and set the thermostats where needed. Afterwards it briefly
+shows how many thermostats were set – or that there was nothing to do.
 
-Nützlich, wenn man eine Einstellung geändert hat und nicht auf den nächsten
-Takt warten will.
+Useful after changing a setting, when you do not want to wait for the next
+cycle.
 
-## Betriebsarten je Raum
+## Operating modes per room
 
-**Nach Zeitplan führen** (Vorgabe) – der Planer bestimmt den Sollwert
-durchgehend, wie in der Rangfolge oben beschrieben.
+**Follow the schedule** (default) – the planner determines the setpoint
+continuously, as described in the order of precedence above.
 
-**Von Hand – nur zu festen Zeiten absenken** – der Raum wird von Hand gestellt,
-am Thermostat oder in Home Assistant. Der Planer greift allein zu den
-Zeitpunkten des Plans ein und lässt ihn sonst in Ruhe, auch wenn jemand
-hochdreht. Für Räume, die man nach Bedarf warm macht und abends nur
-zuverlässig heruntergefahren haben will – ein Gäste-WC etwa.
+**By hand – set back at fixed times only** – the room is set by hand, at the
+thermostat or in Home Assistant. The planner only intervenes at the points of
+the schedule and otherwise leaves the room alone, even if somebody turns it
+up. For rooms you warm up on demand and only want reliably turned down in the
+evening – a guest toilet, for instance.
 
-In dieser Betriebsart gelten Anwesenheit, Vorheizen und Heizkurve nicht; sie
-setzen ein durchgehend geführtes Ziel voraus. Was weiter gilt:
+In this mode presence, preheating and the heating curve do not apply; they
+presuppose a continuously controlled target. What still applies:
 
-* Ein **Absenkzeitpunkt** stellt die Temperatur seines Modus einmal ein. Er
-  überschreibt dabei ausdrücklich eine Handeinstellung – dafür ist er da.
-  Danach gehört der Raum wieder der Hand.
-* Ein **verpasster** Zeitpunkt wird nicht nachgeholt. Startet das Add-on um
-  22 Uhr, holt es die Absenkung von 21 Uhr nicht nach und überfährt so keine
-  Handeinstellung. Innerhalb von 30 Minuten nach dem Zeitpunkt versucht es
-  weiter – das überbrückt einen ausgefallenen Takt.
-* **Fenster, Urlaub und Sommerbetrieb** greifen weiterhin. Der Planer merkt
-  sich dabei den vorgefundenen Sollwert und **stellt ihn wieder her**, sobald
-  der Sonderzustand vorbei ist. Ohne das bliebe der Raum nach einmal Lüften
-  für immer auf Frostschutz stehen.
+* A **setback point** sets the temperature of its mode once. In doing so it
+  deliberately overwrites a manual setting – that is what it is there for.
+  Afterwards the room belongs to the hand again.
+* A **missed** point is not made up. If the add-on starts at 22:00, it does
+  not apply the 21:00 setback afterwards and thus never overruns a manual
+  setting. Within 30 minutes of the point it keeps trying – that bridges a
+  cycle that failed to run.
+* **Window, holiday and summer mode** still apply. The planner remembers the
+  setpoint it found and **restores it** as soon as the special state is over.
+  Without that the room would stay on frost protection forever after airing
+  once.
 
-## Zeitplan
+## Schedule
 
-Ein Zeitplan besteht aus **Umschaltpunkten**, nicht aus Zeitfenstern. Jeder
-Punkt sagt: ab dieser Uhrzeit, an diesen Wochentagen, gilt dieser Modus – bis
-der nächste Punkt kommt. Der letzte Punkt eines Tages reicht über Mitternacht
-in den nächsten. Dadurch kann keine Lücke entstehen, in der kein Modus gilt.
+A schedule consists of **switching points**, not of time ranges. Each point
+says: from this time, on these weekdays, this mode applies – until the next
+point comes. The last point of a day reaches past midnight into the next one.
+That way no gap can occur in which no mode applies.
 
-Jeder Punkt gilt wahlweise **immer**, nur an **Schultagen** oder nur an
-**schulfreien** Tagen. Welcher Fall vorliegt, entscheidet die in den
-Einstellungen hinterlegte Entität (hier: `input_boolean.wochenende_feiertag`).
-Ist sie nicht gesetzt, greifen ausschließlich die „immer“-Punkte.
+Each point applies either **always**, only on **school days** or only on
+**days off**. Which case applies is decided by the entity configured in the
+settings. If none is set, only the “always” points take effect.
 
-Vier Temperaturen je Raum:
+Four temperatures per room:
 
-* **Komfort** – wenn der Raum benutzt wird
-* **Eco** – tagsüber, wenn der Raum nur bereitgehalten wird
-* **Nacht** – Nachtabsenkung
-* **Abwesend** – wenn niemand Zuständiges im Haus ist
+* **Comfort** – when the room is in use
+* **Eco** – during the day, when the room is merely kept available
+* **Night** – night setback
+* **Away** – when nobody responsible is in the house
 
-Dazu **Nie unter** / **Nie über** als harte Grenzen des Raumes. Sie deckeln
-auch die Heizkurve.
+Plus **never below** / **never above** as the hard limits of the room. They
+also cap the heating curve.
 
-### Rezept: ein Raum soll nur vor dem Auskühlen geschützt werden
+### Recipe: a room that should only be protected from cooling out
 
-Für Räume, in denen man nicht heizen, aber auch nicht frieren will – ein
-Schlafzimmer etwa:
+For rooms in which you do not want to heat, but do not want to freeze either –
+a bedroom, for instance:
 
-* **ein einziger Schaltpunkt**, etwa `00:00 → Eco`,
-* **Eco** auf die gewünschte Untergrenze, etwa 18 °C,
-* **Heizkurve aus** – sie würde den Sollwert bei Kälte anheben und damit genau
-  das tun, was hier nicht gewollt ist,
-* **Anwesenheitsabsenkung aus** – die Untergrenze gilt unabhängig davon, ob
-  jemand im Haus ist.
+* **a single switching point**, e.g. `00:00 → eco`,
+* **eco** set to the desired lower limit, e.g. 18 °C,
+* **heating curve off** – it would raise the setpoint in cold weather and thus
+  do exactly what is not wanted here,
+* **presence setback off** – the lower limit applies regardless of whether
+  anybody is in the house.
 
-Der Sollwert steht dann rund um die Uhr auf 18 °C. Das Thermostat regelt
-selbst: Es heizt erst, wenn der Raum darunter fällt, und sonst nie.
+The setpoint then stays at 18 °C around the clock. The thermostat regulates by
+itself: it only heats when the room falls below, and never otherwise.
 
-Eine Handeinstellung bleibt dabei möglich und hält **bis zum nächsten
-Schaltpunkt** – bei einem einzigen Punkt also bis Mitternacht. Wer abends auf
-21 °C dreht, findet am nächsten Morgen wieder die 18 °C vor.
+A manual setting remains possible and holds **until the next switching
+point** – with a single point that means until midnight. Whoever turns it up
+to 21 °C in the evening finds 18 °C again the next morning.
 
-Im Sommerbetrieb ist auch dieser Raum zu; die Untergrenze greift erst wieder,
-wenn die gedämpfte Außentemperatur unter die Sommergrenze fällt.
+In summer mode this room is closed as well; the lower limit only applies again
+once the damped outdoor temperature falls below the summer threshold.
 
-## Übersteuerung: eine Regel statt des Zeitplans
+## Override: a rule instead of the schedule
 
-Ein Raum kann Regeln bekommen, die den Zeitplan außer Kraft setzen. Eine Regel
-besteht aus einem Modus und beliebig vielen Bedingungen; sie greift, solange
-**alle** Bedingungen zutreffen.
+A room can be given rules that suspend the schedule. A rule consists of a mode
+and any number of conditions; it applies while **all** conditions are met.
 
-![Homeoffice-Regel im Reiter Zeitplan](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
+![Working-from-home rule in the schedule tab](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersteuerung.png)
 
-Der Anlass ist das Homeoffice. Das Wohnzimmer läuft nach einem Plan, der es
-vormittags auf Eco stellt, weil dann üblicherweise niemand da ist. Arbeitet
-jemand zu Hause, soll es warm bleiben – ohne Schalter, ohne Zeitplanumbau:
+The occasion is working from home. The living room follows a schedule that
+sets it to eco in the morning, because usually nobody is there. If somebody
+works at home, it should stay warm – without a switch, without rebuilding the
+schedule:
 
-| Bedingung | Entität | Zustand |
+| Condition | Entity | State |
 |---|---|---|
-| Werktag | `binary_sensor.workday_sensor` | ist an |
-| keine Ferien | `calendar.ferien_feiertage_bayern` | ist aus |
-| Isabel ist da | `person.isabel` | ist an |
+| workday | `binary_sensor.workday_sensor` | is on |
+| no holidays | `calendar.school_holidays` | is off |
+| someone is at home | `person.…` | is on |
 
-dazu das Zeitfenster **08:00–18:00**.
+plus the time window **08:00–18:00**.
 
-Ergebnis: **Komfort** statt Eco. Trifft eine der drei nicht zu, führt wieder
-der Zeitplan.
+Result: **comfort** instead of eco. If one of the three does not apply, the
+schedule takes over again.
 
-Als Bedingung taugt alles, was an oder aus sein kann: Schalter und Helfer,
-Melder, Kalender (`on`, solange ein Termin läuft) und Personen. **Eine Person
-zählt als „an", solange sie zu Hause ist** – wer in einer anderen Zone steht,
-etwa im Büro, zählt als fort.
+Anything that can be on or off works as a condition: switches and helpers,
+sensors, calendars (`on` while an event is running) and people. **A person
+counts as “on” while they are at home** – whoever is in another zone, at the
+office for instance, counts as away.
 
-Das **Zeitfenster** grenzt ein, wann die Regel überhaupt greifen darf. Ohne
-es liefe die Homeoffice-Regel auch nachts um drei weiter – Werktag, keine
-Ferien und Isabel zu Hause treffen ja weiterhin zu, und das Wohnzimmer stünde
-statt auf Nacht auf Komfort. Leere Zeiten heißen: rund um die Uhr. Ein Fenster
-darf über Mitternacht reichen (22:00–06:00), wie ein Zeitplanpunkt auch.
+The **time window** limits when the rule may apply at all. Without it the
+working-from-home rule would still be running at three in the morning –
+workday, no holidays and somebody at home still apply – and the living room
+would be at comfort instead of night. Empty times mean: around the clock. A
+window may reach past midnight (22:00–06:00), just like a schedule point.
 
-Die **Bezeichnung** der Regel ist frei. Sie steht später in der Begründung und
-im Protokoll: „Homeoffice – komfort statt Zeitplan" ist dort lesbarer als die
-Aufzählung dreier Entitäten. Ohne Bezeichnung werden die Bedingungen genannt.
+The **name** of the rule is free. It later appears in the reasoning and in the
+log: “Working from home – comfort instead of schedule” reads better there than
+a list of three entities. Without a name the conditions are listed.
 
-**Woran man sieht, ob eine Regel läuft:** Die Regel selbst sagt es – und
-nennt den Grund. Unter der Kopfzeile steht eine der folgenden Zeilen, davor
-vor jeder Bedingung ein Häkchen oder ein Kreuz:
+**How to tell whether a rule is running:** the rule says so itself – and names
+the reason. Below its header one of the following lines appears, and in front
+of every condition a tick or a cross:
 
-| Zeile | Bedeutung |
+| Line | Meaning |
 |---|---|
-| *greift gerade* | alle Bedingungen erfüllt, Uhrzeit im Fenster |
-| *greift heute nicht – Ferien & Feiertage läuft* | eine Bedingung, die für den ganzen Tag gilt: Kalender, Werktag, Ferien |
-| *greift gerade nicht – Isabel ist nicht zu Hause* | eine Bedingung, die sich jederzeit ändern kann |
-| *greift gerade nicht – außerhalb 08:00–18:00 Uhr* | inhaltlich passt alles, nur die Uhrzeit nicht |
-| *… meldet nichts* | die Entität liefert weder an noch aus |
+| *active now* | all conditions met, time within the window |
+| *not active today – School holidays is on* | a condition that applies for the whole day: calendar, workday, holidays |
+| *not active right now – … is not at home* | a condition that can change at any moment |
+| *not active right now – outside 08:00–18:00* | everything fits except the time |
+| *… reports nothing* | the entity delivers neither on nor off |
 
-Die Unterscheidung ist nicht kosmetisch: Ein Ferientag gilt bis Mitternacht,
-eine abwesende Person kann in fünf Minuten zurück sein. Greift eine Regel, steht ihre Bezeichnung
-außerdem in der Begründung auf der Raumkachel und im Protokoll:
-„Homeoffice – komfort statt Zeitplan".
+The distinction is not cosmetic: a holiday lasts until midnight, an absent
+person can be back in five minutes. When a rule applies, its name also appears
+in the reasoning on the room tile and in the log.
 
-Sind mehrere Regeln hinterlegt, gewinnt die oberste. Eine Entität, die nichts
-meldet, lässt ihre Bedingung durchfallen (Zeichen `?`) – dann gilt schlicht
-der Zeitplan.
+If several rules are configured, the topmost one wins. An entity that reports
+nothing lets its condition fail (sign `?`) – then the schedule simply applies.
 
-**Was die Übersteuerung nicht aushebelt:** ein offenes Fenster, den
-Sommerbetrieb, den Urlaubsschalter und die Anwesenheitsabsenkung. Das ist
-Absicht: Eine Regel, die sich verhakt, heizt so kein leeres Haus.
+**What the override does not suspend:** an open window, summer mode, the
+holiday switch and the presence setback. That is deliberate: a rule that gets
+stuck will not heat an empty house.
 
-Der Modus *Aus* schließt das Ventil – für eine Regel, die einen Raum zeitweise
-ganz stilllegt. Zum dauerhaften Sperren gibt es die
-[Freigabe](#freigabe-räume-die-nur-zeitweise-gebraucht-werden); sie steht in
-der Rangfolge weit oben und gilt auch gegen die Partytaste.
+The mode *off* closes the valve – for a rule that shuts a room down for a
+while. For permanent blocking there is the
+[release switch](#release-rooms-that-are-only-used-occasionally); it stands
+high in the order of precedence and applies even against the party button.
 
-## Heizkurve
+## Heating curve
 
 ```
-Aufschlag = Steilheit × (Basis-Außentemperatur − Außentemperatur)
+surcharge = slope × (base outdoor temperature − outdoor temperature)
 ```
 
-begrenzt auf den eingestellten Höchstwert. Mit den Vorgaben (Basis 15 °C,
-Steilheit 0,06, Höchstwert 1,5 K) heißt das: bei 0 °C draußen +0,9 K, bei
-−10 °C +1,5 K, bei 20 °C −0,3 K. Die Oberfläche rechnet die Beispiele beim
-Verstellen mit.
+capped at the configured maximum. With the defaults (base 15 °C, slope 0.06,
+maximum 1.5 K) that means: +0.9 K at 0 °C outside, +1.5 K at −10 °C, −0.3 K at
+20 °C. The interface recalculates the examples while you change the values.
 
-Die Kurve gleicht aus, dass ein Heizkörper bei Kälte mehr Vorlauf braucht, um
-dieselbe Raumtemperatur zu halten. Sie ersetzt keine Vorlauftemperatur­regelung
-am Kessel.
+The curve compensates for the fact that a radiator needs a higher flow
+temperature in the cold to hold the same room temperature. It does not replace
+flow-temperature control at the boiler.
 
-## Sommerbetrieb
+## Summer mode
 
-Die Außentemperatur wird exponentiell geglättet (Vorgabe: 24 Stunden
-Zeitkonstante). Beim ersten Lauf holt sich der Planer den Anlauf aus der
-Historie von Home Assistant, damit die Glättung nicht bei einem
-Momentanwert beginnt. Steigt der geglättete Wert über die Grenze, schließen die
-Ventile; er muss um die Hysterese darunter fallen, bevor wieder geheizt wird.
-Ohne Glättung würde ein sonniger Februarnachmittag die Heizung abstellen.
+The outdoor temperature is smoothed exponentially (default: a 24-hour time
+constant). On the first run the planner takes its starting value from the
+history of Home Assistant, so that the smoothing does not begin at a momentary
+reading. If the smoothed value rises above the threshold, the valves close; it
+must fall below by the hysteresis before heating resumes. Without smoothing a
+sunny February afternoon would switch off the heating.
 
-Thermostate, die `off` können, werden abgeschaltet – das spart Batterie und
-schließt das Ventil vollständig. Alle anderen bekommen den Frostschutzwert.
+Thermostats that support `off` are switched off – that saves battery and
+closes the valve completely. All others get the frost-protection value.
 
-**Wenn ein Gerät sich nicht abschalten lässt:** Manche Matter-Thermostate
-nehmen den Befehl an und stehen eine Minute später wieder auf `heat`. Ohne
-Gegenmaßnahme schickt der Planer bei jedem Takt ein neues „aus“ – Dauerfeuer,
-das nichts bewirkt außer die Batterie zu leeren. Nach zwei vergeblichen
-Versuchen schließt er das Ventil deshalb dauerhaft über den Frostschutzwert
-und vermerkt das im Protokoll. Meldet sich das Gerät später doch einmal als
-abgeschaltet, gilt wieder der normale Weg.
+**When a device cannot be switched off:** some Matter thermostats accept the
+command and are back on `heat` a minute later. Without a countermeasure the
+planner would send a new “off” in every cycle – a barrage that achieves
+nothing except draining the battery. After two futile attempts it therefore
+closes the valve permanently via the frost-protection value and notes this in
+the log. If the device later does report itself as switched off, the normal
+path applies again.
 
-## Partytaste
+## Party button
 
-Einmal drücken, und die gewählten Räume gehen für die eingestellte Dauer auf
-Komfort – gleich, was der Zeitplan sagt. Danach führt wieder der Plan; niemand
-muss daran denken, die Taste zurückzustellen.
+One press, and the selected rooms go to comfort for the configured duration –
+no matter what the schedule says. Afterwards the schedule takes over again;
+nobody has to remember to reset the button.
 
-Zu finden an drei Stellen: als Knopf oben in der Oberfläche (mit Restzeit), als
-`switch.heizungsplaner_party` in Home Assistant – also auch auf dem Dashboard,
-per Sprachbefehl oder in Automationen – und über `POST /api/party`, wahlweise
-mit abweichender Dauer (`{"stunden": 5}`).
+It can be found in three places: as a button at the top of the interface (with
+the remaining time), as `switch.heizungsplaner_party` in Home Assistant – and
+thus on the dashboard, by voice or in automations – and via `POST /api/party`,
+optionally with a different duration (`{"stunden": 5}`).
 
-**Welche Räume mitmachen**, steht in den Einstellungen unter *Partytaste*; ein
-Schlafzimmer will man dort meist nicht dabei haben. Dieselbe Einstellung findet
-sich auch im Raum selbst unter *Belegung*.
+**Which rooms take part** is configured in the settings under *Party button*;
+a bedroom is usually not wanted there. The same setting can be found in the
+room itself under *Occupancy*.
 
-In der Rangfolge steht die Party **vor Urlaub und Sommerbetrieb**: Wer sie
-drückt, ist im Haus und will es warm haben, gleich was der Kalender sagt. Nur
-ein **offenes Fenster** bleibt stärker – dagegen anzuheizen wäre sinnlos. Läuft
-gerade Sommerbetrieb, sagt die Begründung dazu, dass die Anlage möglicherweise
-gar nicht heizt.
+In the order of precedence the party stands **before holiday and summer
+mode**: whoever presses it is in the house and wants it warm, regardless of
+what the calendar says. Only an **open window** stays stronger – heating
+against it would be pointless. If summer mode is running, the reasoning says
+that the system may not be heating at all.
 
-## Freigabe: Räume, die nur zeitweise gebraucht werden
+## Release: rooms that are only used occasionally
 
-Ein Raum kann an einen Schalter in Home Assistant gehängt werden (*Freigabe*).
-Steht der auf aus, bleibt der Raum kalt – ganz gleich, was Zeitplan und
-Anwesenheit sagen. Gedacht für ein Gästezimmer, das nur geheizt werden soll,
-wenn tatsächlich Gäste da sind: Schalter an, und der hinterlegte Zeitplan
-greift wie bei jedem anderen Raum.
+A room can be tied to a switch in Home Assistant (*release switch*). While it
+is off, the room stays cold – no matter what the schedule and presence say.
+Intended for a guest room that should only be heated when guests are actually
+there: switch on, and the stored schedule applies as in any other room.
 
-Fehlt der Schalter in Home Assistant oder meldet er nichts, wird der Raum
-**normal geregelt** und der Hinweisbalken meldet es. Einen Raum wegen eines
-kaputten Schalters kalt zu lassen wäre die unangenehmere Überraschung.
+If the switch is missing in Home Assistant or reports nothing, the room is
+**controlled normally** and the notice bar reports it. Leaving a room cold
+because of a broken switch would be the more unpleasant surprise.
 
-## Anwesenheit
+## Presence
 
-Jedem Raum lassen sich zuständige Personen zuordnen. Ohne Zuordnung zählt die
-ganze Familie. Zusätzlich kann ein Präsenz- oder Bewegungsmelder den Raum als
-besetzt melden.
+Every room can have people assigned to it. Without an assignment the whole
+family counts. In addition a presence or motion sensor can report the room as
+occupied.
 
-**Nur der Präsenzmelder zählt** – für Räume, die man betritt und wieder
-verlässt, statt sich dort aufzuhalten: ein Büro, eine Werkstatt. Dann bleiben
-Personen außer Betracht, und allein der Melder im Raum entscheidet. Ohne diese
-Einstellung wäre ein Raum ohne Personenzuordnung immer belegt, sobald irgendwer
-im Haus ist, und der Melder bliebe wirkungslos.
+**Only the presence sensor counts** – for rooms you enter and leave again
+instead of staying in: an office, a workshop. Then people are disregarded and
+the sensor in the room decides alone. Without this setting a room without
+people assigned would always be occupied as soon as anybody is in the house,
+and the sensor would have no effect.
 
-In dieser Betriebsart ist auch das Vorheizen bei Heimkehr abgeschaltet: Sonst
-liefe die Heizung an, sobald jemand nach Hause fährt, obwohl niemand den Raum
-betritt.
+In this mode preheating on return is switched off as well: otherwise the
+heating would start as soon as somebody drives home, even though nobody enters
+the room.
 
-**Ein Melder, der nichts meldet, gilt nicht als „niemand da“.** Bei einem
-ausgefallenen oder falsch eingetragenen Melder stünde der Raum sonst dauerhaft
-auf der Abwesenheitstemperatur, ohne dass es auffällt. Antwortet kein einziger
-Melder des Raumes, gilt er als belegt und der Hinweisbalken meldet es.
+**A sensor that reports nothing does not count as “nobody there”.** With a
+failed or wrongly configured sensor the room would otherwise sit on the away
+temperature permanently without anyone noticing. If not a single sensor of the
+room answers, it counts as occupied and the notice bar reports it.
 
-Ist niemand Zuständiges da, wartet der Planer die **Karenzzeit** ab (Vorgabe:
-45 Minuten), bevor er absenkt. Ein kurzer Gang zum Bäcker kostet damit nichts.
-Jeder Raum kann eine eigene Karenzzeit bekommen – ein Büro, dessen
-Bewegungsmelder nach zwei Minuten abfällt, braucht eine kürzere als ein
-Wohnzimmer.
+If nobody responsible is present, the planner waits for the **grace period**
+(default: 45 minutes) before setting back. A short trip to the baker therefore
+costs nothing. Every room can have its own grace period – an office whose
+motion sensor drops out after two minutes needs a shorter one than a living
+room.
 
-Die **Heimkehr** wird vorhergesehen. Dafür müssen drei Dinge zutreffen:
+The **return home** is anticipated. Three things must apply:
 
-1. die Person ist näher als die eingestellte Entfernung zur Heimzone,
-2. sie steht **in keiner Zone** – wer in der Schule oder im Büro sitzt, ist
-   dort angekommen, auch wenn das nur einen Kilometer entfernt ist,
-3. ihre Entfernung hat in den letzten 15 Minuten um die eingestellte
-   **Mindestannäherung** abgenommen.
+1. the person is closer to the home zone than the configured distance,
+2. they are **in no zone** – whoever sits at school or at the office has
+   arrived there, even if that is only one kilometre away,
+3. their distance has decreased over the last 15 minutes by at least the
+   configured **minimum approach**.
 
-Die Entfernung allein genügt nicht. Liegt die Schule einen Kilometer
-entfernt, wären die Kinder den ganzen Vormittag „nah" – ihre Zimmer würden
-durchheizen und die Anwesenheitsabsenkung liefe ins Leere. Die
-Mindestannäherung filtert zugleich das GPS-Rauschen heraus: Ein Wert von
-0,3 km spricht nicht auf die hundert Meter an, um die eine ruhende Position
-schwankt.
+Distance alone is not enough. With a school one kilometre away the children
+would be “close” all morning – their rooms would heat through and the presence
+setback would come to nothing. The minimum approach also filters out GPS
+noise: a value of 0.3 km does not react to the hundred metres by which a
+resting position drifts.
 
-Geprüft wird ausschließlich auf `home`. Tracker, die unterwegs eigene
-Standzonen melden statt `not_home`, funktionieren damit korrekt.
+Only `home` is checked. Trackers that report their own zones on the way
+instead of `not_home` therefore work correctly.
 
-## Vorheizen
+## Preheating
 
 ```
-Vorlauf = Grundvorlauf + Zuschlag × (15 °C − Außentemperatur)
+lead time = base lead time + extra × (15 °C − outdoor temperature)
 ```
 
-begrenzt auf den Höchstwert. Der Planer schaut voraus, wann der Zeitplan das
-nächste Mal etwas Wärmeres verlangt, und zieht den Wechsel um den Vorlauf vor.
-Auch mehrstufige Übergänge (Nacht → Eco → Komfort) werden erkannt.
+capped at the maximum. The planner looks ahead to when the schedule next asks
+for something warmer and brings that change forward by the lead time.
+Multi-step transitions (night → eco → comfort) are recognised as well.
 
-## Fenstererkennung
+## Window detection
 
-Zwei Wege, in dieser Rangfolge:
+Two ways, in this order:
 
-**Fensterkontakte.** Was im Raum unter *Fensterkontakte* eingetragen ist,
-entscheidet. Sobald ein Raum mindestens einen Kontakt hat, der etwas meldet,
-tritt die Temperatursturz-Erkennung für diesen Raum zurück – ein echter
-Kontakt ist genauer, und der Sturz schlägt gelegentlich grundlos an, wenn ein
-anlaufender Heizkörper die Luft am Thermostatfühler verwirbelt. Wer beides
-will, schaltet am Raum *Zusätzlich auf Temperatursturz achten* ein.
+**Window contacts.** What is configured in the room under *Window contacts*
+decides. As soon as a room has at least one contact that reports something,
+the temperature-drop detection steps back for that room – a real contact is
+more accurate, and the drop occasionally triggers for no reason when a
+starting radiator stirs the air at the thermostat's sensor. Whoever wants both
+enables *Watch the temperature drop as well* in the room.
 
-**Die geräteeigene Erkennung eines Thermostats ist kein Kontakt.** Manche
-Thermostate – die FRITZ!Smart Thermo etwa – erkennen ein offenes Fenster
-selbst am Sturz an ihrem eigenen Fühler und melden das als eigene Entität.
-Der Planer nimmt eine solche Meldung als Auslöser an, lässt die
-Sturz-Erkennung daneben aber weiterlaufen. Sie macht schließlich dasselbe,
-nur im Gerät, und schweigt, sobald das Gerät abgeschaltet ist oder in der
-Sommerpause steht. Ein Raum, dessen einziger Eintrag eine solche Meldung ist,
-stünde sonst ohne Fenstererkennung da. In der Auswahlliste sind sie als
-*geräteeigene Erkennung* gekennzeichnet.
+**The device's own detection is not a contact.** Some thermostats – the
+FRITZ!Smart Thermo, for instance – detect an open window themselves via the
+drop at their own sensor and report this as a separate entity. The planner
+accepts such a report as a trigger, but lets the drop detection keep running
+alongside. After all it does the same thing, only inside the device, and it
+goes quiet as soon as the device is switched off or in its summer pause. A
+room whose only entry is such a report would otherwise be left without window
+detection. In the selection list they are marked as *device's own detection*.
 
-**Temperatursturz.** Für Räume ohne Kontakte: Fällt die Raumtemperatur um mehr
-als den eingestellten Wert innerhalb des Zeitfensters, gilt das Fenster als
-offen. Der Planer führt dafür je Raum ein Temperaturgedächtnis über eine
-Stunde. Als Raumtemperatur dient der eingetragene Fühler, sonst der Mittelwert
-der `current_temperature` aller Thermostate des Raumes.
+**Temperature drop.** For rooms without contacts: if the room temperature
+falls by more than the configured value within the time window, the window
+counts as open. For this the planner keeps a temperature memory of one hour
+per room. The room temperature is the configured sensor, otherwise the average
+of the `current_temperature` of all thermostats in the room.
 
-Nach beiden Wegen bleibt der Raum für die Sperrzeit auf Frostschutz, damit ein
-kurzes Stoßlüften nicht sofort wieder gegengeheizt wird.
+After either route the room stays on frost protection for the lock period, so
+that brief airing is not immediately heated against.
 
-### Kontakte nachrüsten
+### Retrofitting contacts
 
-Neue Kontakte müssen nur in Home Assistant einem **Bereich** zugeordnet sein,
-der einem Raum des Planers entspricht. Dann erscheint auf der Übersicht ein
-Hinweis samt Knopf *Zuordnen*, der den Raum mit vorgewähltem Kontakt öffnet –
-Speichern genügt. Dasselbe gilt für neue Präsenz- und Bewegungsmelder.
+New contacts only need to be assigned in Home Assistant to an **area** that
+corresponds to a room of the planner. A notice then appears on the overview
+with an *Assign* button that opens the room with the contact preselected –
+saving is enough. The same applies to new presence and motion sensors.
 
-Was man dort nicht haben will, verschwindet mit *Nicht nötig* dauerhaft aus
-den Hinweisen.
+Whatever you do not want there disappears from the notices permanently via
+*Not needed*.
 
-In der Auswahlliste stehen die Kontakte nach Bereich gruppiert, der eigene
-Bereich zuoberst. Als Kontakt gilt, was die Geräteklasse `window`, `door` oder
-`opening` trägt **oder** ein entsprechendes Wort im Namen führt – so werden
-auch die „Offenes Fenster erkannt“-Meldungen mancher Thermostate gefunden, die
-ohne Geräteklasse kommen. Alles übrige Binäre steht unter *Sonstige Melder*
-und erscheint erst, wenn man ins Suchfeld tippt.
+In the selection list the contacts are grouped by area, the room's own area on
+top. A contact is anything carrying the device class `window`, `door` or
+`opening` **or** a matching word in its name – that is how the “open window
+detected” reports of some thermostats are found, which come without a device
+class. Everything else binary sits under *Other binary sensors* and only
+appears once you type in the search field.
 
-### Wenn ein Kontakt ausfällt
+### When a contact fails
 
-**Ein Kontakt, der nichts meldet, gilt nicht als „geschlossen“.** Eine leere
-Batterie, ein abgezogener Funkstick oder ein noch nicht angelerntes Gerät
-würde den Raum sonst stillschweigend blind machen. Meldet ein eingetragener
-Kontakt weder `on` noch `off`, springt für diesen Raum die
-Temperatursturz-Erkennung wieder ein, die Begründung sagt es
-(„… melden nichts – ersatzweise Temperatursturz“), und auf der Übersicht steht
-eine Warnung.
+**A contact that reports nothing does not count as “closed”.** An empty
+battery, an unplugged radio stick or a device not yet paired would otherwise
+make the room blind without a word. If a configured contact reports neither
+`on` nor `off`, the temperature-drop detection steps in again for that room,
+the reasoning says so (“… report nothing – falling back to temperature drop”),
+and a warning appears on the overview.
 
-## Während Home Assistant startet
+## While Home Assistant is starting
 
-Nach einem Neustart liefert Home Assistant seine Entitäten nach und nach. Wer
-in dieser Phase rechnet, hält die noch nicht geladenen Geräte für verschwunden.
-Der Planer fragt deshalb vor jedem Takt den Zustand von Home Assistant ab und
-setzt aus, solange dieser nicht `RUNNING` ist – kein Schalten, keine Störung,
-keine Benachrichtigung. Die Oberfläche zeigt in dieser Zeit einen Hinweis statt
-einer Mängelliste.
+After a restart Home Assistant delivers its entities gradually. Whoever
+calculates during that phase takes the devices not yet loaded for gone. The
+planner therefore asks Home Assistant for its state before every cycle and
+pauses while that is not `RUNNING` – no switching, no faults, no
+notifications. During that time the interface shows a notice instead of a list
+of defects.
 
-## Überwachung: wenn ein Thermostat ausfällt
+## Monitoring: when a thermostat fails
 
-Der Anlass ist ein Vorfall: Während eines Urlaubs fielen vier Thermostate wegen
-leerer Batterien aus, und niemand bemerkte es.
+The occasion was an incident: during a holiday four thermostats failed because
+of empty batteries, and nobody noticed.
 
-Eine Batteriewarnung allein hilft dabei nicht. Die SwitchBot-Thermostate melden
-über Matter **gar keinen Ladestand** – es gibt nichts zu überwachen. Was sie
-melden, ist ihr Zustand, und zwar regelmäßig. Bleibt das aus, ist das Gerät tot,
-gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
+A battery warning alone does not help here. The SwitchBot thermostats report
+**no charge level at all** over Matter – there is nothing to monitor. What they
+report is their state, and they do so regularly. If that stops, the device is
+dead, whatever the reason. The planner therefore watches for **signs of
+life**:
 
-| Fall | Wann |
+| Case | When |
 |---|---|
-| gibt es nicht mehr | die Entität ist aus Home Assistant verschwunden |
-| nicht erreichbar | Zustand `unavailable` oder `unknown` |
-| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 12 Stunden, im Sommerbetrieb doppelt) |
-| schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) und **nicht älter als zwölf Stunden** |
-| nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
-| steht in der Sommerpause | das Gerät meldet `summer`, obwohl geheizt werden soll |
+| no longer exists | the entity has disappeared from Home Assistant |
+| unavailable | state `unavailable` or `unknown` |
+| has stopped reporting | no sign of life since the silence period (default 12 hours, doubled in summer mode) |
+| low battery | where there is a reading, below the threshold (default 20 %) and **not older than twelve hours** |
+| refuses setpoints | three write operations rejected in a row |
+| in summer pause | the device reports `summer` although heating is due |
 
-Beim Batteriestand zählt auch sein Alter. Manche Geräte melden ihn nur bei
-Änderung – nach einem Batteriewechsel steht dort womöglich noch tagelang der
-alte Wert. Eine Warnung darauf wäre falsch, deshalb bleibt ein Stand, der
-älter als zwölf Stunden ist, unberücksichtigt. Die Meldung nennt umgekehrt die
-Uhrzeit der Messung, damit man sie einordnen kann.
+For the battery level its age counts as well. Some devices only report it on
+change – after a battery swap the old value may sit there for days. Warning
+about that would be wrong, so a reading older than twelve hours is
+disregarded. Conversely the message names the time of the measurement, so that
+you can judge it.
 
-**Die Sommerpause meldet der Planer von sich aus**, sobald der Sommerbetrieb
-endet und ein Gerät noch auf `summer` steht. Das ist der Zeitpunkt, an dem der
-Hinweis etwas nützt: Vorher wäre er eine Nachricht über den Sommer, nachher
-bliebe der Raum kalt. Beenden lässt sie sich nur in der FRITZ!Box – unter
-*Smart Home → Gerät bearbeiten → Zeitschaltung → Sommerzeit*. Home Assistant
-kann es nicht: Die Integration zeigt den Modus an, und die Liste der
-Voreinstellungen enthält dann nichts außer `summer`.
+**The summer pause is reported by the planner on its own**, as soon as summer
+mode ends and a device is still on `summer`. That is the moment when the hint
+is useful: before it, it would be news about the summer; after it, the room
+would stay cold. It can only be ended in the FRITZ!Box – under *Smart Home →
+edit device → schedule → summer time*. Home Assistant cannot do it: the
+integration shows the mode, and the list of presets then contains nothing but
+`summer`.
 
-Bis dahin gilt auch der Fall darüber: Ein Gerät in der Sommerpause lehnt jeden
-Sollwert ab. Die Meldung nennt das ausdrücklich, damit man nicht nach
-Batterien sucht, wo keine fehlen.
+Until then the case above applies as well: a device in summer pause rejects
+every setpoint. The message says so explicitly, so that nobody goes looking
+for batteries where none are missing.
 
-Nach drei Fehlschlägen versucht der Planer es nur noch alle 30 Minuten. Sonst
-füllte ein solches Gerät bei jedem Takt das Protokoll, ohne dass sich etwas
-ändert.
+After three failures the planner only tries every 30 minutes. Otherwise such a
+device would fill the log in every cycle without anything changing.
 
-**Wie lange darf ein Gerät schweigen?** Länger, als man denkt. Die
-Matter-Thermostate dieses Hauses melden im Sommerbetrieb – Ventile zu, nichts
-zu berichten – regulär bis zu 13 Stunden nichts. Eine Frist von sechs Stunden
-erzeugte damit reihenweise Ausfallmeldungen für Geräte, denen nichts fehlte.
-Die Vorgabe liegt deshalb bei zwölf Stunden und gilt im Sommerbetrieb doppelt.
-Im Heizbetrieb meldet ein Gerät bei jeder Sollwertänderung, dort ist die Frist
-deutlich schärfer, als sie klingt.
+**How long may a device stay silent?** Longer than one would think. In summer
+mode – valves closed, nothing to report – the Matter thermostats of this house
+regularly say nothing for up to 13 hours. A period of six hours produced a
+whole series of failure reports for devices that were perfectly fine. The
+default is therefore twelve hours, doubled in summer mode. In heating mode a
+device reports on every setpoint change, so the period is considerably
+stricter than it sounds.
 
-Gemeldet wird **auf Flanke**: einmal beim Auftreten, einmal bei der Behebung.
-Eine Warnung, die stündlich erneut aufs Telefon kommt, wird nach dem dritten
-Mal weggewischt und beim vierten Mal übersehen. Wird aus einer schwachen
-Batterie ein Ausfall, gilt das als neue Nachricht.
+Reporting happens **on edges**: once when it occurs, once when it is resolved.
+A warning that arrives on the phone again every hour is swiped away after the
+third time and overlooked on the fourth. If a low battery turns into a
+failure, that counts as a new message.
 
-Die Meldewege wählt man in den Einstellungen aus den `notify`-Diensten von Home
-Assistant – für die Ferne taugt die Companion-App, für zu Hause zusätzlich die
-dauerhafte Benachrichtigung in der Oberfläche. Jede Störung steht außerdem im
-Protokoll und im Hinweisbalken.
+The notification targets are chosen in the settings from the `notify` services
+of Home Assistant – the companion app works well when away from home, the
+persistent notification in the interface additionally at home. Every fault
+also appears in the log and in the notice bar.
 
-Für eigene Automationen gibt es `binary_sensor.heizungsplaner_stoerung`
-(Geräteklasse `problem`) mit den Meldungen als Attribut sowie
-`sensor.heizungsplaner_stoerungen` mit der Zahl der ausgefallenen Geräte.
+For your own automations there is `binary_sensor.heizungsplaner_stoerung`
+(device class `problem`) with the messages as an attribute, as well as
+`sensor.heizungsplaner_stoerungen` with the number of failed devices.
 
-## Handeingriffe
+## Manual changes
 
-Wird ein Thermostat von Hand verstellt – am Gerät, in Home Assistant oder per
-Automation –, erkennt der Planer die Abweichung von seinem zuletzt
-geschriebenen Wert und hält sich **bis zum nächsten Zeitplanwechsel** zurück.
-Danach führt wieder der Plan. Abschaltbar über *Einstellungen → Betrieb*.
+If a thermostat is adjusted by hand – at the device, in Home Assistant or by
+an automation – the planner recognises the deviation from its last written
+value and stands back **until the next scheduled change**. Afterwards the
+schedule takes over again. This can be switched off under *Settings →
+Operation*.
 
-Funkthermostate melden verzögert. Deshalb wertet der Planer eine Abweichung
-erst 15 Minuten nach dem eigenen Schreibvorgang als Handeingriff.
+Radio thermostats report with a delay. The planner therefore only treats a
+deviation as a manual change 15 minutes after its own write operation.
 
-**Nicht jede Abweichung ist eine Hand.** Manche Geräte quittieren einen
-Sollwert und setzen ihn trotzdem nicht um – sie stehen danach unverändert da.
-Der Planer merkt sich deshalb, welcher Wert *vor* seinem Befehl am Gerät
-stand: Ist es noch genau dieser, hat niemand gedreht, sondern das Gerät hat
-den Befehl verschluckt. Er versucht es dann erneut und meldet es nach drei
-Fehlschlägen als Störung. Diese Unterscheidung ist wichtig – als Handeingriff
-gedeutet, zöge sich der Planer zurück und der Raum bliebe auf einem Wert, den
-niemand gewollt hat.
+**Not every deviation is a hand.** Some devices acknowledge a setpoint and
+still do not apply it – they stand unchanged afterwards. The planner therefore
+remembers which value was on the device *before* its command: if it is still
+exactly that one, nobody turned anything, the device swallowed the command
+instead. It then tries again and reports it as a fault after three failures.
+This distinction matters – read as a manual change, the planner would stand
+back and the room would stay at a value nobody wanted.
 
-## Wie geschrieben wird
+## How writing works
 
-Ein Sollwert geht nur dann an ein Thermostat, wenn dort tatsächlich etwas
-anderes eingestellt ist – **auf Flanke, nicht auf Pegel**. Ein Add-on, das in
-jedem Takt stur denselben Wert schreibt, wird zum Besitzer der Entität und
-überfährt jede andere Bedienung.
+A setpoint only goes to a thermostat when something different is actually set
+there – **on edges, not on levels**. An add-on that stubbornly writes the same
+value in every cycle becomes the owner of the entity and overruns every other
+form of operation.
 
-Jedes Thermostat wird **einzeln** angesprochen. Ein Sammelaufruf würde an
-einem einzigen abgeschalteten Gerät scheitern und alle übrigen mitreißen.
-Nimmt ein Thermostat den Sollwert nicht an, schaltet der Planer es einmal auf
-`heat` und versucht es erneut.
+Every thermostat is addressed **individually**. A bulk call would fail on a
+single switched-off device and drag all the others down with it. If a
+thermostat does not accept the setpoint, the planner switches it to `heat`
+once and tries again.
 
-Der zuletzt geschriebene Wert liegt in `/data/zustand.json` und überlebt einen
-Neustart. Ohne dieses Gedächtnis würde jeder Add-on-Start in jedes Thermostat
-schreiben.
+The last written value lives in `/data/zustand.json` and survives a restart.
+Without that memory every start of the add-on would write into every
+thermostat.
 
-## Trockenlauf und Automatik aus
+## Dry run and automatic off
 
-**Trockenlauf** – der Planer rechnet, protokolliert und meldet über MQTT, aber
-stellt kein Thermostat. Der richtige Zustand für die ersten Tage.
+**Dry run** – the planner calculates, logs and reports over MQTT, but sets no
+thermostat. The right state for the first few days.
 
-**Automatik aus** – der Planer rechnet nicht mehr in die Thermostate hinein
-und lässt sie, wie sie sind.
+**Automatic off** – the planner no longer writes into the thermostats and
+leaves them as they are.
 
-### Zurück zur vorherigen Steuerung
+### Back to the previous control
 
-1. Trockenlauf einschalten (oder Automatik aus).
-2. Die zuvor abgeschalteten Zeitpläne und Automationen wieder aktivieren.
+1. Switch on the dry run (or automatic off).
+2. Re-enable the schedules and automations you switched off before.
 
-Die Thermostate behalten in beiden Fällen den zuletzt gestellten Wert – der
-Planer räumt beim Abschalten nichts auf, damit ein versehentliches Umschalten
-kein kaltes Haus hinterlässt.
+In both cases the thermostats keep the last value set – the planner does not
+tidy up when switched off, so that an accidental switch does not leave a cold
+house behind.
 
-## Ersteinrichtung
+## Initial setup
 
-Der Assistent liest die Bereiche aus Home Assistant und legt je Bereich mit
-Thermostat einen Raum an: mit den Thermostaten dieses Bereichs, einem üblichen
-Zeitplan und – wo der Bereichsname einen Vornamen enthält – der zuständigen
-Person. Gruppen-Helfer bleiben außen vor; der Planer stellt jeden Heizkörper
-einzeln. Doppelt registrierte Geräte mit gleichem Anzeigenamen werden nur
-einmal übernommen.
+The assistant reads the areas from Home Assistant and creates one room per
+area that has a thermostat: with the thermostats of that area, a typical
+schedule and – where the area name contains a first name – the person in
+charge. Group helpers are left out; the planner sets every radiator
+individually. Devices registered twice under the same display name are
+imported only once.
 
-Der Vorschlag wird angezeigt, bevor er gespeichert wird. Danach gehören
-Zeitpläne, Temperaturen und Personenzuordnung geprüft – geraten ist nicht
-entschieden.
+The proposal is shown before it is saved. Afterwards schedules, temperatures
+and the assignment of people want checking – guessed is not decided.
 
-## Umstieg von der Scheduler-Integration
+## Migrating from the Scheduler integration
 
-Solange beide laufen, schreiben zwei Systeme auf dieselben Sollwerte und
-überstimmen sich gegenseitig. Deshalb:
+While both are running, two systems write to the same setpoints and overrule
+each other. Therefore:
 
-1. Räume im Planer einrichten und einige Tage im Trockenlauf beobachten.
-2. Das Protokoll gegen die tatsächlichen Zeiten halten.
-3. Die Scheduler-Einträge für die Heizung **ausschalten**.
-4. Erst dann den Trockenlauf abschalten.
+1. Set up the rooms in the planner and watch them for a few days in dry run.
+2. Hold the log against the actual times.
+3. **Switch off** the scheduler entries for the heating.
+4. Only then switch off the dry run.
 
-Der Hinweisbalken der Oberfläche warnt, wenn ein Thermostat in zwei Räumen
-steht – dann würden sich die beiden Räume gegenseitig verstellen.
+The notice bar of the interface warns when a thermostat is listed in two rooms
+– the two rooms would then set it against each other.
 
-## Karten fürs Dashboard
+## Cards for the dashboard
 
-Unter `heizungsplaner/dashboard/` im Repository liegt eine fertige Übersicht
-zum Einfügen: die Partytaste mit Restzeit, eine Störungsanzeige, die nur
-erscheint, wenn es etwas zu melden gibt, und eine Tabelle aller Räume mit
-Zielwert, Ist-Temperatur, Zustand und dem nächsten Schaltpunkt. Die Karten
-lesen ausschließlich die MQTT-Entitäten und funktionieren deshalb auch von
-unterwegs.
+`heizungsplaner/dashboard/` in the repository holds a ready-made overview: the
+party button with its remaining time, a fault display that only appears when
+there is something to report, and a table of all rooms with setpoint, measured
+temperature, state and the next switching point. The cards read the MQTT
+entities only and therefore work from outside the house as well.
 
-Dazu kommt `regelkarte(sensor)`: eine Kachel, die nur erscheint, solange eine
-Übersteuerungsregel greift, und zeigt, bis wann („bis 14:00 Uhr"). Sie gehört
-in den Abschnitt, in dem man den Raum ohnehin ansieht. Grundlage sind die
-Attribute `uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` und
-`uebersteuerung_bis` am Raum-Sensor – eine Karte, die stattdessen die
-Begründung nach Stichworten durchsucht, bricht beim ersten umbenannten Raum.
+In addition there is `regelkarte(sensor)`: a tile that only appears while an
+override rule is active, showing until when (“until 14:00”). It belongs in the
+section where you look at the room anyway. It builds on the attributes
+`uebersteuerung`, `uebersteuerung_greift`, `uebersteuerung_lage` and
+`uebersteuerung_bis` of the room sensor – a card that searches the reasoning
+for keywords instead breaks with the first renamed room.
 
-**Keine `conditional`-Karte verwenden:** In einer Sections-Ansicht meldet die
-in Home Assistant 2026.8 „Konfigurationsfehler". Dort gehört `visibility` an
-die Karte selbst. Und ist das unter `state_content` genannte Attribut leer,
-zeigt eine Tile-Karte ersatzweise den Zustand des Sensors – deshalb ist
-`uebersteuerung_bis` nie leer, sondern trägt „ruht", wenn nichts läuft.
+**Do not use a `conditional` card:** in a sections view Home Assistant 2026.8
+reports a “configuration error” for it. There `visibility` belongs on the card
+itself. And if the attribute named under `state_content` is empty, a tile card
+shows the state of the sensor instead – which is why `uebersteuerung_bis` is
+never empty but carries “idle” when nothing is running.
 
-## Dateien
+## Files
 
-| Datei unter `/data` | Inhalt |
+| File under `/data` | Content |
 |---|---|
-| `config.json` | Räume, Zeitpläne, Einstellungen |
-| `zustand.json` | zuletzt geschriebene Sollwerte, Laufzeitzustand je Raum |
-| `logbuch.json` | Protokoll der letzten 500 Schaltvorgänge |
+| `config.json` | rooms, schedules, settings |
+| `zustand.json` | last written setpoints, runtime state per room |
+| `logbuch.json` | log of the last 500 switching operations |
+
+## Language
+
+The planner speaks German and English. It takes the language from Home
+Assistant (`/config` → `language`) and follows a change there from the next
+cycle onwards; anything other than German shows English.
+
+Three things deliberately stay German, because they are data rather than
+interface:
+
+* the **entity ids** (`sensor.heizungsplaner_raum_wohnzimmer`) – they are part
+  of every existing installation, and renaming them would break dashboards and
+  automations;
+* the **keys** of modes and states (`komfort`, `sommer`, `fenster`) as they
+  appear in the stored configuration and in MQTT attributes;
+* the **names** you gave to rooms, rules and devices.
+
+A third language needs one more column in `backend/texte.py` and one more
+dictionary in `frontend/englisch.js` – no changes elsewhere.

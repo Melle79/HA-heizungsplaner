@@ -17,6 +17,7 @@ import os
 import re
 import threading
 import uuid
+import texte
 
 DATA_DIR = os.environ.get("DATA_DIR", "./data")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
@@ -236,17 +237,17 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         raise ValidationError("Raum: Objekt erwartet")
     name = str(raum.get("name") or "").strip()[:60]
     if not name:
-        raise ValidationError("Der Raum braucht einen Namen")
+        raise ValidationError(texte.t("fehler_name"))
 
     thermostate = [str(e).strip() for e in (raum.get("thermostate") or []) if str(e).strip()]
     for eid in thermostate:
         if not eid.startswith("climate."):
-            raise ValidationError(f"{eid} ist kein Thermostat")
+            raise ValidationError(texte.t("fehler_kein_thermostat", entity=eid))
 
     minimum = _zahl(raum.get("min", 5.0), "Minimum", 4.0, 30.0)
     maximum = _zahl(raum.get("max", 26.0), "Maximum", 4.0, 35.0)
     if maximum <= minimum:
-        raise ValidationError("Das Maximum muss über dem Minimum liegen")
+        raise ValidationError(texte.t("fehler_max_min"))
 
     temperaturen = {}
     for schluessel, vorgabe in (("komfort", 21.0), ("eco", 19.0),
@@ -256,7 +257,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
 
     betriebsart = str(raum.get("betriebsart") or "plan").strip()
     if betriebsart not in BETRIEBSARTEN:
-        raise ValidationError(f"Unbekannte Betriebsart {betriebsart!r}")
+        raise ValidationError(texte.t("fehler_betriebsart", wert=betriebsart))
 
     # Übersteuerungen: Reihenfolge = Rangfolge, die erste zutreffende gewinnt.
     # Innerhalb einer Regel müssen **alle** Bedingungen zutreffen.
@@ -266,7 +267,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
             raise ValidationError("Übersteuerung: Objekt erwartet")
         modus = str(eintrag.get("modus") or "komfort").strip()
         if modus not in MODI:
-            raise ValidationError(f"Unbekannter Modus {modus!r} in der Übersteuerung")
+            raise ValidationError(texte.t("fehler_modus", wert=modus))
 
         # Die frühere Form kannte nur einen Schalter je Regel.
         rohe = eintrag.get("wenn")
@@ -282,7 +283,7 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
                 continue
             zustand = str(bedingung.get("zustand") or "an").strip()
             if zustand not in ZUSTAENDE:
-                raise ValidationError(f"Unbekannte Bedingung {zustand!r}")
+                raise ValidationError(texte.t("fehler_bedingung", wert=zustand))
             bedingungen.append({"entity": entity, "zustand": zustand})
         # Zeitfenster: leer heißt „rund um die Uhr“. Ohne Fenster hielte eine
         # Homeoffice-Regel den Raum auch nachts um drei auf Komfort – die
@@ -291,12 +292,11 @@ def validate_raum(raum: dict, vorhandene_id: str | None = None) -> dict:
         bis = str(eintrag.get("bis") or "").strip()
         for wert in (von, bis):
             if wert and not _TIME_RE.match(wert):
-                raise ValidationError(
-                    f"Übersteuerung: ungültige Uhrzeit {wert!r} (erwartet HH:MM)")
+                raise ValidationError(texte.t("fehler_uhrzeit", wert=wert))
         if bool(von) != bool(bis):
-            raise ValidationError("Übersteuerung: Zeitfenster braucht Anfang und Ende")
+            raise ValidationError(texte.t("fehler_fenster_paar"))
         if von and von == bis:
-            raise ValidationError("Übersteuerung: Anfang und Ende sind gleich")
+            raise ValidationError(texte.t("fehler_fenster_gleich"))
 
         if bedingungen:
             uebersteuerung.append({

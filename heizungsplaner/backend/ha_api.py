@@ -17,6 +17,8 @@ import os
 import urllib.error
 import urllib.request
 
+import texte
+
 _LOGGER = logging.getLogger(__name__)
 
 API_BASE = "http://supervisor/core/api"
@@ -63,6 +65,12 @@ def ist_bereit() -> bool:
         return False
     if not isinstance(config, dict):
         return False
+    # Die Sprache steht in derselben Antwort – ein eigener Aufruf wäre
+    # Verschwendung. Sie ändert sich selten, wird aber bei jedem Takt
+    # nachgezogen: Wer sie in Home Assistant umstellt, soll sie nicht erst
+    # nach einem Neustart des Add-ons wiederfinden.
+    texte.sprache_setzen(config.get("language"))
+
     zustand = config.get("state")
     # Ältere Fassungen melden kein `state` – dann wird Bereitschaft angenommen.
     return zustand in (None, "RUNNING")

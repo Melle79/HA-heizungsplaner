@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
 import anwesenheit
 import regelung
 import store
+import texte
 import witterung
 import zeitplan as zp
 
@@ -1213,6 +1214,42 @@ pruefe(gerufen and regelung._BATTERIEN["stand"]["climate.a"] == "sensor.neu_batt
 regelung.wachhund.batterien_je_thermostat = echt
 regelung._BATTERIEN["stand"] = None
 
+
+print("\n=== Zweisprachigkeit ===")
+
+# Jeder Text muss in beiden Sprachen stehen und dieselben Platzhalter tragen.
+# Ein vergessener Platzhalter faellt sonst erst im Betrieb auf - als Satz mit
+# einer Luecke mitten in einer Begruendung.
+import re as _re
+_luecken = []
+for _schluessel, _eintrag in texte.TEXTE.items():
+    _fehlend = {"de", "en"} - set(_eintrag)
+    if _fehlend:
+        _luecken.append(f"{_schluessel}: fehlt {sorted(_fehlend)}")
+        continue
+    _platz = {_sp: set(_re.findall(r"\{(\w+)\}", _eintrag[_sp])) for _sp in ("de", "en")}
+    if _platz["de"] != _platz["en"]:
+        _luecken.append(f"{_schluessel}: {_platz['de']} vs {_platz['en']}")
+for _name, _tabelle in (("MODUS", texte.MODUS), ("ZUSTAND", texte.ZUSTAND)):
+    for _k, _v in _tabelle.items():
+        if {"de", "en"} - set(_v):
+            _luecken.append(f"{_name}.{_k}")
+pruefe(not _luecken,
+       f"alle {len(texte.TEXTE)} Texte zweisprachig mit gleichen Platzhaltern "
+       f"({'; '.join(_luecken[:3]) if _luecken else 'ok'})")
+
+# Die Sprache wirkt sich auf die Begruendung aus - und nur auf sie.
+texte.sprache_setzen("en")
+_en = texte.t("zeitplan", modus=texte.modus("komfort"), uhrzeit="07:30")
+texte.sprache_setzen("de")
+_de = texte.t("zeitplan", modus=texte.modus("komfort"), uhrzeit="07:30")
+pruefe(_en == "Schedule: comfort from 07:30" and _de == "Zeitplan: Komfort ab 07:30 Uhr",
+       f"dieselbe Lage in beiden Sprachen ({_en!r} / {_de!r})")
+
+# Unbekannte Sprachen bekommen Englisch, nicht einen leeren Text.
+pruefe(texte.sprache_setzen("fr-CA") == "en", "unbekannte Sprache faellt auf Englisch")
+pruefe(texte.sprache_setzen("de-AT") == "de", "de-AT bleibt Deutsch")
+texte.sprache_setzen("de")
 
 print("\n=== Validierung ===")
 try:

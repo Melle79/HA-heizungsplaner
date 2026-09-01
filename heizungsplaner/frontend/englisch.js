@@ -1,0 +1,439 @@
+// Die englische Fassung der Oberfläche.
+//
+// Schlüssel ist der deutsche Text, so wie er im HTML und im Skript steht.
+// Das klingt unorthodox, hat aber einen handfesten Vorteil: Im übrigen Code
+// muss nichts umgebaut werden, und ein vergessener Text fällt nicht aus – er
+// bleibt schlicht deutsch stehen, statt als „missing.key.42“ zu erscheinen.
+//
+// Übersetzt wird beim Laden und danach bei jeder Änderung am DOM: Die
+// Oberfläche baut Listen, Kacheln und Dialoge laufend neu auf, eine einmalige
+// Übersetzung beim Start würde nur den ersten Zustand erwischen.
+
+const EN = {
+  // Kopf und Navigation
+  "🔥 Heizungsplaner": "🔥 Heating Planner",
+  "Heizungsplaner": "Heating Planner",
+  "Übersicht": "Overview",
+  "Räume": "Rooms",
+  "Einstellungen": "Settings",
+  "Protokoll": "Log",
+  "🎉 Party": "🎉 Party",
+  "Jetzt prüfen": "Check now",
+  "Aktualisieren": "Refresh",
+  "MQTT": "MQTT",
+  "Liest die Zustände aus Home Assistant neu ein, entscheidet für jeden Raum und stellt die Thermostate. Von selbst geschieht das alle paar Minuten.":
+    "Reads the states from Home Assistant again, decides for every room and sets the thermostats. This happens by itself every few minutes.",
+
+  // Ersteinrichtung
+  "Ersteinrichtung": "Initial setup",
+  "Aus Home Assistant übernehmen": "Import from Home Assistant",
+  "Vorschlag anzeigen": "Show proposal",
+  "Ausgewählte Räume anlegen": "Create selected rooms",
+  "Der Planer kann die Räume aus Home Assistant übernehmen: je Bereich ein Raum mit seinen Thermostaten, einem üblichen Zeitplan und – wo der Name es nahelegt – der zuständigen Person.":
+    "The planner can import the rooms from Home Assistant: one room per area, with its thermostats, a typical schedule and – where the name suggests it – the person in charge.",
+
+  // Raumliste und Dialog
+  "Raum hinzufügen": "Add room",
+  "Raum löschen": "Delete room",
+  "Speichern": "Save",
+  "Schließen": "Close",
+  "Name": "Name",
+  "Raum": "Room",
+  "Raum aktiv – ausgeschaltet bleibt das Ventil zu":
+    "Room active – switched off, the valve stays closed",
+  "Betriebsart": "Operating mode",
+  "Nach Zeitplan führen": "Follow the schedule",
+  "Von Hand – nur zu festen Zeiten absenken":
+    "By hand – set back at fixed times only",
+  "Thermostate": "Thermostats",
+  "Mehrfachauswahl mit ⌘ bzw. Strg. Gruppen-Helfer gehören nicht hierher – der Planer stellt jeden Heizkörper einzeln.":
+    "Group helpers do not belong here – the planner sets every radiator individually.",
+  "Grundlagen": "Basics",
+  "Temperaturen": "Temperatures",
+  "Zeitplan": "Schedule",
+  "Belegung": "Occupancy",
+  "Fühler und Melder": "Sensors",
+
+  // Temperaturen
+  "Sollwerte der Modi": "Setpoints per mode",
+  "Komfort (°C)": "Comfort (°C)",
+  "Eco (°C)": "Eco (°C)",
+  "Nacht (°C)": "Night (°C)",
+  "Abwesend (°C)": "Away (°C)",
+  "Grenzen des Raumes": "Limits of this room",
+  "Nie unter (°C)": "Never below (°C)",
+  "Nie über (°C)": "Never above (°C)",
+  "Die Grenzen deckeln auch die Heizkurve.":
+    "The limits also cap the heating curve.",
+  "Heizkurve auf diesen Raum anwenden": "Apply the heating curve to this room",
+  "Komfort": "Comfort",
+  "Eco": "Eco",
+  "Nacht": "Night",
+  "Aus": "Off",
+  "Sollwert": "Setpoint",
+
+  // Zeitplan
+  "Punkt hinzufügen": "Add point",
+  "Umschaltpunkt hinzufügen": "Add switching point",
+  "Vorlage einsetzen …": "Insert template …",
+  "Jeder Punkt gilt, bis der nächste kommt. Der letzte Punkt des Tages reicht über Mitternacht.":
+    "Each point applies until the next one. The last point of the day reaches past midnight.",
+  "immer": "always",
+  "Schultag": "school day",
+  "schulfrei": "day off",
+
+  // Übersteuerung
+  "Übersteuerung": "Override",
+  "Regel hinzufügen": "Add rule",
+  "Bedingung hinzufügen": "Add condition",
+  "Bezeichnung, z. B. Homeoffice": "Name, e.g. working from home",
+  "wenn": "if",
+  "und": "and",
+  "ist an / zu Hause": "is on / at home",
+  "ist aus / fort": "is off / away",
+  "greift gerade": "active now",
+  "ruht": "idle",
+  "Keine Regel – es gilt immer der Zeitplan.":
+    "No rule – the schedule always applies.",
+  "Treffen mehrere zu, gewinnt die oberste.":
+    "If several apply, the topmost wins.",
+  "Diese Regel entfernen": "Remove this rule",
+  "Diese Bedingung entfernen": "Remove this condition",
+  "ab wann die Regel greift – leer: rund um die Uhr":
+    "when the rule starts – empty: around the clock",
+  "bis wann die Regel greift": "when the rule ends",
+  "Treffen alle Bedingungen einer Regel zu, gilt ihr Modus statt des Zeitplans. So entsteht eine Homeoffice-Regelung ohne Schalter:":
+    "If all conditions of a rule apply, its mode replaces the schedule. That is how a working-from-home rule works without any switch:",
+  "Werktag ist an": "workday is on",
+  "Ferien sind aus": "holidays are off",
+  "Isabel ist zu Hause": "someone is at home",
+  "→ Komfort. Personen zählen als „an“, solange sie zu Hause sind. Das Zeitfenster grenzt ein, wann die Regel überhaupt greifen darf – ohne es liefe sie auch nachts um drei weiter. Leere Zeiten heißen: rund um die Uhr. Offene Fenster, Sommerbetrieb, Urlaub und die Anwesenheitsabsenkung bleiben stärker.":
+    "→ comfort. People count as “on” while they are at home. The time window limits when the rule may apply at all – without it the rule would still be running at three in the morning. Empty times mean: around the clock. Open windows, summer mode, holiday and the presence setback remain stronger.",
+
+  // Belegung
+  "Freigabe": "Release switch",
+  "Nur heizen, wenn dieser Schalter an ist": "Only heat while this switch is on",
+  "immer freigegeben": "always released",
+  "Für Räume, die nur zeitweise gebraucht werden – ein Gästezimmer etwa. Steht der Schalter auf aus, bleibt der Raum kalt.":
+    "For rooms that are only used occasionally – a guest room, for instance. With the switch off, the room stays cold.",
+  "Wer den Raum belegt": "Who uses this room",
+  "Absenken, wenn niemand Zuständiges da ist":
+    "Set back when nobody in charge is present",
+  "Absenken, wenn niemand Zuständiges zu Hause ist":
+    "Set back when nobody in charge is at home",
+  "Bei der Partytaste mitmachen": "Take part in the party button",
+  "Nur der Präsenzmelder zählt – Personen im Haus bleiben außer Betracht":
+    "Only the presence sensor counts – people in the house are ignored",
+  "Zuständige Personen": "People in charge",
+  "Nichts ausgewählt = die ganze Familie zählt.":
+    "Nothing selected = the whole family counts.",
+  "Eigene Karenzzeit (Minuten)": "Own grace period (minutes)",
+  "Leer lassen, dann gilt die Karenzzeit aus den Einstellungen.":
+    "Leave empty to use the grace period from the settings.",
+  "global": "global",
+
+  // Fühler und Melder
+  "Raumfühler": "Room sensor",
+  "Mittelwert der Thermostate dieses Raumes":
+    "Average of this room's thermostats",
+  "Präsenz- und Bewegungsmelder": "Presence and motion sensors",
+  "Fensterkontakte": "Window contacts",
+  "Sonstige Melder": "Other binary sensors",
+  "Sobald hier ein echter Kontakt steht, entscheidet er allein – die Temperatursturz-Erkennung tritt zurück. Meldet ein Kontakt nichts, springt sie wieder ein. Die":
+    "As soon as a real contact is listed here, it decides alone – the temperature-drop detection steps back. If a contact reports nothing, the detection returns. The",
+  "geräteeigene Erkennung": "device's own detection",
+  "eines Thermostats löst zwar mit aus, verdrängt die Sturz-Erkennung aber nicht: Sie schweigt, sobald das Gerät abgeschaltet ist.":
+    "of a thermostat does trigger as well, but does not replace the drop detection: it goes quiet as soon as the device is switched off.",
+  "Zusätzlich auf Temperatursturz achten, auch wenn alle Kontakte geschlossen melden":
+    "Watch the temperature drop as well, even when all contacts report closed",
+  "filtern …": "filter …",
+  "Nichts gefunden.": "Nothing found.",
+  "Nichts zur Auswahl.": "Nothing to choose from.",
+
+  // Einstellungen
+  "Betrieb": "Operation",
+  "Automatik – der Planer stellt die Thermostate":
+    "Automatic – the planner sets the thermostats",
+  "Trockenlauf – nur rechnen und protokollieren, nichts stellen":
+    "Dry run – only calculate and log, set nothing",
+  "Handeingriffe achten – ein von Hand gedrehtes Thermostat bleibt bis zum nächsten Zeitplanwechsel unangetastet":
+    "Respect manual changes – a thermostat turned by hand stays untouched until the next scheduled change",
+  "Takt (Sekunden)": "Cycle (seconds)",
+  "Quellen aus Home Assistant": "Sources from Home Assistant",
+  "Außentemperatur": "Outdoor temperature",
+  "Wetterdienst oder Außenfühler. Ein Fühler in der Sonne taugt nicht – er meldet mittags zweistellig zu viel.":
+    "Weather service or outdoor sensor. A sensor in the sun is useless – at noon it reads far too high.",
+  "Schulfrei / Wochenende": "Day off / weekend",
+  "Entscheidet, ob im Zeitplan die Schultag- oder die Schulfrei-Punkte gelten.":
+    "Decides whether the school-day or the day-off points of the schedule apply.",
+  "Urlaubsschalter": "Holiday switch",
+  "Urlaubstemperatur (°C)": "Holiday temperature (°C)",
+  "Frostschutz (°C)": "Frost protection (°C)",
+  "Witterung": "Weather",
+  "Heizkurve": "Heating curve",
+  "Sollwert nach Außentemperatur nachführen":
+    "Follow the outdoor temperature with the setpoint",
+  "Basis-Außentemperatur (°C)": "Base outdoor temperature (°C)",
+  "Steilheit (K je K)": "Slope (K per K)",
+  "Höchstens (K)": "At most (K)",
+  "Dämpfung (Stunden)": "Damping (hours)",
+  "Die Dämpfung glättet die Außentemperatur, damit ein sonniger Nachmittag im Februar nicht die Heizung abstellt. Beim ersten Lauf holt sich der Planer den Anlauf aus der Historie.":
+    "Damping smooths the outdoor temperature so that a sunny afternoon in February does not switch off the heating. On the first run the planner takes its starting value from the history.",
+  "Dämpfung neu anlaufen lassen": "Restart the damping",
+  "Sommerbetrieb": "Summer mode",
+  "Bei milder Witterung nicht heizen": "Do not heat in mild weather",
+  "Grenze (°C, gedämpft)": "Threshold (°C, damped)",
+  "Hysterese (K)": "Hysteresis (K)",
+  "Anwesenheit und Vorheizen": "Presence and preheating",
+  "Absenkung bei Abwesenheit": "Setback when away",
+  "Karenzzeit (Minuten)": "Grace period (minutes)",
+  "So lange muss ein Raum leer sein, bevor abgesenkt wird. Je Raum überschreibbar.":
+    "A room must be empty this long before it is set back. Can be overridden per room.",
+  "Vorheizen": "Preheating",
+  "Rechtzeitig vor dem Zeitplanwechsel anlaufen":
+    "Start in time before the scheduled change",
+  "Grundvorlauf (Min.)": "Base lead time (min.)",
+  "Zuschlag je Grad Kälte": "Extra per degree of cold",
+  "Höchstens (Min.)": "At most (min.)",
+  "Heimkehr ab (km)": "Return from (km)",
+  "Mindestannäherung (km)": "Minimum approach (km)",
+  "Als heimkehrend gilt nur, wer näher als die Schwelle ist,":
+    "Only someone closer than the threshold counts as returning,",
+  "in keiner Zone steht": "is in no zone",
+  "und dessen Entfernung in den letzten 15 Minuten um mindestens den genannten Wert abgenommen hat. Die Entfernung allein genügt nicht: Eine Schule in einem Kilometer Abstand hielte das Kinderzimmer sonst den ganzen Vormittag auf Komforttemperatur.":
+    "and whose distance has decreased by at least the given value over the last 15 minutes. Distance alone is not enough: a school one kilometre away would otherwise keep the child's room at comfort temperature all morning.",
+  "Fenstererkennung": "Window detection",
+  "Bei offenem Fenster auf Frostschutz gehen":
+    "Fall back to frost protection when a window is open",
+  "Temperatursturz (K)": "Temperature drop (K)",
+  "innerhalb von (Min.)": "within (min.)",
+  "Sperre danach (Min.)": "Lock afterwards (min.)",
+  "Der Temperatursturz greift nur in Räumen ohne Fensterkontakte. Kontakte trägt man je Raum ein.":
+    "The temperature drop only applies in rooms without window contacts. Contacts are entered per room.",
+  "Partytaste": "Party button",
+  "Dauer (Stunden)": "Duration (hours)",
+  "Diese Räume machen mit": "These rooms take part",
+  "Ein Druck hebt die gewählten Räume für die eingestellte Dauer auf den Sollwert – danach führt wieder der Zeitplan. Ein offenes Fenster bleibt stärker; Urlaub und Sommerbetrieb treten zurück.":
+    "One press lifts the selected rooms to the setpoint for the configured duration – afterwards the schedule takes over again. An open window stays stronger; holiday and summer mode step back.",
+  "Überwachung": "Monitoring",
+  "Melden, wenn ein Thermostat ausfällt": "Report when a thermostat fails",
+  "Schweigefrist (Stunden)": "Silence period (hours)",
+  "So lange darf ein Gerät nichts von sich hören lassen, bevor es als ausgefallen gilt.":
+    "A device may stay silent this long before it counts as failed.",
+  "Batteriewarnung ab (%)": "Battery warning below (%)",
+  "Nur dort, wo es überhaupt eine Anzeige gibt.":
+    "Only where there is a reading at all.",
+  "Meldewege": "Notification targets",
+  "Mehrfachauswahl mit ⌘ bzw. Strg. Gemeldet wird einmal beim Ausfall und einmal bei der Behebung – eine Warnung, die stündlich erneut kommt, wird bald weggewischt.":
+    "Reported once on failure and once on recovery – a warning that returns every hour is soon swiped away.",
+  "Probemeldung senden": "Send test notification",
+  "Erst speichern, dann die Probe senden – geprüft werden die gespeicherten Meldewege.":
+    "Save first, then send the test – the saved notification targets are what gets checked.",
+  "Einstellungen speichern": "Save settings",
+
+  // Raumliste
+  "Bearbeiten": "Edit",
+  "ganze Familie": "whole family",
+  "Neuer Raum": "New room",
+
+  // Zustände auf den Kacheln
+  "Abwesend": "Away",
+  "Heimkehr": "Coming home",
+  "Urlaub": "Holiday",
+  "Fenster offen": "Window open",
+  "Sommer": "Summer",
+  "Gesperrt": "Blocked",
+  "Von Hand": "Manual",
+  "Absenkung": "Setback",
+  "Party": "Party",
+  "Vorheizen": "Preheating",
+  "· Ventil zu": "· valve closed",
+  "Sommerbetrieb": "Summer mode",
+  "Regelbetrieb": "Normal operation",
+  "Trockenlauf": "Dry run",
+  "Automatik aus": "Automatic off",
+  "Schultag": "School day",
+  "Schulfrei": "Day off",
+
+  // Kopfzeile und Kacheln
+  "Draußen": "Outside",
+  "Nächster Wechsel": "Next change",
+  "Letzter Durchlauf": "Last run",
+  "Störungen": "Faults",
+  "werden geregelt": "are being controlled",
+  "Ventile geschlossen": "valves closed",
+  "Ventil zu": "valve closed",
+  "der erste Takt steht noch aus": "the first cycle is still pending",
+  "Zurückgesetzt – noch kein Wert": "Reset – no value yet",
+  "kein MQTT": "no MQTT",
+  "prüft …": "checking …",
+  "nicht erreichbar": "unavailable",
+  "Konfiguration nicht lesbar": "Configuration cannot be read",
+  "Noch keine Räume eingerichtet.": "No rooms set up yet.",
+  "Kein Raum macht mit": "No room takes part",
+  "Nichts ausgewählt": "Nothing selected",
+  "Neuer Raum": "New room",
+  "alle Räume abgesenkt": "all rooms set back",
+  "der Planer greift nicht ein": "the planner does not intervene",
+  "von Hand": "manual",
+  "nur Präsenzmelder": "presence sensor only",
+  "zu Hause": "at home",
+  "ist zu Hause": "is at home",
+  "läuft": "is on",
+  "läuft nicht": "is not on",
+  "gewählt": "selected",
+  "dieser Raum": "this room",
+  "· geräteeigene Erkennung": "· device's own detection",
+  "· kommt näher": "· approaching",
+  "(zurzeit nicht in Home Assistant)": "(currently not in Home Assistant)",
+  "Diesen Vorschlag nicht mehr anzeigen": "Do not show this suggestion again",
+  "Absenkpunkt hinzufügen": "Add setback point",
+  "Aus – Ventil zu": "Off – valve closed",
+  "Die gewählten Räume für die eingestellte Dauer auf Komfort":
+    "Lifts the selected rooms to comfort for the configured duration",
+  "Alle Bedingungen treffen zu und die Uhrzeit liegt im Fenster.":
+    "All conditions apply and the time is within the window.",
+
+  // Protokoll
+  "Protokoll leeren": "Clear log",
+  "Zeit": "Time",
+  "Was": "What",
+  "Warum": "Why",
+  "Wer ist zu Hause": "Who is at home",
+};
+
+// Texte mit Zahlen darin – als Muster, damit „4 von 20“ nicht 400 Einträge
+// braucht. Reihenfolge zählt: Das erste passende Muster gewinnt.
+const EN_MUSTER = [
+  [/^(\d+) von (\d+)$/, "$1 of $2"],
+  [/^(\d+) von (\d+) · (\d+) gewählt$/, "$1 of $2 · $3 selected"],
+  [/^(\d+) zur Auswahl$/, "$1 to choose from"],
+  [/^(\d+) zur Auswahl · (\d+) gewählt$/, "$1 to choose from · $2 selected"],
+  [/^(\d+) weitere – zum Suchen tippen$/, "$1 more – type to search"],
+  [/^nur (.+)$/, "only $1"],
+  [/^greift nicht: (.+)$/, "not active: $1"],
+  [/^greift heute nicht – (.+)$/, "not active today – $1"],
+  [/^greift gerade nicht – (.+)$/, "not active right now – $1"],
+  [/^ist nicht zu Hause$/, "is not at home"],
+  [/^(\d+) Thermostat\(e\)$/, "$1 thermostat(s)"],
+  [/^(\d+) Absenkpunkt\(e\)$/, "$1 setback point(s)"],
+  [/^seit (\d\d:\d\d)$/, "since $1"],
+  [/^nächster Wechsel (\d\d:\d\d)$/, "next change $1"],
+  [/^ist ([\d,.]+) °C$/, "is $1 °C"],
+  // Der Hinweis beim Raumfühler wird aus Teilen gebaut – hier als Ganzes.
+  [/^Ohne eigenen Fühler mittelt der Planer die Ist-Temperaturen der (\d+) Thermostate, die im Reiter Grundlagen angehakt sind\.$/,
+   "Without its own sensor the planner averages the current temperatures of the $1 thermostats ticked under Basics."],
+  [/^Ohne eigenen Fühler mittelt der Planer die Ist-Temperaturen des Thermostats, das im Reiter Grundlagen angehakt ist\.$/,
+   "Without its own sensor the planner uses the current temperature of the thermostat ticked under Basics."],
+  [/^Ohne eigenen Fühler mittelt der Planer die Ist-Temperaturen der Thermostate dieses Raumes – zurzeit ist im Reiter Grundlagen keines angehakt\.$/,
+   "Without its own sensor the planner averages this room's thermostats – currently none is ticked under Basics."],
+  [/^Der Planer führt den Sollwert durchgehend nach Zeitplan, Anwesenheit und Außentemperatur\.$/,
+   "The planner controls the setpoint continuously by schedule, presence and outdoor temperature."],
+  [/^Der Planer stellt den Raum nur zu den Zeitpunkten des Plans\. Dazwischen der Planer greift nicht ein.*$/,
+   "The planner only sets this room at the points of the schedule. In between it does not intervene."],
+  [/^Die Regel ist eingerichtet, aber diese Bedingung trifft nicht zu\. Sobald sie erfüllt ist, greift die Regel von selbst\.$/,
+   "The rule is set up, but this condition does not apply. As soon as it does, the rule takes effect by itself."],
+  [/^Alle Bedingungen treffen zu, aber die Uhrzeit liegt außerhalb des Zeitfensters\.$/,
+   "All conditions apply, but the time is outside the window."],
+  [/^greift nicht: (.+) meldet nichts$/, "not active: $1 reports nothing"],
+  [/^(.+) ist gerade nicht „(an|aus)“\.$/, "$1 is currently not “$2”."],
+  [/^(.+) meldet weder an noch aus\.$/, "$1 reports neither on nor off."],
+  [/^(\d+) Thermostat$/, "$1 thermostat"],
+  [/^(\d+) Thermostate$/, "$1 thermostats"],
+  [/^(\d+) Absenkpunkt$/, "$1 setback point"],
+  [/^(\d+) Absenkpunkte$/, "$1 setback points"],
+  [/^nächster Wechsel (.+)$/, "next change $1"],
+  [/^gedämpft ([\d,.]+) °C$/, "damped $1 °C"],
+  [/^außen ([\d,.]+) °C$/, "outside $1 °C"],
+  [/^Komfort ([\d,.]+) \/ Eco ([\d,.]+) °C$/, "Comfort $1 / eco $2 °C"],
+  [/^(\d+) Punkte$/, "$1 points"],
+  [/^(\d+) Punkt$/, "$1 point"],
+  [/^(\d+) Person\(en\)$/, "$1 person(s)"],
+  [/^(\d+) Melder$/, "$1 sensors"],
+  [/^(\d+) Kontakt(e)?$/, "$1 window contact$2"],
+];
+
+// Im HTML stehen längere Sätze über mehrere Zeilen. Verglichen wird deshalb
+// mit zusammengefasstem Leerraum – sonst bliebe jeder umbrochene Absatz
+// deutsch, obwohl er im Wörterbuch steht.
+const _glatt = (text) => text.replace(/\s+/g, ' ').trim();
+
+function _uebersetze(text) {
+  const roh = _glatt(text);
+  if (!roh) return null;
+  if (EN[roh] !== undefined) return EN[roh];
+  for (const [muster, ersatz] of EN_MUSTER) {
+    if (muster.test(roh)) return roh.replace(muster, ersatz);
+  }
+  return null;
+}
+
+// Was ein Mensch benannt hat – Räume, Geräte, Regeln – bleibt unangetastet.
+// Sonst würde aus einem Raum namens „Schlafzimmer“ ein „Bedroom“, und wer ihn
+// so wiederfinden will, sucht vergebens.
+function _istDaten(el) {
+  return !!(el && el.closest && el.closest('[data-roh]'));
+}
+
+function _knotenUebersetzen(wurzel) {
+  const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+  const zu_aendern = [];
+  while (lauf.nextNode()) {
+    const knoten = lauf.currentNode;
+    if (knoten.parentElement && ['SCRIPT', 'STYLE'].includes(knoten.parentElement.tagName))
+      continue;
+    if (_istDaten(knoten.parentElement)) continue;
+    const neu = _uebersetze(knoten.nodeValue);
+    if (neu !== null && neu !== knoten.nodeValue) zu_aendern.push([knoten, neu]);
+  }
+  for (const [knoten, neu] of zu_aendern) knoten.nodeValue = neu;
+
+  const elemente = wurzel.nodeType === 1 ? [wurzel, ...wurzel.querySelectorAll('*')]
+                                         : [...wurzel.querySelectorAll('*')];
+  for (const el of elemente) {
+    if (_istDaten(el)) continue;
+    for (const attr of ['placeholder', 'title']) {
+      const wert = el.getAttribute && el.getAttribute(attr);
+      if (!wert) continue;
+      const neu = _uebersetze(wert);
+      if (neu !== null && neu !== wert) el.setAttribute(attr, neu);
+    }
+  }
+}
+
+// Die Oberfläche baut Kacheln, Listen und Dialoge laufend neu auf. Ein
+// Beobachter übersetzt, was dazukommt – sonst wäre nur der erste Zustand
+// englisch. Er schreibt nur, wenn sich etwas ändert, sonst würde er sich
+// selbst immer wieder auslösen.
+const VORLAGEN_EN = {"wohnraum": "Living space", "kinderzimmer": "Child's room",
+                     "schlafzimmer": "Bedroom", "nebenraum": "Secondary room"};
+
+function englischAnschalten() {
+  // Die Vorlagen des Zeitplans stehen in einem Auswahlfeld und heißen wie
+  // mögliche Raumnamen. Sie werden deshalb über ihren Wert übersetzt.
+  const vorlage = document.getElementById('r-vorlage');
+  if (vorlage) {
+    for (const option of vorlage.options) {
+      if (VORLAGEN_EN[option.value]) option.textContent = VORLAGEN_EN[option.value];
+    }
+  }
+  _knotenUebersetzen(document.body);
+  new MutationObserver((eintraege) => {
+    for (const eintrag of eintraege) {
+      for (const knoten of eintrag.addedNodes) {
+        if (knoten.nodeType === 1) _knotenUebersetzen(knoten);
+        else if (knoten.nodeType === 3 && !_istDaten(knoten.parentElement)) {
+          const neu = _uebersetze(knoten.nodeValue);
+          if (neu !== null && neu !== knoten.nodeValue) knoten.nodeValue = neu;
+        }
+      }
+      if (eintrag.type === 'characterData' && !_istDaten(eintrag.target.parentElement)) {
+        const neu = _uebersetze(eintrag.target.nodeValue);
+        if (neu !== null && neu !== eintrag.target.nodeValue)
+          eintrag.target.nodeValue = neu;
+      }
+    }
+  }).observe(document.body, {childList: true, subtree: true, characterData: true});
+}
+
+window.englischAnschalten = englischAnschalten;

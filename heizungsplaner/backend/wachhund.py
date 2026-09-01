@@ -20,17 +20,18 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import ha_api
+import texte
 
 _LOGGER = logging.getLogger(__name__)
 
 # Wie eine Störung benannt und wie dringend sie ist.
 ARTEN = {
-    "fehlt":        ("gibt es in Home Assistant nicht mehr", "fehler"),
-    "unerreichbar": ("ist nicht erreichbar", "fehler"),
-    "stumm":        ("meldet sich nicht mehr", "fehler"),
-    "batterie":     ("hat eine schwache Batterie", "warnung"),
-    "verweigert":   ("nimmt keine Sollwerte an", "fehler"),
-    "sommerpause":  ("steht in der Sommerpause und heizt deshalb nicht", "fehler"),
+    "fehlt":        ("wach_fehlt", "fehler"),
+    "unerreichbar": ("wach_unerreichbar", "fehler"),
+    "stumm":        ("wach_stumm", "fehler"),
+    "batterie":     ("wach_batterie", "warnung"),
+    "verweigert":   ("wach_verweigert", "fehler"),
+    "sommerpause":  ("wach_sommerpause", "fehler"),
 }
 
 # So oft darf ein Schreibvorgang scheitern, bevor es als Störung gilt.
@@ -124,7 +125,8 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
             if gemeldet and jetzt_utc - gemeldet > stumm_ab:
                 stunden = (jetzt_utc - gemeldet).total_seconds() / 3600
                 stoerungen.append(_bauen(entity_id, name, raum, "stumm",
-                                         f"zuletzt vor {stunden:.0f} Stunden"))
+                                         texte.t("wach_seit",
+                                                 stunden=f"{stunden:.0f}")))
                 continue
 
             # Die Sommerpause eines FRITZ!-Thermostats ist ein Zustand in der
@@ -136,14 +138,14 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
             if not sommerbetrieb and (eintrag.get("attributes") or {}).get(
                     "preset_mode") == "summer":
                 stoerungen.append(_bauen(entity_id, name, raum, "sommerpause",
-                                         "in der FRITZ!Box beenden"))
+                                         texte.t("wach_fritzbox")))
                 continue
 
             fehler = (thermostat_zustand.get(entity_id) or {}).get("schreib_fehler", 0)
             if fehler >= FEHLSCHLAEGE:
-                zusatz = f"{fehler} Versuche vergeblich"
+                zusatz = texte.t("wach_versuche", anzahl=fehler)
                 if (eintrag.get("attributes") or {}).get("preset_mode") == "summer":
-                    zusatz += ", das Gerät steht in der Sommerpause"
+                    zusatz += texte.t("wach_sommerpause_zusatz")
                 stoerungen.append(_bauen(entity_id, name, raum, "verweigert", zusatz))
                 continue
 
@@ -162,16 +164,18 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
                     _LOGGER.info("Batteriestand von %s ist %.0f Stunden alt "
                                  "(%.0f %%) – keine Warnung", batterie_id, alter, stand)
                 else:
-                    zusatz = f"{stand:.0f} %"
-                    if gemessen:
-                        zusatz += f", Stand {gemessen.astimezone().strftime('%H:%M')} Uhr"
+                    zusatz = (texte.t("wach_batterie_stand",
+                                      prozent=f"{stand:.0f}",
+                                      uhrzeit=gemessen.astimezone().strftime("%H:%M"))
+                              if gemessen else f"{stand:.0f} %")
                     stoerungen.append(_bauen(entity_id, name, raum, "batterie", zusatz))
 
     return stoerungen
 
 
 def _bauen(entity_id: str, name: str, raum: dict, art: str, zusatz: str) -> dict:
-    text, schwere = ARTEN[art]
+    schluessel, schwere = ARTEN[art]
+    text = texte.t(schluessel)
     return {
         "entity_id": entity_id,
         "name": name,
@@ -206,14 +210,16 @@ def meldung_bauen(hinzu: list[dict], weg: list[dict]) -> tuple[str, str] | None:
         return None
     if hinzu:
         schwer = [s for s in hinzu if s["schwere"] == "fehler"]
-        titel = ("Heizung: %d Thermostat%s ausgefallen" %
-                 (len(schwer), "" if len(schwer) == 1 else "e")) if schwer \
-            else "Heizung: Batterie wird schwach"
+        titel = (texte.t("wach_meldung_titel", anzahl=len(schwer),
+                         mehrzahl="" if len(schwer) == 1
+                         else ("e" if texte.sprache() == "de" else "s"))
+                 if schwer else texte.t("wach_meldung_batterie"))
         zeilen = [s["text"] for s in hinzu]
         if weg:
             zeilen.append("")
-            zeilen += ["Wieder in Ordnung: " + s["name"] for s in weg]
+            zeilen += [texte.t("wach_wieder_zeile", name=s["name"]) for s in weg]
         return titel, "\n".join(zeilen)
-    return ("Heizung: wieder in Ordnung",
-            "\n".join(s["text"].replace(ARTEN[s["art"]][0], "meldet sich wieder")
+    return (texte.t("wach_wieder_titel"),
+            "\n".join(s["text"].replace(texte.t(ARTEN[s["art"]][0]),
+                                        texte.t("wach_meldet_wieder"))
                       for s in weg))

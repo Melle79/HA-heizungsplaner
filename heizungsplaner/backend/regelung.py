@@ -28,6 +28,7 @@ from datetime import datetime, timedelta
 
 import anwesenheit
 import ha_api
+import texte
 import wachhund
 import witterung
 import zeitplan as zp
@@ -157,13 +158,12 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
         if not geraeteeigen:
             verlaesslich += 1
         if zustand:
-            return True, (f"{name} meldet ein offenes Fenster" if geraeteeigen
-                          else f"{name} ist offen"), ""
+            return True, (texte.t("fenster_geraet", name=name) if geraeteeigen
+                          else texte.t("fenster_kontakt", name=name)), ""
 
     hinweis = ""
     if stumm:
-        hinweis = (f"{len(stumm)} Fensterkontakt(e) melden nichts – "
-                   f"ersatzweise Temperatursturz")
+        hinweis = texte.t("fenster_stumm", anzahl=len(stumm))
     sturz_erlaubt = verlaesslich == 0 or raum.get("sturz_auch_mit_kontakten") or stumm
     if not sturz_erlaubt or ist is None:
         return False, "", hinweis
@@ -177,8 +177,9 @@ def fenster_offen(raum: dict, states_index: dict, rz: dict, ist: float | None,
     if frueher:
         hoechster = max(frueher)
         if hoechster - ist >= schwelle:
-            return True, (f"Temperatursturz um {hoechster - ist:.1f} K "
-                          f"in {fenster_min} Minuten"), hinweis
+            return True, texte.t("fenster_sturz",
+                                 grad=f"{hoechster - ist:.1f}",
+                                 minuten=fenster_min), hinweis
     return False, "", hinweis
 
 
@@ -218,8 +219,9 @@ def uebersteuerung_lage(raum: dict, states_index: dict,
         # der Zielwert steht ohnehin daneben. Ohne Zeitfenster bleibt es bei
         # „läuft“, denn ein Ende gibt es dann nicht.
         bis = greifend.get("fenster", "").strip(" ()")
-        return {"name": greifend["name"], "greift": True, "lage": "greift gerade",
-                "bis": bis or "läuft"}
+        return {"name": greifend["name"], "greift": True,
+                "lage": texte.t("regel_greift"),
+                "bis": bis or texte.t("regel_laeuft")}
 
     # Sonst die erste Regel erklären – sie ist die ranghöchste.
     regel = regeln[0]
@@ -238,22 +240,22 @@ def uebersteuerung_lage(raum: dict, states_index: dict,
             wort in entity_id for wort in
             ("workday", "feiertag", "ferien", "schulfrei", "urlaub"))
         if ist is None:
-            grund = f"{anzeige} meldet nichts"
+            grund = texte.t("grund_meldet_nichts", name=anzeige)
         elif not soll:
-            grund = (f"{anzeige} ist zu Hause" if person
-                     else f"{anzeige} läuft" if art == "calendar"
-                     else f"{anzeige} ist an")
+            grund = texte.t("grund_zuhause" if person
+                            else "grund_laeuft" if art == "calendar"
+                            else "grund_an", name=anzeige)
         else:
-            grund = (f"{anzeige} ist nicht zu Hause" if person
-                     else f"{anzeige} läuft nicht" if art == "calendar"
-                     else f"{anzeige} ist aus")
-        vorspann = "greift heute nicht" if tagesfrage else "greift gerade nicht"
-        return {"name": name, "greift": False, "bis": "ruht",
-                "lage": f"{vorspann} – {grund}"}
+            grund = texte.t("grund_nicht_zuhause" if person
+                            else "grund_laeuft_nicht" if art == "calendar"
+                            else "grund_aus", name=anzeige)
+        return {"name": name, "greift": False, "bis": texte.t("regel_ruht"),
+                "lage": texte.t("regel_heute_nicht" if tagesfrage
+                                else "regel_gerade_nicht", grund=grund)}
 
-    return {"name": name, "greift": False, "bis": "ruht",
-            "lage": (f"greift gerade nicht – außerhalb {regel.get('von')}–"
-                     f"{regel.get('bis')} Uhr")}
+    return {"name": name, "greift": False, "bis": texte.t("regel_ruht"),
+            "lage": texte.t("regel_ausserhalb", von=regel.get("von"),
+                            bis=regel.get("bis"))}
 
 
 def _uebersteuerung(raum: dict, states_index: dict,
@@ -291,7 +293,8 @@ def _uebersteuerung(raum: dict, states_index: dict,
                 # der Regel braucht.
                 return {"modus": eintrag.get("modus", "komfort"),
                         "name": eintrag.get("name") or " · ".join(namen),
-                        "fenster": (f" (bis {eintrag['bis']} Uhr)"
+                        "fenster": (texte.t("uebersteuerung_bis",
+                                            uhrzeit=eintrag["bis"])
                                     if eintrag.get("von") and eintrag.get("bis")
                                     else "")}
     return None
@@ -351,8 +354,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
 
     # 1 — Raum abgeschaltet oder nicht freigegeben
     if not raum.get("aktiv", True):
-        return ergebnis("aus", frostschutz, "Raum ist im Planer abgeschaltet",
-                        ventil_zu=True)
+        return ergebnis("aus", frostschutz, texte.t("raum_aus"), ventil_zu=True)
 
     # Ein Raum, der nur zeitweise gebraucht wird – ein Gästezimmer etwa –
     # hängt an einem Schalter in Home Assistant. Steht der auf aus, bleibt der
@@ -364,8 +366,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
             name = (states_index.get(freigabe, {}).get("attributes") or {}).get(
                 "friendly_name", freigabe)
             return ergebnis("gesperrt", frostschutz,
-                            f"\u201e{name}\u201c ist aus \u2013 der Raum wird "
-                            f"nicht geheizt", ventil_zu=True)
+                            texte.t("gesperrt", name=name), ventil_zu=True)
         if zustand_freigabe is None:
             # Der Schalter fehlt oder meldet nichts. Den Raum deswegen kalt zu
             # lassen wäre die unangenehmere Überraschung, also wird geheizt und
@@ -384,7 +385,7 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     if sperre_bis and sperre_bis > jetzt:
         rest = int((sperre_bis - jetzt).total_seconds() // 60) + 1
         return ergebnis("fenster", frostschutz,
-                        f"Fenster war offen – Sperre noch {rest} Minuten")
+                        texte.t("sperre_rest", minuten=rest))
     rz["fenster_bis"] = None
 
     # 3 — Partytaste
@@ -396,24 +397,22 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     if party_bis and raum.get("party", True):
         rest = int((party_bis - jetzt).total_seconds() // 60) + 1
         ziel = zp.modus_temperatur(raum, einst["party"]["modus"], frostschutz)
-        hinweis = ""
-        if umgebung.get("sommerbetrieb"):
-            hinweis = " · Achtung: Sommerbetrieb, die Anlage heizt womöglich nicht"
+        hinweis = texte.t("party_sommer") if umgebung.get("sommerbetrieb") else ""
         return ergebnis("party", ziel,
-                        f"Partytaste – noch {rest} Minuten{hinweis}")
+                        texte.t("party", minuten=rest, hinweis=hinweis))
 
     # 4 — Urlaub
     if umgebung.get("urlaub"):
         return ergebnis("urlaub", float(einst["urlaub_temperatur"]),
-                        "Urlaub ist eingeschaltet")
+                        texte.t("urlaub"))
 
     # 5 — Sommerbetrieb
     if umgebung.get("sommerbetrieb"):
         gedaempft = umgebung.get("aussen_gedaempft")
         return ergebnis("sommer", frostschutz,
-                        f"Sommerbetrieb – Außentemperatur liegt im Mittel bei "
-                        f"{gedaempft:.1f} °C" if gedaempft is not None
-                        else "Sommerbetrieb", ventil_zu=True)
+                        texte.t("sommer", grad=f"{gedaempft:.1f}")
+                        if gedaempft is not None else texte.t("sommer_ohne_wert"),
+                        ventil_zu=True)
 
     # 6a — Betriebsart „nur absenken“: der Plan stößt an, statt zu führen
     plan = raum.get("zeitplan") or []
@@ -425,8 +424,9 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     eintrag = zp.aktueller_eintrag(plan, jetzt, umgebung.get("schulfrei"))
     modus = eintrag["modus"] if eintrag else "eco"
     basis = zp.modus_temperatur(raum, modus, frostschutz)
-    begruendung = (f"Zeitplan: {modus} ab {eintrag['start']} Uhr" if eintrag
-                   else "Kein Zeitplan hinterlegt – Eco-Temperatur")
+    begruendung = (texte.t("zeitplan", modus=texte.modus(modus),
+                           uhrzeit=eintrag["start"]) if eintrag
+                   else texte.t("zeitplan_leer"))
 
     # Ein Schalter kann den Zeitplan übersteuern – ein Homeoffice-Schalter
     # etwa hält das Büro auf Komfort, statt es vormittags abzusenken. Er
@@ -437,8 +437,9 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
     if uebersteuerung:
         modus = uebersteuerung["modus"]
         basis = zp.modus_temperatur(raum, modus, frostschutz)
-        begruendung = (f"{uebersteuerung['name']}{uebersteuerung.get('fenster', '')}"
-                       f" – {modus} statt Zeitplan")
+        begruendung = texte.t("uebersteuerung", name=uebersteuerung["name"],
+                              fenster=uebersteuerung.get("fenster", ""),
+                              modus=texte.modus(modus))
         if uebersteuerung["modus"] == "aus":
             return ergebnis("uebersteuert", frostschutz, begruendung,
                             ventil_zu=True)
@@ -452,9 +453,9 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
             if jetzt + timedelta(minutes=vorlauf) >= zeitpunkt:
                 basis = zp.modus_temperatur(raum, kommender_eintrag["modus"], frostschutz)
                 modus = kommender_eintrag["modus"]
-                begruendung = (f"Vorheizen für {kommender_eintrag['modus']} um "
-                               f"{kommender_eintrag['start']} Uhr "
-                               f"({vorlauf} Minuten Vorlauf)")
+                begruendung = texte.t(
+                    "vorheizen", modus=texte.modus(kommender_eintrag["modus"]),
+                    uhrzeit=kommender_eintrag["start"], minuten=vorlauf)
 
     # 7 — Anwesenheit
     zustand = modus
@@ -483,18 +484,20 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
                 heimweg, heimweg_grund = anwesenheit.kommt_heim(
                     raum, umgebung["personen"], schwelle)
                 if heimweg:
-                    begruendung = f"Heimkehr erwartet – {heimweg_grund}"
+                    begruendung = texte.t("heimkehr_erwartet", grund=heimweg_grund)
                     zustand = "heimkehr"
                 else:
                     abwesend = float(raum["abwesend"])
                     if abwesend < basis:
                         basis = abwesend
                         zustand = "abwesend"
-                        begruendung = (f"{anwesenheits_grund}, seit "
-                                       f"{int(leer_minuten)} Minuten leer")
+                        begruendung = texte.t("leer_seit_grund",
+                                              grund=anwesenheits_grund,
+                                              minuten=int(leer_minuten))
             else:
                 rest = int(karenz - leer_minuten) + 1
-                begruendung += f" – {anwesenheits_grund}, Absenkung in {rest} Minuten"
+                begruendung += texte.t("absenkung_in", grund=anwesenheits_grund,
+                                       minuten=rest)
 
     # 8 — Heizkurve
     #
@@ -507,7 +510,8 @@ def entscheide(raum: dict, rz: dict, umgebung: dict) -> dict:
         korrektur = witterung.korrektur(umgebung.get("aussen"), einst["heizkurve"])
         if abs(korrektur) >= 0.05:
             vorzeichen = "+" if korrektur > 0 else ""
-            begruendung += f" · Heizkurve {vorzeichen}{korrektur:.1f} K"
+            begruendung += texte.t("heizkurve", vorzeichen=vorzeichen,
+                                   grad=f"{korrektur:.1f}")
 
     if fenster_hinweis:
         begruendung += f" · {fenster_hinweis}"
@@ -559,17 +563,17 @@ def _nur_absenken(raum: dict, rz: dict, umgebung: dict, plan: list[dict],
 
     treffer = zp.letzter_zeitpunkt(plan, jetzt, umgebung.get("schulfrei"))
     if not treffer:
-        return ruhen("Von Hand gestellt – kein Absenkzeitpunkt hinterlegt")
+        return ruhen(texte.t("hand_ohne_punkt"))
 
     zeitpunkt, eintrag = treffer
     zuletzt = _aus_iso(rz.get("zuletzt_ausgeloest"))
     naechster = zp.naechster_wechsel(plan, jetzt, umgebung.get("schulfrei"))
-    ausblick = (f" – nächste Absenkung {naechster[1]['start']} Uhr"
+    ausblick = (texte.t("hand_ausblick", uhrzeit=naechster[1]["start"])
                 if naechster else "")
 
     if zuletzt is None:
         rz["zuletzt_ausgeloest"] = _iso(zeitpunkt)
-        return ruhen(f"Von Hand gestellt{ausblick}")
+        return ruhen(texte.t("hand_gestellt", ausblick=ausblick))
 
     if zeitpunkt > zuletzt:
         faellig_seit = jetzt - zeitpunkt
@@ -578,14 +582,14 @@ def _nur_absenken(raum: dict, rz: dict, umgebung: dict, plan: list[dict],
             # Genau dieser Eingriff soll die Handeinstellung überschreiben –
             # sonst hielte ihn die Handeingriff-Erkennung für einen Konflikt.
             return ergebnis("absenkung", ziel,
-                            f"Absenkung um {eintrag['start']} Uhr auf "
-                            f"{ziel:.1f} °C", erzwingen=True)
+                            texte.t("hand_absenkung", uhrzeit=eintrag["start"],
+                                    modus=f"{ziel:.1f} °C"), erzwingen=True)
         # Verpasst – etwa weil das Add-on stand. Nicht nachholen, nur vermerken.
         rz["zuletzt_ausgeloest"] = _iso(zeitpunkt)
-        return ruhen(f"Absenkung um {eintrag['start']} Uhr verpasst, "
-                     f"nicht nachgeholt{ausblick}")
+        return ruhen(texte.t("hand_verpasst", uhrzeit=eintrag["start"],
+                             ausblick=ausblick))
 
-    return ruhen(f"Von Hand gestellt{ausblick}")
+    return ruhen(texte.t("hand_gestellt", ausblick=ausblick))
 
 
 # ------------------------------------------------------------- Ausführung ----
@@ -611,7 +615,8 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
     for entity_id in raum.get("thermostate") or []:
         eintrag = states_index.get(entity_id)
         if not eintrag:
-            protokoll(raum["name"], "fehlt", f"{entity_id} ist in Home Assistant nicht vorhanden")
+            protokoll(raum["name"], texte.t("log_fehlt"),
+                      texte.t("fehlt_entity", entity=entity_id))
             continue
         attrs = eintrag.get("attributes") or {}
         gedaechtnis = state["thermostate"].setdefault(entity_id, {})
@@ -638,9 +643,10 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                                             "hvac": "heat"})
                         aktionen.append({"entity_id": entity_id, "aktion": "zurück",
                                          "wert": gesichert})
-                        protokoll(raum["name"], f"zurück auf {gesichert:.1f} °C",
-                                  "Sonderzustand vorbei – die Handeinstellung von "
-                                  "vorher gilt wieder", entity_id)
+                        protokoll(raum["name"],
+                                  texte.t("zurueck_auf", grad=f"{gesichert:.1f}"),
+                                  texte.t("hand_zurueck", grad=f"{gesichert:.1f}"),
+                                  entity_id)
             continue
 
         # -- Ventil schließen (Sommer / Raum abgeschaltet) --------------------
@@ -665,10 +671,9 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                 gedaechtnis["aus_fehlversuche"] = fehlversuche
                 if fehlversuche >= 2:
                     gedaechtnis["aus_vergeblich"] = True
-                    protokoll(raum["name"], "bleibt an",
-                              f"{attrs.get('friendly_name', entity_id)} nimmt das "
-                              f"Ausschalten nicht an – von nun an schließt der "
-                              f"Planer das Ventil über den Frostschutzwert",
+                    protokoll(raum["name"], texte.t("log_bleibt_an"),
+                              texte.t("nicht_uebernommen",
+                                      name=attrs.get("friendly_name", entity_id)),
                               entity_id)
                     # kein continue: unten wird jetzt der Sollwert gesetzt
                 else:
@@ -718,10 +723,10 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                 gedaechtnis["schreib_fehler"] = fehler
                 gedaechtnis["fehler_zuletzt"] = _iso(jetzt)
                 if fehler <= FEHLSCHLAEGE_BIS_SCHONUNG:
-                    protokoll(raum["name"], "nicht übernommen",
-                              f"{attrs.get('friendly_name', entity_id)} hat "
-                              f"{geschrieben:.1f} °C bestätigt, steht aber weiter "
-                              f"auf {ist_soll:.1f} °C", entity_id)
+                    protokoll(raum["name"], texte.t("log_nicht_bestaetigt"),
+                              f"{attrs.get('friendly_name', entity_id)}: "
+                              + texte.t("nicht_bestaetigt", grad=f"{geschrieben:.1f}")
+                              + f" ({ist_soll:.1f} °C)", entity_id)
             elif (geschrieben is not None and ist_soll is not None
                     and abs(ist_soll - geschrieben) >= SCHRITT
                     and abs(ist_soll - ziel) >= SCHRITT):
@@ -730,9 +735,8 @@ def anwenden(raum: dict, entscheidung: dict, state: dict, umgebung: dict,
                 gedaechtnis["soll"] = ist_soll
                 aktionen.append({"entity_id": entity_id, "aktion": "manuell",
                                  "wert": ist_soll})
-                protokoll(raum["name"], "manuell",
-                          f"Von Hand auf {ist_soll:.1f} °C gestellt – der Planer "
-                          f"hält sich bis zum nächsten Zeitplanwechsel zurück",
+                protokoll(raum["name"], texte.t("log_manuell"),
+                          texte.t("hand_erkannt", grad=f"{ist_soll:.1f}"),
                           entity_id)
                 continue
         manuell_bis = _aus_iso(gedaechtnis.get("manuell_bis"))
@@ -829,23 +833,25 @@ def takt(config: dict, state: dict, protokoll) -> dict:
             einst.get("aussen_entity", ""),
             max(24.0, float(einst["daempfung_stunden"]) * 2))
         if vorgeschichte is not None:
-            protokoll("Alle Räume", "Anlauf",
-                      f"Gedämpfte Außentemperatur aus der Historie übernommen: "
-                      f"{vorgeschichte:.1f} °C")
+            protokoll(texte.t("log_alle_raeume"), texte.t("log_anlauf"),
+                      texte.t("log_gedaempft_uebernommen",
+                              grad=f"{vorgeschichte:.1f}"))
 
     gedaempft = witterung.daempfen(vorgeschichte, aussen,
                                    sekunden, float(einst["daempfung_stunden"]))
     sommer = witterung.sommerbetrieb(gedaempft, einst["sommer"],
                                      bool(state.get("sommerbetrieb")))
     if sommer != bool(state.get("sommerbetrieb")):
-        protokoll("Alle Räume", "Sommerbetrieb " + ("ein" if sommer else "aus"),
-                  f"Gedämpfte Außentemperatur {gedaempft:.1f} °C" if gedaempft is not None
-                  else "Außentemperatur unbekannt")
+        protokoll(texte.t("log_alle_raeume"),
+                  texte.t("log_sommer_ein" if sommer else "log_sommer_aus"),
+                  texte.t("log_gedaempft", grad=f"{gedaempft:.1f}")
+                  if gedaempft is not None else texte.t("log_aussen_unbekannt"))
 
     # Läuft gerade eine Party? Abgelaufene Tasten räumen sich selbst weg.
     party_bis = _aus_iso(state.get("party_bis"))
     if party_bis and party_bis <= jetzt:
-        protokoll("Alle Räume", "Party vorbei", "Der Zeitplan führt wieder")
+        protokoll(texte.t("log_alle_raeume"), texte.t("log_party_vorbei_was"),
+                  texte.t("log_party_vorbei"))
         party_bis = None
         state["party_bis"] = None
 

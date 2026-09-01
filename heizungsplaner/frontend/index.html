@@ -804,6 +804,19 @@
   </div>
 </dialog>
 
+<script src="englisch.js"></script>
+<script>
+// Sprache aus Home Assistant. Die Abfrage läuft vor allem anderen: Steht die
+// Übersetzung erst nach den ersten Daten, sieht man die deutsche Fassung
+// kurz aufblitzen.
+fetch('api/sprache', {cache: 'no-store'})
+  .then(a => a.json())
+  .then(d => {
+    window.SPRACHE = d.sprache || 'de';
+    if (window.SPRACHE !== 'de') window.englischAnschalten();
+  })
+  .catch(() => {});
+</script>
 <script>
 const API = 'api/';
 const TAGE = [['mon','Mo'],['tue','Di'],['wed','Mi'],['thu','Do'],
@@ -847,21 +860,26 @@ const sendeJSON = (pfad, methode, koerper) => hole(pfad, {
   body: JSON.stringify(koerper),
 });
 
+// Zahlen und Zeiten folgen der Sprache: „23,0 °C“ im Deutschen, „23.0 °C“ im
+// Englischen. Ein Dezimalkomma in einer englischen Oberfläche liest sich wie
+// ein Tippfehler.
+const ORT = () => (window.SPRACHE === 'en' ? 'en-GB' : 'de-DE');
+
 function zahl(wert, stellen = 1) {
   if (wert === null || wert === undefined) return null;
-  return wert.toLocaleString('de-DE', {minimumFractionDigits: stellen,
-                                       maximumFractionDigits: stellen});
+  return wert.toLocaleString(ORT(), {minimumFractionDigits: stellen,
+                                     maximumFractionDigits: stellen});
 }
 
 const uhr = (iso) => iso
-  ? new Date(iso).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})
+  ? new Date(iso).toLocaleTimeString(ORT(), {hour:'2-digit', minute:'2-digit'})
   : '–';
 
 function zeitpunkt(iso) {
   if (!iso) return '–';
   const d = new Date(iso);
   const heute = new Date().toDateString() === d.toDateString();
-  return (heute ? '' : d.toLocaleDateString('de-DE', {weekday:'short'}) + ' ') + uhr(iso);
+  return (heute ? '' : d.toLocaleDateString(ORT(), {weekday:'short'}) + ' ') + uhr(iso);
 }
 
 function meldung(id, text, gut) {
@@ -1003,6 +1021,7 @@ function auswahlFuellen(ziel, quelle, wert, opt) {
       return option;
     }
     const label = document.createElement('label');
+    label.dataset.roh = '';
     const kasten = document.createElement('input');
     kasten.type = 'checkbox';
     kasten.value = eintrag.entity_id;
@@ -1330,7 +1349,7 @@ function karteZeichnen(raum) {
   karte.className = 'karte';
   karte.innerHTML = `
     <div class="kopfzeile">
-      <span class="name">${raum.name}</span>
+      <span class="name" data-roh>${raum.name}</span>
       <span class="pille ${raum.zustand}">${ZUSTAND_NAME[raum.zustand] || raum.zustand}</span>
     </div>
     <div class="werte">
@@ -1531,7 +1550,7 @@ async function vorschlagAnzeigen() {
       <label class="raumzeile">
         <span class="rname"><input type="checkbox" class="vorschlag-haken"
           value="${raum.name}" checked style="width:auto; accent-color:var(--warm)">
-          <span>${raum.name}</span></span>
+          <span data-roh>${raum.name}</span></span>
         <span class="rinfo">
           <span class="merkmal">${raum.thermostate.length} Thermostat(e)</span>
           <span class="merkmal">${raum.personen.length
@@ -1597,7 +1616,7 @@ function raumlisteZeichnen() {
   $('einrichtung').style.display = 'none';
   ziel.innerHTML = raeume.map(raum => `
     <div class="raumzeile">
-      <span class="rname">${raum.aktiv ? '' : '⏻ '}<span>${raum.name}</span></span>
+      <span class="rname">${raum.aktiv ? '' : '⏻ '}<span data-roh>${raum.name}</span></span>
       <span class="rinfo">${raumMerkmale(raum)
         .map(m => `<span class="merkmal">${m}</span>`).join('')}</span>
       <button class="leise" data-raum="${raum.id}">Bearbeiten</button>
@@ -1954,6 +1973,7 @@ function raumOeffnen(raum, startblatt) {
     freigabe_entity:'', sturz_auch_mit_kontakten:false, zeitplan:[],
   };
   $('d-titel').textContent = neu ? 'Neuer Raum' : d.name;
+  $('d-titel').toggleAttribute('data-roh', !neu);
   $('r-name').value = d.name;
   $('r-aktiv').checked = d.aktiv;
   $('r-betriebsart').value = d.betriebsart || 'plan';
