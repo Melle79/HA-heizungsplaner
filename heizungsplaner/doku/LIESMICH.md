@@ -19,6 +19,11 @@ beiden Dinge, um die es geht.
 im Sommer nicht zu sehen gibt: Komfort, Abwesend, Heimkehr, Fenster offen,
 Von Hand, Gesperrt.
 
+Unter `bilder/en/` liegen dieselben Ansichten mit englischer Oberfläche und
+englischem Beispielzustand – sie gehören zur englischen Fassung von README und
+Anleitung. Erzeugt werden sie gegen denselben Mock-Server, nur mit
+`api/sprache` → `en` und übersetzten Beispieldaten.
+
 In README und Anleitung sind sie über die Rohadresse von GitHub eingebunden,
 nicht über relative Pfade: Home Assistant zeigt `DOCS.md` im Reiter
 *Dokumentation* an, löst relative Bildpfade dort aber nicht auf.

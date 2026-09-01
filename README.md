@@ -18,7 +18,7 @@ that the living room gets 21.5 °C, but why: “Preheating for comfort at 12:30
 built in; anything other than German shows English. There is nothing to
 configure.
 
-![Overview with all rooms, setpoint and reasoning](heizungsplaner/doku/bilder/uebersicht.png)
+![Overview with all rooms, setpoint and reasoning](heizungsplaner/doku/bilder/en/uebersicht.png)
 
 ## What the planner takes into account
 
@@ -61,12 +61,12 @@ outdoor temperature, the party button and the *Check now* button.
 
 Rooms are set up under **Rooms**:
 
-![Room list with operating mode and number of thermostats](heizungsplaner/doku/bilder/raeume.png)
+![Room list with operating mode and number of thermostats](heizungsplaner/doku/bilder/en/raeume.png)
 
 Every room opens in a dialogue with five tabs – basics, temperatures,
 schedule, occupancy, sensors:
 
-![Basics of a room: operating mode and assigned thermostats](heizungsplaner/doku/bilder/raum-grundlagen.png)
+![Basics of a room: operating mode and assigned thermostats](heizungsplaner/doku/bilder/en/raum-grundlagen.png)
 
 The **schedule** consists of switching points, not of time ranges: each point
 applies until the next one comes – always, on school days only or on days off
@@ -79,30 +79,30 @@ the time is within its window, its mode replaces the schedule. That is how a
 working-from-home rule works without any switch. Each rule says whether it is
 active and, if not, what is missing:
 
-![Override rule with conditions and time window](heizungsplaner/doku/bilder/uebersteuerung.png)
+![Override rule with conditions and time window](heizungsplaner/doku/bilder/en/uebersteuerung.png)
 
 **Occupancy** holds who uses the room – the people responsible, a presence
 sensor, an own grace period – and whether the room takes part in the party
 button:
 
-![Occupancy: release switch, people in charge, grace period](heizungsplaner/doku/bilder/raum-belegung.png)
+![Occupancy: release switch, people in charge, grace period](heizungsplaner/doku/bilder/en/raum-belegung.png)
 
 Under **Sensors** the temperature sensor, presence sensors and window contacts
 are attached to the room. Devices are ticked, and a filter row above each list
 shows only what belongs to this room – otherwise the letterbox contact would
 be on offer in the living room:
 
-![Sensors with a filter row above each list](heizungsplaner/doku/bilder/raum-melder.png)
+![Sensors with a filter row above each list](heizungsplaner/doku/bilder/en/raum-melder.png)
 
 The **settings** apply to the whole house: heating curve, summer mode,
 preheating, presence, window detection, monitoring and notification targets:
 
-![Settings with heating curve and summer mode](heizungsplaner/doku/bilder/einstellungen.png)
+![Settings with heating curve and summer mode](heizungsplaner/doku/bilder/en/einstellungen.png)
 
 The **log** records every change with its reason – faults in red, warnings in
 yellow:
 
-![Log of switching operations with reasons](heizungsplaner/doku/bilder/protokoll.png)
+![Log of switching operations with reasons](heizungsplaner/doku/bilder/en/protokoll.png)
 
 ## Installation
 
