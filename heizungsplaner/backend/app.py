@@ -20,6 +20,7 @@ import ha_api
 import logbuch
 import regelung
 import store
+import texte
 import uebernahme
 import wachhund
 from version import VERSION
@@ -200,6 +201,16 @@ def statisch(datei: str):
 
 
 # ------------------------------------------------------------------ API ----
+
+@app.route("/api/sprache")
+def api_sprache():
+    """Welche Sprache spricht Home Assistant?
+
+    Die Oberfläche fragt das einmal beim Laden. Ein eigener, winziger Endpunkt
+    statt eines Feldes im Status: Die Übersetzung soll stehen, bevor die
+    ersten Daten eintreffen – sonst blitzt die deutsche Fassung kurz auf.
+    """
+    return jsonify({"sprache": texte.sprache()})
 
 @app.route("/api/status")
 def api_status():
