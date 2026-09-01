@@ -15,6 +15,7 @@ Zwei Eigenheiten dieses Hauses sind berücksichtigt:
 from __future__ import annotations
 
 import math
+import texte
 
 ERDRADIUS_KM = 6371.0
 
@@ -163,18 +164,19 @@ def raum_besetzt(raum: dict, states_index: dict, personen: dict) -> tuple[bool, 
     """
     bewegung, verlaesslich = praesenz_lage(raum, states_index)
     if bewegung:
-        return True, "Präsenzmelder meldet Bewegung"
+        return True, texte.t("praesenz_bewegung")
     if raum.get("nur_praesenz"):
         # Kein antwortender Melder heißt nicht „niemand da“. Sonst stünde der
         # Raum nach einem ausgefallenen oder falsch eingetragenen Melder
         # dauerhaft auf der Abwesenheitstemperatur, ohne dass es auffällt.
         if verlaesslich == 0:
-            return True, "kein Präsenzmelder meldet sich"
-        return False, "Präsenzmelder meldet niemanden"
+            return True, texte.t("praesenz_stumm")
+        return False, texte.t("praesenz_niemand")
     for entity_id in zustaendige(raum, personen):
         if personen[entity_id]["zuhause"]:
-            return True, f"{personen[entity_id]['name']} ist zu Hause"
-    return False, "niemand zu Hause"
+            return True, texte.t("person_zuhause",
+                                 name=personen[entity_id]["name"])
+    return False, texte.t("niemand_zuhause")
 
 
 def kommt_heim(raum: dict, personen: dict, schwelle_km: float) -> tuple[bool, str]:
@@ -204,5 +206,6 @@ def kommt_heim(raum: dict, personen: dict, schwelle_km: float) -> tuple[bool, st
         if naechste is None or distanz < naechste:
             naechste, name = distanz, person["name"]
     if naechste is not None and naechste <= schwelle_km:
-        return True, f"{name} kommt näher, noch {naechste:.1f} km"
+        return True, texte.t("heimkehr_naehert", name=name,
+                             km=f"{naechste:.1f}")
     return False, ""
