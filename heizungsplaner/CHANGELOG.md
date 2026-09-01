@@ -1,5 +1,22 @@
 # Änderungen
 
+## 1.14.0
+
+- **Der Planer spricht Englisch.** Oberfläche, Begründungen, Protokoll,
+  Störungsmeldungen und Hinweise gibt es jetzt in zwei Sprachen. Eingestellt
+  wird nichts: Die Sprache kommt von Home Assistant (`/config` → `language`)
+  und folgt einer Änderung dort ab dem nächsten Takt.
+- Deutsch bleibt für deutsche Installationen unverändert – Wort für Wort.
+- Zahlen und Uhrzeiten folgen der Sprache: „21,5 °C“ im Deutschen,
+  „21.5 °C“ im Englischen.
+- **Namen bleiben unangetastet.** Räume, Regeln und Geräte sind Daten, keine
+  Oberfläche; ebenso die Entitäts-IDs und die Schlüssel der Modi und Zustände,
+  die in jeder gespeicherten Konfiguration stecken.
+- README und Handbuch gibt es auf Englisch (`README.md`, `DOCS.md`) und auf
+  Deutsch (`README.de.md`, `DOCS.de.md`).
+- Der Prüflauf hält die Sprachen gegeneinander: gleiche Schlüssel, gleiche
+  Platzhalter. Eine halbe Übersetzung fällt damit sofort auf.
+
 ## 1.13.2
 
 - `uebersteuerung_bis` ist nie mehr leer: „bis 14:00 Uhr“, solange die Regel

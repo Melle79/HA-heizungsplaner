@@ -14,6 +14,7 @@ import threading
 import paho.mqtt.client as mqtt
 
 from version import VERSION
+import texte
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -216,15 +217,15 @@ class Publisher:
         raeume = bericht.get("raeume") or []
         aktive = [r for r in raeume if r["zustand"] not in ("aus", "sommer")]
         if bericht.get("trockenlauf"):
-            status = "Trockenlauf"
+            status = texte.t("mq_trockenlauf")
         elif not bericht.get("automatik"):
-            status = "Automatik aus"
+            status = texte.t("mq_automatik_aus")
         elif bericht.get("sommerbetrieb"):
-            status = "Sommerbetrieb"
+            status = texte.t("mq_sommer")
         elif bericht.get("urlaub"):
-            status = "Urlaub"
+            status = texte.t("mq_urlaub")
         else:
-            status = f"{len(aktive)} von {len(raeume)} Räumen aktiv"
+            status = texte.t("mq_aktiv", aktive=len(aktive), gesamt=len(raeume))
 
         self._zustand("status", status, {
             "zeit": bericht.get("zeit"),

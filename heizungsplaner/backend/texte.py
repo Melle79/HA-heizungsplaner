@@ -325,6 +325,77 @@ TEXTE: dict[str, dict[str, str]] = {
     "log_manuell": {"de": "manuell", "en": "manual"},
     "log_party_vorbei_was": {"de": "Party vorbei", "en": "Party over"},
 
+    # MQTT: Zustand des Planers
+    "mq_trockenlauf": {"de": "Trockenlauf", "en": "Dry run"},
+    "mq_automatik_aus": {"de": "Automatik aus", "en": "Automatic off"},
+    "mq_sommer": {"de": "Sommerbetrieb", "en": "Summer mode"},
+    "mq_urlaub": {"de": "Urlaub", "en": "Holiday"},
+    "mq_aktiv": {"de": "{aktive} von {gesamt} Räumen aktiv",
+                 "en": "{aktive} of {gesamt} rooms active"},
+
+    # Hinweisbalken
+    "hin_startet": {
+        "de": "Home Assistant startet gerade – der Planer setzt aus, bis alle "
+              "Geräte geladen sind.",
+        "en": "Home Assistant is starting – the planner waits until all devices "
+              "are loaded."},
+    "hin_keine_raeume": {
+        "de": "Noch keine Räume eingerichtet – der Assistent übernimmt sie aus "
+              "Home Assistant.",
+        "en": "No rooms set up yet – the assistant can import them from Home "
+              "Assistant."},
+    "hin_trockenlauf": {
+        "de": "Trockenlauf ist aktiv: Der Planer rechnet, stellt aber kein "
+              "Thermostat.",
+        "en": "Dry run is active: the planner calculates but sets no thermostat."},
+    "hin_automatik_aus": {"de": "Die Automatik ist ausgeschaltet.",
+                          "en": "The automatic control is switched off."},
+    "hin_entity_fehlt": {
+        "de": "{feld}: {entity} gibt es in Home Assistant nicht.",
+        "en": "{feld}: {entity} does not exist in Home Assistant."},
+    "hin_kontakt_stumm": {
+        "de": "Fensterkontakt {entity} (Raum „{raum}“) meldet nichts – der Raum "
+              "fällt auf die Temperatursturz-Erkennung zurück.",
+        "en": "Window contact {entity} (room “{raum}”) reports nothing – the room "
+              "falls back to temperature-drop detection."},
+    "hin_freigabe_fehlt": {
+        "de": "Der Freigabeschalter {entity} (Raum „{raum}“) gibt es in Home "
+              "Assistant nicht – der Raum wird deshalb normal geregelt.",
+        "en": "The release switch {entity} (room “{raum}”) does not exist in Home "
+              "Assistant – the room is therefore controlled normally."},
+    "hin_melder_stumm": {
+        "de": "Präsenzmelder {entity} (Raum „{raum}“) meldet nichts.",
+        "en": "Presence sensor {entity} (room “{raum}”) reports nothing."},
+    "hin_nur_praesenz_stumm": {
+        "de": "Raum „{raum}“ soll allein dem Präsenzmelder folgen, aber keiner "
+              "meldet sich – er gilt darum immer als belegt.",
+        "en": "Room “{raum}” should follow its presence sensor alone, but none is "
+              "reporting – it therefore always counts as occupied."},
+    "hin_kein_thermostat": {"de": "Raum „{raum}“ hat kein Thermostat.",
+                            "en": "Room “{raum}” has no thermostat."},
+    "hin_kein_zeitplan": {
+        "de": "Raum „{raum}“ hat keinen Zeitplan – es gilt dauerhaft die "
+              "Eco-Temperatur.",
+        "en": "Room “{raum}” has no schedule – the eco temperature applies "
+              "permanently."},
+    "hin_thermostat_weg": {
+        "de": "{entity} (Raum „{raum}“) gibt es in Home Assistant nicht mehr.",
+        "en": "{entity} (room “{raum}”) no longer exists in Home Assistant."},
+    "hin_doppelt": {
+        "de": "{entity} steht in „{a}“ und in „{b}“ – zwei Räume würden dasselbe "
+              "Thermostat gegeneinander stellen.",
+        "en": "{entity} is listed in “{a}” and in “{b}” – two rooms would set the "
+              "same thermostat against each other."},
+    "feld_aussen": {"de": "Außentemperatur", "en": "Outdoor temperature"},
+    "feld_urlaub": {"de": "Urlaubsschalter", "en": "Holiday switch"},
+    "feld_schulfrei": {"de": "Schulfrei-Schalter", "en": "Day-off switch"},
+    "api_raum_fehlt": {"de": "Raum nicht gefunden", "en": "Room not found"},
+    "api_keine_entitaet": {"de": "Keine Entität angegeben",
+                           "en": "No entity given"},
+    "api_dauer": {"de": "Ungültige Dauer", "en": "Invalid duration"},
+    "api_kein_meldeweg": {"de": "Es ist kein Meldeweg eingestellt.",
+                          "en": "No notification target is configured."},
+
     # Validierung
     "fehler_name": {"de": "Der Raum braucht einen Namen",
                     "en": "The room needs a name"},

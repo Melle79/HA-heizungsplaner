@@ -5,8 +5,8 @@ nach Zeitplan, Außentemperatur und Anwesenheit.
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-melle79-ffdd00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/melle79)
 
-> 📖 Die vollständige Anleitung steht in **[DOCS.md](DOCS.md)** – sie ist im
-> Add-on auch über den Reiter *Dokumentation* erreichbar.
+> 📖 Full manual: **[DOCS.md](DOCS.md)** (English) · **[DOCS.de.md](DOCS.de.md)**
+> (Deutsch). Im Add-on steht sie unter *Dokumentation*.
 
 ![Übersicht mit allen Räumen, Zielwert und Begründung](https://raw.githubusercontent.com/Melle79/HA-heizungsplaner/main/heizungsplaner/doku/bilder/uebersicht.png)
 
