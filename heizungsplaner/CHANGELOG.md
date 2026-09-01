@@ -1,5 +1,11 @@
 # Änderungen
 
+## 1.15.1
+
+- README und Add-on-Beschreibung nennen die Einheit: Der Planer folgt Home
+  Assistant nicht nur in der Sprache, sondern auch in Celsius oder Fahrenheit.
+  Im Handbuch stand es bereits.
+
 ## 1.15.0
 
 - **Celsius oder Fahrenheit, je nach Maßsystem von Home Assistant.** Die

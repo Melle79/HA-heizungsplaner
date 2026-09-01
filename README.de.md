@@ -9,8 +9,10 @@ nach Zeitplan, Außentemperatur und Anwesenheit.
 > 📖 Ausführliche Anleitung: **[DOCS.de.md](heizungsplaner/DOCS.de.md)** ·
 > 🇬🇧 In English: **[README.md](README.md)**
 
-**Die Oberfläche folgt der Sprache von Home Assistant.** Deutsch und Englisch
-sind eingebaut; alles außer Deutsch zeigt Englisch. Einzustellen ist nichts.
+**Der Planer folgt Home Assistant.** Der Sprache – Deutsch und Englisch sind
+eingebaut, alles andere zeigt Englisch – und der Temperatureinheit: Celsius
+oder Fahrenheit, mitsamt Vorgaben, Grenzen und Schrittweite. Einzustellen ist
+nichts; beides steht in `/config` und wird bei jedem Takt gelesen.
 
 Statt fester Uhrzeiten je Thermostat rechnet der Planer für jeden Raum in
 jedem Takt einen Sollwert aus und begründet ihn. In der Oberfläche steht nicht
@@ -45,6 +47,9 @@ komfort um 12:30 Uhr (50 Minuten Vorlauf) · Heizkurve +0,6 K“.
   in Home Assistant es freigibt.
 * **Partytaste** – hebt die gewählten Räume für ein paar Stunden auf Komfort
   und stellt sich danach von selbst zurück.
+* **Einheit** – Celsius oder Fahrenheit, aus dem Maßsystem übernommen. Spannen
+  werden als Spannen umgerechnet: Aus 1,5 K Hysterese werden 2,7 °F, nicht
+  34,7. Wechselt das Maßsystem, ziehen die gespeicherten Werte einmalig mit.
 * **Übersteuerung je Raum** – Regeln aus mehreren Bedingungen setzen den
   Zeitplan außer Kraft: „Werktag, keine Ferien, Isabel ist zu Hause“ hält das
   Wohnzimmer auf Komfort, statt es vormittags abzusenken. Als Bedingung taugt

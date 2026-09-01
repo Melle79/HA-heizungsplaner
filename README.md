@@ -14,9 +14,10 @@ every room in every cycle – and explains it. The interface does not only say
 that the living room gets 21.5 °C, but why: “Preheating for comfort at 12:30
 (50 minutes lead time) · heating curve +0.6 K”.
 
-**The interface follows Home Assistant's language.** German and English are
-built in; anything other than German shows English. There is nothing to
-configure.
+**The planner follows Home Assistant.** Language – German and English are
+built in, anything else shows English – and the temperature unit: Celsius or
+Fahrenheit, with defaults, limits and step size following along. There is
+nothing to configure; both come from `/config` and are read on every cycle.
 
 ![Overview with all rooms, setpoint and reasoning](heizungsplaner/doku/bilder/en/uebersicht.png)
 
@@ -50,6 +51,9 @@ configure.
   condition – switches, sensors, calendars and people.
 * **Party button** – lifts the selected rooms to comfort for a few hours and
   resets itself afterwards.
+* **Units** – Celsius or Fahrenheit, taken from the measurement system. Spans
+  are converted as spans: a hysteresis of 1.5 K becomes 2.7 °F, not 34.7. If
+  the measurement system changes, the stored values are converted once.
 
 ## The interface
 

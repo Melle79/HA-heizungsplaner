@@ -1,7 +1,7 @@
 name: "Heizungsplaner"
-version: "1.15.0"
+version: "1.15.1"
 slug: "heizungsplaner"
-description: "Predictive heating control: per-room schedules, a heating curve based on outdoor temperature, presence-based setback and preheating. German and English."
+description: "Predictive heating control: per-room schedules, a heating curve based on outdoor temperature, presence-based setback and preheating. German and English, °C and °F."
 url: "https://github.com/Melle79/HA-heizungsplaner-heating-planner"
 arch:
   - aarch64

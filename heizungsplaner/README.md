@@ -25,6 +25,8 @@ Wohnzimmer 21,5 °C bekommt, sondern warum.
 * **Fenster** – über Kontakte oder, wo es keine gibt, über den Temperatursturz
 * **Urlaub, Freigabe je Raum und Partytaste**
 * **Überwachung** – ein Thermostat, das sich nicht mehr meldet, wird gemeldet
+* **Sprache und Einheit** – beides aus Home Assistant: Deutsch oder Englisch,
+  Celsius oder Fahrenheit
 
 ## Erste Schritte
 
