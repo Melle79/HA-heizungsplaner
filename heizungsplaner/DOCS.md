@@ -669,5 +669,41 @@ interface:
   appear in the stored configuration and in MQTT attributes;
 * the **names** you gave to rooms, rules and devices.
 
-A third language needs one more column in `backend/texte.py` and one more
-dictionary in `frontend/englisch.js` – no changes elsewhere.
+
+## Adding a language
+
+The planner speaks German and English. A third language is two files and no
+code change:
+
+**1. The backend** – `backend/texte.py` holds every sentence the planner
+writes. Each entry is a small table; add a column:
+
+```python
+"zeitplan": {
+    "de": "Zeitplan: {modus} ab {uhrzeit} Uhr",
+    "en": "Schedule: {modus} from {uhrzeit}",
+    "fr": "Programme : {modus} à partir de {uhrzeit}",
+},
+```
+
+The placeholders must be the same in every language – the test run checks
+exactly that, along with the tables `MODUS` and `ZUSTAND`. Which languages
+exist is derived from these entries; nothing is registered anywhere.
+
+**2. The interface** – copy `frontend/sprachen/en.js` to `<code>.js`, change
+the first line to `window.SPRACHEN.fr = {`, set `locale` (it decides decimal
+separator and clock format) and translate the right-hand side. The file has
+three parts: `woerter` for fixed texts, `muster` for texts containing numbers,
+`vorlagen` for the schedule templates.
+
+The key is always the **German original text** – that way a forgotten entry
+does not break anything, it simply stays German.
+
+**What is not covered:** the patterns under `muster` are regular expressions
+and assume that singular and plural differ the way they do in German and
+English. Languages with more plural forms – Polish or Russian, for instance –
+need one pattern per form, or a rebuild towards real keys.
+
+If a language is missing at runtime, English is used; if that is missing too,
+German remains. A half-finished translation therefore never empties the
+interface.

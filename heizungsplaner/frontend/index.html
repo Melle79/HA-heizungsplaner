@@ -819,7 +819,7 @@ function einheitAnschreiben(wert) {
   for (const el of document.querySelectorAll('.einheit-marke')) el.textContent = wert;
 }
 </script>
-<script src="englisch.js"></script>
+<script src="uebersetzung.js"></script>
 <script>
 // Sprache aus Home Assistant. Die Abfrage läuft vor allem anderen: Steht die
 // Übersetzung erst nach den ersten Daten, sieht man die deutsche Fassung
@@ -829,9 +829,9 @@ fetch('api/sprache', {cache: 'no-store'})
   .then(d => {
     window.SPRACHE = d.sprache || 'de';
     window.EINHEIT = d.einheit || '°C';
-    if (window.SPRACHE !== 'de') window.englischAnschalten();
     if (window.EINHEIT !== '°C') einheitAnschreiben(window.EINHEIT);
     window.SPANNE = window.EINHEIT === '°F' ? '°F' : 'K';
+    return window.spracheAnwenden(window.SPRACHE);
   })
   .catch(() => {});
 </script>
@@ -881,7 +881,9 @@ const sendeJSON = (pfad, methode, koerper) => hole(pfad, {
 // Zahlen und Zeiten folgen der Sprache: „23,0 °C“ im Deutschen, „23.0 °C“ im
 // Englischen. Ein Dezimalkomma in einer englischen Oberfläche liest sich wie
 // ein Tippfehler.
-const ORT = () => (window.SPRACHE === 'en' ? 'en-GB' : 'de-DE');
+// Die Ortsform bestimmt Dezimaltrenner und Uhrzeit. Sie steht in der
+// Sprachdatei, damit eine neue Sprache hier nichts ändern muss.
+const ORT = () => window.ORTSFORM || 'de-DE';
 
 function zahl(wert, stellen = 1) {
   if (wert === null || wert === undefined) return null;

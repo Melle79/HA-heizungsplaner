@@ -676,5 +676,41 @@ Oberfläche:
   stehen;
 * die **Namen**, die man Räumen, Regeln und Geräten gegeben hat.
 
-Eine dritte Sprache braucht eine weitere Spalte in `backend/texte.py` und ein
-weiteres Wörterbuch in `frontend/englisch.js` – sonst nichts.
+
+## Eine Sprache ergänzen
+
+Der Planer spricht Deutsch und Englisch. Eine dritte Sprache sind zwei Dateien
+und keine Codeänderung:
+
+**1. Das Backend** – in `backend/texte.py` steht jeder Satz, den der Planer
+schreibt. Jeder Eintrag ist eine kleine Tabelle; eine Spalte kommt dazu:
+
+```python
+"zeitplan": {
+    "de": "Zeitplan: {modus} ab {uhrzeit} Uhr",
+    "en": "Schedule: {modus} from {uhrzeit}",
+    "fr": "Programme : {modus} à partir de {uhrzeit}",
+},
+```
+
+Die Platzhalter müssen in allen Sprachen dieselben sein – genau das prüft der
+Prüflauf, ebenso die Tabellen `MODUS` und `ZUSTAND`. Welche Sprachen es gibt,
+leitet der Planer aus diesen Einträgen ab; angemeldet wird nichts.
+
+**2. Die Oberfläche** – `frontend/sprachen/en.js` nach `<code>.js` kopieren,
+in der ersten Zeile `window.SPRACHEN.fr = {` setzen, `locale` eintragen (sie
+entscheidet über Dezimaltrenner und Uhrzeitform) und die rechte Seite
+übersetzen. Die Datei hat drei Teile: `woerter` für feste Texte, `muster` für
+Texte mit Zahlen darin, `vorlagen` für die Zeitplan-Vorlagen.
+
+Schlüssel ist immer der **deutsche Originaltext** – so bricht ein vergessener
+Eintrag nichts, er bleibt schlicht deutsch stehen.
+
+**Was der Aufbau nicht abdeckt:** Die Einträge unter `muster` sind reguläre
+Ausdrücke und setzen voraus, dass Ein- und Mehrzahl sich verhalten wie im
+Deutschen und Englischen. Sprachen mit mehr Pluralformen – Polnisch oder
+Russisch etwa – brauchen ein Muster je Form oder einen Umbau auf echte
+Schlüssel.
+
+Fehlt eine Sprache zur Laufzeit, gilt Englisch; fehlt auch das, bleibt es bei
+Deutsch. Eine halbfertige Übersetzung räumt die Oberfläche also nie leer.

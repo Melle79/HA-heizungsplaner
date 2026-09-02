@@ -1,15 +1,19 @@
-// Die englische Fassung der Oberfläche.
+// Englisch. Eine Sprachdatei besteht aus drei Teilen und sonst nichts:
 //
-// Schlüssel ist der deutsche Text, so wie er im HTML und im Skript steht.
-// Das klingt unorthodox, hat aber einen handfesten Vorteil: Im übrigen Code
-// muss nichts umgebaut werden, und ein vergessener Text fällt nicht aus – er
-// bleibt schlicht deutsch stehen, statt als „missing.key.42“ zu erscheinen.
+//   woerter   – feste Texte, Schlüssel ist der deutsche Originaltext
+//   muster    – Texte mit Zahlen darin, als reguläre Ausdrücke
+//   vorlagen  – die Namen der Zeitplan-Vorlagen, über ihren Wert angesprochen
 //
-// Übersetzt wird beim Laden und danach bei jeder Änderung am DOM: Die
-// Oberfläche baut Listen, Kacheln und Dialoge laufend neu auf, eine einmalige
-// Übersetzung beim Start würde nur den ersten Zustand erwischen.
+// Wer eine Sprache ergänzen will, kopiert diese Datei nach `<code>.js`,
+// übersetzt die rechte Seite und ist fertig – am Code ändert sich nichts.
+// Ein fehlender Eintrag fällt nicht aus: Er bleibt deutsch stehen.
 
-const EN = {
+window.SPRACHEN = window.SPRACHEN || {};
+window.SPRACHEN.en = {
+  // Zahlen und Uhrzeiten: „21.5 °C“ und „14:00“ statt „21,5“ und „2:00 pm“.
+  locale: 'en-GB',
+
+  woerter: {
   // Kopf und Navigation
   "🔥 Heizungsplaner": "🔥 Heating Planner",
   "Heizungsplaner": "Heating Planner",
@@ -300,11 +304,9 @@ const EN = {
   "Was": "What",
   "Warum": "Why",
   "Wer ist zu Hause": "Who is at home",
-};
+  },
 
-// Texte mit Zahlen darin – als Muster, damit „4 von 20“ nicht 400 Einträge
-// braucht. Reihenfolge zählt: Das erste passende Muster gewinnt.
-const EN_MUSTER = [
+  muster: [
   [/^(\d+) von (\d+)$/, "$1 of $2"],
   [/^(\d+) von (\d+) · (\d+) gewählt$/, "$1 of $2 · $3 selected"],
   [/^(\d+) zur Auswahl$/, "$1 to choose from"],
@@ -354,89 +356,8 @@ const EN_MUSTER = [
   [/^(\d+) Person\(en\)$/, "$1 person(s)"],
   [/^(\d+) Melder$/, "$1 sensors"],
   [/^(\d+) Kontakt(e)?$/, "$1 window contact$2"],
-];
+  ],
 
-// Im HTML stehen längere Sätze über mehrere Zeilen. Verglichen wird deshalb
-// mit zusammengefasstem Leerraum – sonst bliebe jeder umbrochene Absatz
-// deutsch, obwohl er im Wörterbuch steht.
-const _glatt = (text) => text.replace(/\s+/g, ' ').trim();
-
-function _uebersetze(text) {
-  const roh = _glatt(text);
-  if (!roh) return null;
-  if (EN[roh] !== undefined) return EN[roh];
-  for (const [muster, ersatz] of EN_MUSTER) {
-    if (muster.test(roh)) return roh.replace(muster, ersatz);
-  }
-  return null;
-}
-
-// Was ein Mensch benannt hat – Räume, Geräte, Regeln – bleibt unangetastet.
-// Sonst würde aus einem Raum namens „Schlafzimmer“ ein „Bedroom“, und wer ihn
-// so wiederfinden will, sucht vergebens.
-function _istDaten(el) {
-  return !!(el && el.closest && el.closest('[data-roh]'));
-}
-
-function _knotenUebersetzen(wurzel) {
-  const lauf = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
-  const zu_aendern = [];
-  while (lauf.nextNode()) {
-    const knoten = lauf.currentNode;
-    if (knoten.parentElement && ['SCRIPT', 'STYLE'].includes(knoten.parentElement.tagName))
-      continue;
-    if (_istDaten(knoten.parentElement)) continue;
-    const neu = _uebersetze(knoten.nodeValue);
-    if (neu !== null && neu !== knoten.nodeValue) zu_aendern.push([knoten, neu]);
-  }
-  for (const [knoten, neu] of zu_aendern) knoten.nodeValue = neu;
-
-  const elemente = wurzel.nodeType === 1 ? [wurzel, ...wurzel.querySelectorAll('*')]
-                                         : [...wurzel.querySelectorAll('*')];
-  for (const el of elemente) {
-    if (_istDaten(el)) continue;
-    for (const attr of ['placeholder', 'title']) {
-      const wert = el.getAttribute && el.getAttribute(attr);
-      if (!wert) continue;
-      const neu = _uebersetze(wert);
-      if (neu !== null && neu !== wert) el.setAttribute(attr, neu);
-    }
-  }
-}
-
-// Die Oberfläche baut Kacheln, Listen und Dialoge laufend neu auf. Ein
-// Beobachter übersetzt, was dazukommt – sonst wäre nur der erste Zustand
-// englisch. Er schreibt nur, wenn sich etwas ändert, sonst würde er sich
-// selbst immer wieder auslösen.
-const VORLAGEN_EN = {"wohnraum": "Living space", "kinderzimmer": "Child's room",
-                     "schlafzimmer": "Bedroom", "nebenraum": "Secondary room"};
-
-function englischAnschalten() {
-  // Die Vorlagen des Zeitplans stehen in einem Auswahlfeld und heißen wie
-  // mögliche Raumnamen. Sie werden deshalb über ihren Wert übersetzt.
-  const vorlage = document.getElementById('r-vorlage');
-  if (vorlage) {
-    for (const option of vorlage.options) {
-      if (VORLAGEN_EN[option.value]) option.textContent = VORLAGEN_EN[option.value];
-    }
-  }
-  _knotenUebersetzen(document.body);
-  new MutationObserver((eintraege) => {
-    for (const eintrag of eintraege) {
-      for (const knoten of eintrag.addedNodes) {
-        if (knoten.nodeType === 1) _knotenUebersetzen(knoten);
-        else if (knoten.nodeType === 3 && !_istDaten(knoten.parentElement)) {
-          const neu = _uebersetze(knoten.nodeValue);
-          if (neu !== null && neu !== knoten.nodeValue) knoten.nodeValue = neu;
-        }
-      }
-      if (eintrag.type === 'characterData' && !_istDaten(eintrag.target.parentElement)) {
-        const neu = _uebersetze(eintrag.target.nodeValue);
-        if (neu !== null && neu !== eintrag.target.nodeValue)
-          eintrag.target.nodeValue = neu;
-      }
-    }
-  }).observe(document.body, {childList: true, subtree: true, characterData: true});
-}
-
-window.englischAnschalten = englischAnschalten;
+  vorlagen: {"wohnraum": "Living space", "kinderzimmer": "Child's room",
+                     "schlafzimmer": "Bedroom", "nebenraum": "Secondary room"  },
+};

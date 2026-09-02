@@ -1,5 +1,23 @@
 # Änderungen
 
+## 1.16.0
+
+- **Vorbereitet für weitere Sprachen.** Die Oberfläche lädt ihre Sprachdatei
+  jetzt nach Sprachcode aus `frontend/sprachen/<code>.js`; die Mechanik steckt
+  in `uebersetzung.js` und kennt keine einzige Vokabel mehr.
+- Welche Sprachen es gibt, leitet das Backend aus `texte.py` ab – eine neue
+  Sprache ist eine Spalte in der Tabelle und eine Datei im Frontend, sonst
+  nichts.
+- **Ausweichkette:** Fehlt eine Sprache, gilt Englisch; fehlt auch das, bleibt
+  es bei Deutsch. Eine halbfertige Übersetzung räumt die Oberfläche nicht
+  leer.
+- Das Zahlen- und Uhrzeitformat steht in der Sprachdatei (`locale`) statt in
+  einer Fallunterscheidung mit zwei Zweigen.
+- Der Prüflauf sieht die Sprachdateien durch: Meldet sich jede unter ihrem
+  Dateinamen an, hat sie alle Teile, und gibt es sie auch im Backend?
+- Beide Handbücher erklären, wie man eine Sprache ergänzt – samt der Grenze
+  des Verfahrens bei Sprachen mit mehr als zwei Pluralformen.
+
 ## 1.15.1
 
 - README und Add-on-Beschreibung nennen die Einheit: Der Planer folgt Home

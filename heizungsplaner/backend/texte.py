@@ -21,15 +21,30 @@ import einheit
 
 _LOGGER = logging.getLogger(__name__)
 
-SPRACHEN = ("de", "en")
+# Die Ausweichkette: Wer eine Sprache nicht kennt, versucht Englisch und
+# zuletzt Deutsch. So bleibt eine halb gepflegte Sprache benutzbar – ein
+# fehlender Satz erscheint auf Englisch statt als leere Stelle.
+AUSWEICH = ("en", "de")
 _sprache = "de"
 
 
+def sprachen() -> tuple[str, ...]:
+    """Welche Sprachen die Tabelle hergibt – abgeleitet, nicht gepflegt.
+
+    Eine neue Sprache ist damit eine Spalte in ``TEXTE`` und sonst nichts:
+    Sie wird von selbst angeboten, sobald sie dort auftaucht.
+    """
+    vorhanden = set()
+    for eintrag in TEXTE.values():
+        vorhanden.update(eintrag)
+    return tuple(sorted(vorhanden))
+
+
 def sprache_setzen(sprache: str | None) -> str:
-    """Sprache aus Home Assistant übernehmen (``de``, ``en-GB``, …)."""
+    """Sprache aus Home Assistant übernehmen (``de``, ``en-GB``, ``fr``, …)."""
     global _sprache
     kurz = (sprache or "de").split("-")[0].lower()
-    _sprache = kurz if kurz in SPRACHEN else "en"
+    _sprache = kurz if kurz in sprachen() else AUSWEICH[0]
     return _sprache
 
 
@@ -43,7 +58,15 @@ def t(schluessel: str, **werte) -> str:
     if eintrag is None:
         _LOGGER.warning("Unbekannter Text: %s", schluessel)
         return schluessel
-    vorlage = eintrag.get(_sprache) or eintrag["de"]
+    vorlage = eintrag.get(_sprache)
+    if not vorlage:
+        for ausweich in AUSWEICH:
+            vorlage = eintrag.get(ausweich)
+            if vorlage:
+                break
+    if not vorlage:
+        _LOGGER.warning("Text %s fehlt in allen Sprachen", schluessel)
+        return schluessel
     # Die Einheit steht in keinem Satz fest: Sie kommt aus dem Maßsystem von
     # Home Assistant und wird hier eingesetzt, ohne dass jeder Aufruf sie
     # mitgeben muss.
@@ -90,14 +113,22 @@ ZUSTAND = {
 }
 
 
+def _aus_tabelle(tabelle: dict, name: str) -> str:
+    eintrag = tabelle.get(name)
+    if not eintrag:
+        return name
+    for sprache in (_sprache, *AUSWEICH):
+        if eintrag.get(sprache):
+            return eintrag[sprache]
+    return name
+
+
 def modus(name: str) -> str:
-    eintrag = MODUS.get(name)
-    return eintrag.get(_sprache, eintrag["de"]) if eintrag else name
+    return _aus_tabelle(MODUS, name)
 
 
 def zustand(name: str) -> str:
-    eintrag = ZUSTAND.get(name)
-    return eintrag.get(_sprache, eintrag["de"]) if eintrag else name
+    return _aus_tabelle(ZUSTAND, name)
 
 
 # ── Begründungen ────────────────────────────────────────────────────────────

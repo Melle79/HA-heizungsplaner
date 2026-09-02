@@ -1217,6 +1217,30 @@ regelung.wachhund.batterien_je_thermostat = echt
 regelung._BATTERIEN["stand"] = None
 
 
+print("\n=== Sprachdateien der Oberflaeche ===")
+
+# Eine Sprachdatei meldet sich unter ihrem Dateinamen an. Vertippt man sich
+# dort, laedt die Oberflaeche die Datei und findet trotzdem nichts - ein
+# Fehler, der sich nur im Browser zeigt und dort wie ein fehlender Text
+# aussieht.
+import os as _os
+_ordner = _os.path.join(_os.path.dirname(__file__), "..", "frontend", "sprachen")
+_dateien = sorted(f for f in _os.listdir(_ordner) if f.endswith(".js"))
+pruefe(bool(_dateien), f"Sprachdateien gefunden ({', '.join(_dateien) or 'keine'})")
+for _datei in _dateien:
+    _code = _datei[:-3]
+    _inhalt = open(_os.path.join(_ordner, _datei), encoding="utf-8").read()
+    pruefe(f"window.SPRACHEN.{_code} =" in _inhalt,
+           f"{_datei} meldet sich als '{_code}' an")
+    for _teil in ("locale:", "woerter:", "muster:", "vorlagen:"):
+        pruefe(_teil in _inhalt, f"{_datei} hat {_teil.rstrip(':')}")
+
+# Was die Oberflaeche kann, muss das Backend auch koennen - sonst spricht die
+# Kachel Englisch und ihre Begruendung Deutsch.
+_ohne_backend = [f[:-3] for f in _dateien if f[:-3] not in texte.sprachen()]
+pruefe(not _ohne_backend,
+       f"jede Oberflaechensprache steht auch in texte.py ({_ohne_backend or 'alle'})")
+
 print("\n=== Temperatureinheit ===")
 
 # Absolute Temperaturen und Spannen duerfen nicht verwechselt werden: Wer eine
