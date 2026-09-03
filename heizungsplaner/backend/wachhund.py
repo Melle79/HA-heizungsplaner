@@ -37,6 +37,11 @@ ARTEN = {
 # So oft darf ein Schreibvorgang scheitern, bevor es als Störung gilt.
 FEHLSCHLAEGE = 3
 
+# So lange bekommt ein angestupstes Gerät Zeit zu antworten, bevor es als
+# ausgefallen gilt. Zwei Takte – der Weckruf und die Antwort brauchen jeweils
+# ihren Weg durch Funk und Integration.
+WECK_SCHONFRIST = timedelta(minutes=12)
+
 # Älter als das wird ein Batteriestand nicht mehr für bare Münze genommen.
 # Manche Geräte melden ihn nur bei Änderung – nach einem Batteriewechsel steht
 # dort womöglich tagelang der alte Wert, und eine Warnung darauf wäre falsch.
@@ -85,7 +90,10 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
     Sollwert wiederholt nicht annimmt, ist so gut wie ausgefallen, auch wenn es
     sich brav meldet.
     """
-    thermostat_zustand = thermostat_zustand or {}
+    # `or {}` wäre hier falsch: Ein leeres Gedächtnis ist gültig – es wird
+    # gefüllt. Wer es ersetzt, verwirft den Weckruf-Merker gleich wieder.
+    if thermostat_zustand is None:
+        thermostat_zustand = {}
     wacht = einstellungen.get("wachhund") or {}
     if not wacht.get("aktiv", True):
         return []
@@ -95,7 +103,7 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
     # ohne dass irgendetwas fehlte. Eine Frist, die im Heizbetrieb sinnvoll
     # ist, erzeugt hier reihenweise Fehlalarme – deshalb gilt sie im Sommer
     # doppelt.
-    stumm_ab = timedelta(hours=float(wacht.get("stumm_stunden", 12)))
+    stumm_ab = timedelta(hours=float(wacht.get("stumm_stunden", 24)))
     if sommerbetrieb:
         stumm_ab *= 2
     schwelle = float(wacht.get("batterie_prozent", 20))
@@ -123,11 +131,32 @@ def pruefen(config: dict, states_index: dict, jetzt: datetime,
             gemeldet = _zeit(eintrag.get("last_reported")
                              or eintrag.get("last_updated"))
             if gemeldet and jetzt_utc - gemeldet > stumm_ab:
+                # Vor der Meldung wird angeklopft. Ein Thermostat, das lange
+                # schweigt, ist meist nicht tot, sondern hatte nichts zu
+                # sagen: Im Sommerbetrieb schreibt der Planer nicht mehr, also
+                # meldet auch das Gerät nichts. Ein Weckruf unterscheidet
+                # beides – genau das, was ein Mensch tut, wenn er den
+                # Sollwert kurz verstellt.
+                merker = thermostat_zustand.setdefault(entity_id, {})
+                geweckt = _zeit(merker.get("geweckt_am"))
+                if geweckt and gemeldet > geweckt:
+                    merker.pop("geweckt_am", None)   # hat geantwortet
+                    geweckt = None
+                if geweckt is None:
+                    ha_api.auffrischen(entity_id)
+                    merker["geweckt_am"] = jetzt_utc.isoformat(timespec="seconds")
+                    continue
+                if jetzt_utc - geweckt < WECK_SCHONFRIST:
+                    continue                          # noch Zeit zu antworten
+
                 stunden = (jetzt_utc - gemeldet).total_seconds() / 3600
                 stoerungen.append(_bauen(entity_id, name, raum, "stumm",
                                          texte.t("wach_seit",
                                                  stunden=f"{stunden:.0f}")))
                 continue
+
+            # Hat sich gemeldet – ein etwaiger Weckruf ist erledigt.
+            thermostat_zustand.get(entity_id, {}).pop("geweckt_am", None)
 
             # Die Sommerpause eines FRITZ!-Thermostats ist ein Zustand in der
             # FRITZ!Box, nicht in Home Assistant: Das Gerät lehnt jeden

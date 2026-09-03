@@ -473,7 +473,7 @@ life**:
 |---|---|
 | no longer exists | the entity has disappeared from Home Assistant |
 | unavailable | state `unavailable` or `unknown` |
-| has stopped reporting | no sign of life since the silence period (default 12 hours, doubled in summer mode) |
+| has stopped reporting | no sign of life since the silence period, and the wake-up call went unanswered (default 24 hours, doubled in summer mode) |
 | low battery | where there is a reading, below the threshold (default 20 %) and **not older than twelve hours** |
 | refuses setpoints | three write operations rejected in a row |
 | in summer pause | the device reports `summer` although heating is due |
@@ -499,13 +499,20 @@ for batteries where none are missing.
 After three failures the planner only tries every 30 minutes. Otherwise such a
 device would fill the log in every cycle without anything changing.
 
-**How long may a device stay silent?** Longer than one would think. In summer
-mode – valves closed, nothing to report – the Matter thermostats of this house
-regularly say nothing for up to 13 hours. A period of six hours produced a
-whole series of failure reports for devices that were perfectly fine. The
-default is therefore twelve hours, doubled in summer mode. In heating mode a
-device reports on every setpoint change, so the period is considerably
-stricter than it sounds.
+**How long may a device stay silent?** Longer than one would think – and the
+period alone is not enough. In summer mode the planner stops writing, so the
+device has nothing to report either: the office, the hobby room and the guest
+room stayed silent for more than a day with nothing wrong with them.
+
+That is why the planner **knocks first**. It asks Home Assistant to refresh
+that entity – a wake-up call without any radio command to the device – waits
+twelve minutes, and only reports if nothing comes back. If the device answers,
+it was merely quiet. This is exactly what a person does who briefly changes
+the setpoint to see whether the thermostat is still alive.
+
+The period itself is 24 hours, doubled in summer mode. In heating mode a
+device reports on every setpoint change, so it is considerably stricter than
+it sounds.
 
 Reporting happens **on edges**: once when it occurs, once when it is resolved.
 A warning that arrives on the phone again every hour is swiped away after the

@@ -116,6 +116,26 @@ def as_float(value) -> float | None:
 
 # -------------------------------------------------------------- schalten ----
 
+def auffrischen(entity_id: str) -> bool:
+    """Home Assistant bitten, den Zustand dieser Entität neu zu holen.
+
+    Der harmlose Weckruf: kein Funkbefehl an das Gerät, keine Änderung, nur
+    die Aufforderung an die Integration, nachzusehen. Gedacht für den Fall,
+    dass ein Thermostat lange schweigt – dann unterscheidet die Antwort ein
+    stilles Gerät von einem toten.
+    """
+    if not available():
+        return False
+    try:
+        _request("POST", "/services/homeassistant/update_entity",
+                 {"entity_id": entity_id})
+        _LOGGER.info("%s angestupst", entity_id)
+        return True
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning("Weckruf an %s fehlgeschlagen: %s", entity_id, err)
+        return False
+
+
 def set_hvac_mode(entity_id: str, mode: str) -> bool:
     """Betriebsart setzen (``heat`` / ``off``)."""
     if not available():

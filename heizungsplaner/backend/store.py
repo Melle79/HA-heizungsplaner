@@ -137,7 +137,7 @@ STANDARD_EINSTELLUNGEN = {
     # Ein ausgefallenes Thermostat soll auffallen, ohne dass jemand hinsieht.
     "wachhund": {
         "aktiv": True,
-        "stumm_stunden": 12.0,     # so lange darf ein Gerät schweigen
+        "stumm_stunden": 24.0,     # so lange darf ein Gerät schweigen
         "batterie_prozent": 20,   # Warnschwelle, wo es eine Anzeige gibt
         "melden_an": ["notify.persistent_notification"],
     },

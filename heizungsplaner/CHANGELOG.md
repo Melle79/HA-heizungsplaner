@@ -1,5 +1,20 @@
 # Änderungen
 
+## 1.16.1
+
+- **Behoben: Ausfallmeldungen für Geräte, die nur still waren.** Im
+  Sommerbetrieb schreibt der Planer nicht mehr – also meldet auch das Gerät
+  nichts. Büro, Hobbyraum und Gästezimmer schwiegen dabei über einen Tag und
+  wurden als ausgefallen gemeldet, obwohl sie erreichbar waren.
+- Vor einer Meldung wird jetzt **angeklopft**: Der Planer lässt Home Assistant
+  den Zustand neu holen, wartet zwölf Minuten und meldet erst, wenn auch dann
+  nichts kommt. Meldet sich das Gerät, war es nur still.
+- Die Schweigefrist steht auf 24 Stunden (vorher 12), im Sommerbetrieb
+  weiterhin doppelt.
+- Dabei gefunden: Ein **leeres** Thermostat-Gedächtnis wurde verworfen statt
+  gefüllt (`or {}` statt `is None`). Bei einer frischen Einrichtung wäre der
+  Weckruf-Merker sofort wieder weg gewesen.
+
 ## 1.16.0
 
 - **Vorbereitet für weitere Sprachen.** Die Oberfläche lädt ihre Sprachdatei

@@ -1034,7 +1034,13 @@ def lage(a_zustand="heat", a_gemeldet="2026-08-25T11:58:00+00:00",
         idx["sensor.a_batterie"] = {"entity_id": "sensor.a_batterie",
                                     "state": str(batterie), "attributes": {}}
     batterien = {"climate.a": "sensor.a_batterie"} if batterie is not None else {}
-    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, batterien)
+    # Ein schweigendes Geraet wird erst angestupst und beim naechsten Mal
+    # gemeldet. Die Hilfe macht deshalb beide Laeufe - sonst pruefte sie nur
+    # den Weckruf.
+    merker = {}
+    wachhund.pruefen(cfg, idx, jetzt_w, einst_w, batterien, merker)
+    spaeter = jetzt_w + wachhund.WECK_SCHONFRIST + timedelta(minutes=1)
+    return wachhund.pruefen(cfg, idx, spaeter, einst_w, batterien, merker)
 
 pruefe(lage() == [], "alles in Ordnung -> keine Stoerung")
 
@@ -1046,10 +1052,10 @@ pruefe(len(st) == 1 and st[0]["art"] == "unerreichbar",
        f"nicht erreichbar erkannt ({st[0]['text'] if st else '-'})")
 
 # Der eigentliche Urlaubsfall: Das Geraet meldet sich einfach nicht mehr
-st = lage(a_gemeldet="2026-08-24T22:00:00+00:00")
+st = lage(a_gemeldet="2026-08-24T09:00:00+00:00")
 pruefe(len(st) == 1 and st[0]["art"] == "stumm",
        f"stilles Verstummen erkannt ({st[0]['text'] if st else '-'})")
-pruefe(st and "14 Stunden" in st[0]["text"],
+pruefe(st and "27 Stunden" in st[0]["text"],
        f"Dauer wird benannt ({st[0]['text'] if st else '-'})")
 
 st = lage(batterie=15)
@@ -1068,14 +1074,18 @@ def lage_stumm(stunden, sommerbetrieb):
            "climate.b": {"entity_id": "climate.b", "state": "off",
                          "last_reported": jetzt_w.isoformat(),
                          "attributes": {"friendly_name": "Thermostat B"}}}
-    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, {},
+    merker = {}
+    wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, merker,
+                     sommerbetrieb=sommerbetrieb)
+    return wachhund.pruefen(cfg, idx, jetzt_w + wachhund.WECK_SCHONFRIST
+                            + timedelta(minutes=1), einst_w, {}, merker,
                             sommerbetrieb=sommerbetrieb)
 
-pruefe(not lage_stumm(14, True),
-       "im Sommer sind vierzehn stille Stunden kein Ausfall")
-pruefe(len(lage_stumm(14, False)) == 1,
-       "im Heizbetrieb sind vierzehn stille Stunden ein Ausfall")
-pruefe(len(lage_stumm(26, True)) == 1,
+pruefe(not lage_stumm(30, True),
+       "im Sommer sind dreissig stille Stunden kein Ausfall")
+pruefe(len(lage_stumm(30, False)) == 1,
+       "im Heizbetrieb sind dreissig stille Stunden ein Ausfall")
+pruefe(len(lage_stumm(50, True)) == 1,
        "auch im Sommer wird ein Geraet nach der doppelten Frist gemeldet")
 
 # Die Sommerpause eines FRITZ!-Thermostats lehnt jeden Sollwert ab. Gemeldet
@@ -1089,7 +1099,11 @@ def lage_sommerpause(sommerbetrieb):
            "climate.b": {"entity_id": "climate.b", "state": "heat",
                          "last_reported": "2026-08-25T11:58:00+00:00",
                          "attributes": {"friendly_name": "Thermostat B"}}}
-    return wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, {},
+    merker = {}
+    wachhund.pruefen(cfg, idx, jetzt_w, einst_w, {}, merker,
+                     sommerbetrieb=sommerbetrieb)
+    return wachhund.pruefen(cfg, idx, jetzt_w + wachhund.WECK_SCHONFRIST
+                            + timedelta(minutes=1), einst_w, {}, merker,
                             sommerbetrieb=sommerbetrieb)
 
 still = lage_sommerpause(True)
@@ -1099,6 +1113,45 @@ pruefe(len(laut) == 1 and laut[0]["art"] == "sommerpause"
        and "FRITZ" in laut[0]["text"],
        f"zur Heizperiode wird die Sommerpause gemeldet "
        f"({laut[0]['text'] if laut else '-'})")
+
+# Der Weckruf: Ein Geraet, das lange schweigt, wird erst angestupst. Meldet es
+# sich daraufhin, war es nur still - im Sommerbetrieb der Normalfall, weil der
+# Planer dann gar nicht mehr schreibt.
+_still = "2026-08-24T09:00:00+00:00"
+_idx_still = {"climate.a": {"entity_id": "climate.a", "state": "off",
+                            "last_reported": _still,
+                            "attributes": {"friendly_name": "Thermostat A"}},
+              "climate.b": {"entity_id": "climate.b", "state": "off",
+                            "last_reported": jetzt_w.isoformat(),
+                            "attributes": {"friendly_name": "Thermostat B"}}}
+_merker = {}
+_erst = wachhund.pruefen(cfg, _idx_still, jetzt_w, einst_w, {}, _merker)
+pruefe(_erst == [] and "geweckt_am" in _merker.get("climate.a", {}),
+       f"erster Verdacht stupst an, statt zu melden ({_erst})")
+
+# Das Geraet antwortet - keine Meldung, der Merker ist weg.
+_idx_antwort = json.loads(json.dumps(_idx_still))
+_idx_antwort["climate.a"]["last_reported"] = (
+    jetzt_w + timedelta(minutes=1)).isoformat()
+_zweit = wachhund.pruefen(cfg, _idx_antwort,
+                          jetzt_w + timedelta(minutes=13), einst_w, {}, _merker)
+pruefe(_zweit == [] and "geweckt_am" not in _merker.get("climate.a", {}),
+       f"wer antwortet, gilt nicht als ausgefallen ({_zweit})")
+
+# Bleibt die Antwort aus, wird nach der Schonfrist gemeldet.
+_merker2 = {}
+wachhund.pruefen(cfg, _idx_still, jetzt_w, einst_w, {}, _merker2)
+_dritt = wachhund.pruefen(cfg, _idx_still, jetzt_w + timedelta(minutes=13),
+                          einst_w, {}, _merker2)
+pruefe(len(_dritt) == 1 and _dritt[0]["art"] == "stumm",
+       f"wer nicht antwortet, wird gemeldet ({_dritt})")
+
+# Und nicht zu frueh: Innerhalb der Schonfrist bleibt es still.
+_merker3 = {}
+wachhund.pruefen(cfg, _idx_still, jetzt_w, einst_w, {}, _merker3)
+_frueh = wachhund.pruefen(cfg, _idx_still, jetzt_w + timedelta(minutes=3),
+                          einst_w, {}, _merker3)
+pruefe(_frueh == [], f"waehrend der Schonfrist wird nicht gemeldet ({_frueh})")
 
 # Ein veralteter Stand darf nicht warnen: Nach einem Batteriewechsel zeigen
 # manche Geraete tagelang den alten Wert.
@@ -1181,10 +1234,13 @@ def lage_ortszeit(gemeldet):
            "climate.b": {"entity_id": "climate.b", "state": "heat",
                          "last_reported": "2026-08-25T11:58:00+00:00",
                          "attributes": {"friendly_name": "Thermostat B"}}}
-    return wachhund.pruefen(cfg, idx, jetzt_ortszeit, einst_w, {})
+    merker = {}
+    wachhund.pruefen(cfg, idx, jetzt_ortszeit, einst_w, {}, merker)
+    return wachhund.pruefen(cfg, idx, jetzt_ortszeit + wachhund.WECK_SCHONFRIST
+                            + timedelta(minutes=1), einst_w, {}, merker)
 
-st_utc = lage(a_gemeldet="2026-08-24T22:00:00+00:00")
-st_lokal = lage_ortszeit("2026-08-24T22:00:00+00:00")
+st_utc = lage(a_gemeldet="2026-08-24T09:00:00+00:00")
+st_lokal = lage_ortszeit("2026-08-24T09:00:00+00:00")
 pruefe(st_utc and st_lokal and st_utc[0]["text"] == st_lokal[0]["text"],
        f"Ortszeit ergibt dieselbe Dauer wie UTC ({st_lokal[0]['text'] if st_lokal else '-'})")
 pruefe(lage_ortszeit("2026-08-25T10:00:00+00:00") == [],

@@ -476,7 +476,7 @@ gleich aus welchem Grund. Der Planer wacht deshalb über das **Lebenszeichen**:
 |---|---|
 | gibt es nicht mehr | die Entität ist aus Home Assistant verschwunden |
 | nicht erreichbar | Zustand `unavailable` oder `unknown` |
-| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen (Vorgabe 12 Stunden, im Sommerbetrieb doppelt) |
+| meldet sich nicht mehr | seit der Schweigefrist kein Lebenszeichen – und der Weckruf blieb unbeantwortet (Vorgabe 24 Stunden, im Sommerbetrieb doppelt) |
 | schwache Batterie | wo es eine Anzeige gibt, unterhalb der Schwelle (Vorgabe 20 %) und **nicht älter als zwölf Stunden** |
 | nimmt keine Sollwerte an | drei Schreibvorgänge in Folge abgelehnt |
 | steht in der Sommerpause | das Gerät meldet `summer`, obwohl geheizt werden soll |
@@ -503,12 +503,20 @@ Nach drei Fehlschlägen versucht der Planer es nur noch alle 30 Minuten. Sonst
 füllte ein solches Gerät bei jedem Takt das Protokoll, ohne dass sich etwas
 ändert.
 
-**Wie lange darf ein Gerät schweigen?** Länger, als man denkt. Die
-Matter-Thermostate dieses Hauses melden im Sommerbetrieb – Ventile zu, nichts
-zu berichten – regulär bis zu 13 Stunden nichts. Eine Frist von sechs Stunden
-erzeugte damit reihenweise Ausfallmeldungen für Geräte, denen nichts fehlte.
-Die Vorgabe liegt deshalb bei zwölf Stunden und gilt im Sommerbetrieb doppelt.
-Im Heizbetrieb meldet ein Gerät bei jeder Sollwertänderung, dort ist die Frist
+**Wie lange darf ein Gerät schweigen?** Länger, als man denkt – und die Frist
+allein genügt nicht. Im Sommerbetrieb schreibt der Planer nicht mehr, also hat
+auch das Gerät nichts zu melden: Büro, Hobbyraum und Gästezimmer schwiegen
+dabei über einen Tag, ohne dass ihnen etwas fehlte.
+
+Deshalb wird vor einer Meldung **angeklopft**. Der Planer bittet Home
+Assistant, den Zustand dieser Entität neu zu holen – ein Weckruf ohne
+Funkbefehl ans Gerät –, wartet zwölf Minuten und meldet erst, wenn auch dann
+nichts kommt. Meldet sich das Gerät, war es nur still. Genau das tut ein
+Mensch, der den Sollwert kurz verstellt, um zu sehen, ob das Thermostat noch
+lebt.
+
+Die Frist selbst liegt bei 24 Stunden und gilt im Sommerbetrieb doppelt. Im
+Heizbetrieb meldet ein Gerät bei jeder Sollwertänderung, dort ist sie
 deutlich schärfer, als sie klingt.
 
 Gemeldet wird **auf Flanke**: einmal beim Auftreten, einmal bei der Behebung.
